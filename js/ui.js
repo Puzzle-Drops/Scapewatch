@@ -50,11 +50,15 @@ class UIManager {
             activityName.textContent = 'Moving';
             activityStatus.textContent = `To: ${targetName}`;
         } else {
-            // Check if we're at a bank
+            // Player is idle
             const currentNode = nodes.getNode(player.currentNode);
-            if (currentNode && currentNode.type === 'bank') {
-                activityName.textContent = 'Banking';
-                activityStatus.textContent = 'Depositing items...';
+            if (currentNode) {
+                activityName.textContent = `Idle at ${currentNode.name}`;
+                if (window.ai && window.ai.currentGoal) {
+                    activityStatus.textContent = 'Planning next action...';
+                } else {
+                    activityStatus.textContent = 'Waiting for AI decision...';
+                }
             } else {
                 activityName.textContent = 'Idle';
                 activityStatus.textContent = 'Waiting for AI decision...';
