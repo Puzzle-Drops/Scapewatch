@@ -103,6 +103,15 @@ class AIManager {
         for (const goal of this.goals) {
             if (!this.isGoalComplete(goal)) {
                 this.currentGoal = goal;
+                
+                // Update starting values when goal is selected
+                if (goal.type === 'skill_level') {
+                    goal.startingLevel = skills.getLevel(goal.skill);
+                    goal.startingXp = skills.getXp(goal.skill);
+                } else if (goal.type === 'bank_items') {
+                    goal.startingCount = bank.getItemCount(goal.itemId);
+                }
+                
                 console.log('New goal selected:', goal);
                 // Update UI immediately when new goal is selected
                 if (window.ui) {
