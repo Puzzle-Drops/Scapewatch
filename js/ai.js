@@ -11,14 +11,14 @@ class AIManager {
         this.addGoal({
             type: 'skill_level',
             skill: 'woodcutting',
-            targetLevel: 15,
+            targetLevel: 5,
             priority: 1
         });
 
         this.addGoal({
             type: 'bank_items',
-            itemId: 'oak_logs',
-            targetCount: 100,
+            itemId: 'logs',
+            targetCount: 10,
             priority: 2
         });
 
@@ -73,13 +73,19 @@ class AIManager {
         for (const goal of this.goals) {
             if (!this.isGoalComplete(goal)) {
                 this.currentGoal = goal;
-                console.log('New goal:', goal);
+                console.log('New goal selected:', goal);
+                // Update UI immediately when new goal is selected
+                if (window.ui) {
+                    window.ui.updateGoal();
+                }
                 return;
             }
         }
 
         // All goals complete - add new ones
+        console.log('All goals complete, generating new goals');
         this.generateNewGoals();
+        this.selectNewGoal(); // Try selecting again after generating new goals
     }
 
     isGoalComplete(goal) {
@@ -182,8 +188,16 @@ class AIManager {
                 this.currentGoal = null;
             }
             
-            // Make a new decision (will continue current goal if not complete)
-            this.makeDecision();
+            // Reset decision cooldown to make a new decision immediately
+            this.decisionCooldown = 0;
+            
+            // Force a new decision in the next frame
+            setTimeout(() => {
+                if (!player.isBusy()) {
+                    this.makeDecision();
+                }
+            }, 100);
+            
             return;
         }
 
@@ -220,6 +234,27 @@ class AIManager {
             itemId: 'willow_logs',
             targetCount: 500,
             priority: this.goals.length + 2
+        });
+
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'mining',
+            targetLevel: 30,
+            priority: this.goals.length + 3
+        });
+
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'fishing',
+            targetLevel: 20,
+            priority: this.goals.length + 4
+        });
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'iron_ore',
+            targetCount: 200,
+            priority: this.goals.length + 5
         });
 
         console.log('Generated new goals');
