@@ -68,7 +68,7 @@ class MapRenderer {
                 this.camera.y
             );
 
-            if (screenDist < 500 / this.camera.zoom) {
+            if (screenDist < 1500 / this.camera.zoom) {
                 this.drawNode(node);
             }
         }
