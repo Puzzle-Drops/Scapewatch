@@ -19,35 +19,35 @@ class UIManager {
     }
 
     updateActivity() {
-        const activityName = document.getElementById('activity-name');
-        const activityProgress = document.getElementById('activity-progress');
-        const activityStatus = document.getElementById('activity-status');
+    const activityName = document.getElementById('activity-name');
+    const activityProgress = document.getElementById('activity-progress');
+    const activityStatus = document.getElementById('activity-status');
 
-        if (player.currentActivity) {
-            const activityData = loadingManager.getData('activities')[player.currentActivity];
-            activityName.textContent = activityData.name;
-            activityProgress.style.width = `${player.activityProgress * 100}%`;
+    if (player.currentActivity) {
+        const activityData = loadingManager.getData('activities')[player.currentActivity];
+        activityName.textContent = activityData.name;
+        activityProgress.style.width = `${player.activityProgress * 100}%`;
 
-            // Calculate actions per hour
-            const duration = getActionDuration(
-                activityData.baseDuration,
-                skills.getLevel(activityData.skill),
-                activityData.requiredLevel
-            );
-            const actionsPerHour = Math.floor(3600000 / duration);
-            const xpPerHour = actionsPerHour * activityData.xpPerAction;
+        // Calculate actions per hour
+        const duration = getActionDuration(
+            activityData.baseDuration,
+            skills.getLevel(activityData.skill),
+            activityData.requiredLevel
+        );
+        const actionsPerHour = Math.floor(3600000 / duration);
+        const xpPerHour = actionsPerHour * activityData.xpPerAction;
 
-            activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
-        } else if (player.isMoving()) {
-            activityName.textContent = 'Moving';
-            activityProgress.style.width = '0%';
-            activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
-        } else {
-            activityName.textContent = 'Idle';
-            activityProgress.style.width = '0%';
-            activityStatus.textContent = 'Waiting for AI decision...';
-        }
+        activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
+    } else if (player.isMoving()) {
+        activityName.textContent = 'Moving';
+        activityProgress.style.width = '0%';
+        activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
+    } else {
+        activityName.textContent = 'Idle';
+        activityProgress.style.width = '0%';
+        activityStatus.textContent = 'Waiting for AI decision...';
     }
+}
 
     updateSkillsList() {
         const skillsList = document.getElementById('skills-list');
