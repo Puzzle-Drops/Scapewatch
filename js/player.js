@@ -111,6 +111,10 @@ class Player {
                         // Inventory full
                         console.log('Inventory full!');
                         this.stopActivity();
+                        // Reset AI decision cooldown to react immediately
+                        if (window.ai) {
+                            window.ai.decisionCooldown = 0;
+                        }
                         return;
                     }
                 }
@@ -142,6 +146,13 @@ class Player {
         if (this.targetNode) {
             this.currentNode = this.targetNode;
             this.targetNode = null;
+            
+            console.log(`Reached node: ${this.currentNode}`);
+            
+            // Reset AI decision cooldown when reaching a destination
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+            }
         }
     }
 
@@ -160,9 +171,14 @@ class Player {
         this.currentActivity = activityId;
         this.activityProgress = 0;
         this.activityStartTime = Date.now();
+        
+        console.log(`Started activity: ${activityData.name}`);
     }
 
     stopActivity() {
+        if (this.currentActivity) {
+            console.log(`Stopped activity: ${this.currentActivity}`);
+        }
         this.currentActivity = null;
         this.activityProgress = 0;
     }
