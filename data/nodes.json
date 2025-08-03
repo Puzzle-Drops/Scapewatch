@@ -3,67 +3,154 @@
         "id": "lumbridge_bank",
         "name": "Lumbridge Bank",
         "type": "bank",
-        "position": {"x": 4370, "y": 1886}
+        "position": {
+            "x": 4370,
+            "y": 1879
+        }
     },
     "lumbridge_trees": {
         "id": "lumbridge_trees",
         "name": "Lumbridge Trees",
         "type": "skill",
-        "position": {"x": 4348, "y": 1832},
-        "activities": ["chop_tree", "chop_oak"]
+        "position": {
+            "x": 4348,
+            "y": 1832
+        },
+        "activities": [
+            "chop_tree",
+            "chop_oak"
+        ]
     },
     "lumbridge_goblins": {
         "id": "lumbridge_goblins",
         "name": "Goblin Camp",
         "type": "skill",
-        "position": {"x": 4541, "y": 1502},
-        "activities": ["fight_goblin"]
+        "position": {
+            "x": 4445,
+            "y": 1849
+        },
+        "activities": [
+            "fight_goblin"
+        ]
     },
-    "lumbridge_mine": {
+    "west_lumbridge_mine": {
         "id": "lumbridge_mine",
         "name": "Lumbridge Mine",
         "type": "skill",
-        "position": {"x": 4342, "y": 1502},
-        "activities": ["mine_copper", "mine_tin"]
+        "position": {
+            "x": 4245,
+            "y": 2024
+        },
+        "activities": [
+            "mine_copper",
+            "mine_tin"
+        ]
+    },
+    "east_lumbridge_mine": {
+        "id": "lumbridge_mine",
+        "name": "Lumbridge Mine",
+        "type": "skill",
+        "position": {
+            "x": 4406,
+            "y": 2026
+        },
+        "activities": [
+            "mine_copper",
+            "mine_tin"
+        ]
     },
     "lumbridge_fishing": {
         "id": "lumbridge_fishing",
         "name": "River Lum",
         "type": "skill",
-        "position": {"x": 4149, "y": 1627},
-        "activities": ["fish_shrimp"]
+        "position": {
+            "x": 4443,
+            "y": 2013
+        },
+        "activities": [
+            "fish_shrimp"
+        ]
     },
     "draynor_bank": {
         "id": "draynor_bank",
         "name": "Draynor Bank",
         "type": "bank",
-        "position": {"x": 4088, "y": 1882}
+        "position": {
+            "x": 4134,
+            "y": 1833
+        }
     },
     "draynor_willows": {
         "id": "draynor_willows",
         "name": "Draynor Willows",
         "type": "skill",
-        "position": {"x": 4149, "y": 2137},
-        "activities": ["chop_willow"]
+        "position": {
+            "x": 4126,
+            "y": 1854
+        },
+        "activities": [
+            "chop_willow"
+        ]
     },
-    "varrock_bank": {
-        "id": "varrock_bank",
-        "name": "Varrock Bank",
+    "east_varrock_bank": {
+        "id": "east_varrock_bank",
+        "name": "East Varrock Bank",
         "type": "bank",
-        "position": {"x": 4342, "y": 2262}
+        "position": {
+            "x": 4459,
+            "y": 1480
+        }
     },
-    "varrock_mine": {
-        "id": "varrock_mine",
-        "name": "Varrock Mine",
+    "west_varrock_bank": {
+        "id": "west_varrock_bank",
+        "name": "West Varrock Bank",
+        "type": "bank",
+        "position": {
+            "x": 4318,
+            "y": 1439
+        }
+    },
+    "grand_exchange": {
+        "id": "grand_exchange",
+        "name": "Grand Exchange",
+        "type": "bank",
+        "position": {
+            "x": 4281,
+            "y": 1340
+        }
+    },
+    "east_varrock_mine": {
+        "id": "east_varrock_mine",
+        "name": "East Varrock Mine",
         "type": "skill",
-        "position": {"x": 4541, "y": 2262},
-        "activities": ["mine_iron"]
+        "position": {
+            "x": 4523,
+            "y": 1588
+        },
+        "activities": [
+            "mine_iron"
+        ]
+    },
+    "west_varrock_mine": {
+        "id": "west_varrock_mine",
+        "name": "West Varrock Mine",
+        "type": "skill",
+        "position": {
+            "x": 4523,
+            "y": 1588
+        },
+        "activities": [
+            "mine_iron"
+        ]
     },
     "cook_quest": {
         "id": "cook_quest",
         "name": "Cook's Assistant",
         "type": "quest",
-        "position": {"x": 4734, "y": 2137},
+        "position": {
+            "x": 4371,
+            "y": 1887
+        },
         "questId": "cooks_assistant"
     }
 }
