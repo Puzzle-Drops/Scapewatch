@@ -107,3 +107,4 @@ class SkillsManager {
         return this.skills;
     }
 }
+window.AIManager = AIManager;
