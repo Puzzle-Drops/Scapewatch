@@ -5,7 +5,7 @@ class MapRenderer {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 10 // higher number is zoom in
+            zoom: 10  // High zoom for close-up view
         };
         this.worldMap = loadingManager.getImage('worldMap');
     }
@@ -31,14 +31,13 @@ class MapRenderer {
             this.ctx.drawImage(this.worldMap, 0, 0);
         }
 
-
         // Draw player path
         this.drawPlayerPath();
         
-        // Draw player
+        // Draw player (before nodes so it appears under them)
         this.drawPlayer();
 
-        // Draw nodes
+        // Draw nodes (last so they appear on top)
         this.drawNodes();
 
         // Restore context state
@@ -58,212 +57,188 @@ class MapRenderer {
     }
 
     drawNodes() {
-    const allNodes = nodes.getAllNodes();
+        const allNodes = nodes.getAllNodes();
 
-    for (const [id, node] of Object.entries(allNodes)) {
-        // Only draw nodes within view
-        const screenDist = distance(
-            node.position.x,
-            node.position.y,
-            this.camera.x,
-            this.camera.y
-        );
+        for (const [id, node] of Object.entries(allNodes)) {
+            // Only draw nodes within view
+            const screenDist = distance(
+                node.position.x,
+                node.position.y,
+                this.camera.x,
+                this.camera.y
+            );
 
-        if (screenDist < 800 / this.camera.zoom) {  // Increased from 500 to 800
-            this.drawNode(node);
-        }
-    }
-}
-
-    drawNode(node) {
-    const { x, y } = node.position;
-    
-    // Get unique skills from activities
-    const skills = this.getNodeSkills(node);
-    
-    if (skills.length === 0) return;
-    
-    // Calculate icon positions based on count
-    const iconSize = 8;
-    const positions = this.getIconPositions(skills.length, iconSize);
-    
-    // Draw each skill icon
-    skills.forEach((skill, index) => {
-        const pos = positions[index];
-        const iconX = x + pos.x - iconSize / 2;
-        const iconY = y + pos.y - iconSize / 2;
-        
-        // Get icon from loading manager
-        const icon = loadingManager.getImage(`skill_${skill}`);
-        
-        if (icon) {
-            this.ctx.drawImage(icon, iconX, iconY, iconSize, iconSize);
-        } else {
-            // Fallback: colored square with initial
-            this.ctx.fillStyle = this.getSkillColor(skill);
-            this.ctx.fillRect(iconX, iconY, iconSize, iconSize);
-            
-            this.ctx.fillStyle = '#fff';
-            this.ctx.font = 'bold 12px Arial';
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'middle';
-            this.ctx.fillText(skill.charAt(0).toUpperCase(), iconX + iconSize / 2, iconY + iconSize / 2);
-        }
-    });
-    
-    // Node name
-    this.ctx.font = '6px Arial';
-    this.ctx.fillStyle = '#fff';
-    this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 1;
-    this.ctx.textAlign = 'center';
-    this.ctx.strokeText(node.name, x, y + 10);
-    this.ctx.fillText(node.name, x, y + 10);
-}
-
-getNodeSkills(node) {
-    const skills = new Set();
-    
-    if (node.type === 'bank') {
-        skills.add('bank');
-    } else if (node.type === 'quest') {
-        skills.add('quests');
-    } else if (node.type === 'skill' && node.activities) {
-        // Get all unique skills from activities
-        const activities = loadingManager.getData('activities');
-        for (const activityId of node.activities) {
-            const activity = activities[activityId];
-            if (activity && activity.skill) {
-                skills.add(activity.skill);
+            if (screenDist < 800 / this.camera.zoom) {
+                this.drawNode(node);
             }
         }
     }
-    
-    return Array.from(skills);
-}
 
-getIconPositions(count, iconSize) {
-    const spacing = 2;  // Reduced spacing for smaller icons
-    
-    switch (count) {
-        case 1:
-            // Single icon centered
-            return [{ x: 0, y: 0 }];
+    drawNode(node) {
+        const { x, y } = node.position;
+        
+        // Get unique skills from activities
+        const skills = this.getNodeSkills(node);
+        
+        if (skills.length === 0) return;
+        
+        // Calculate icon positions based on count
+        const iconSize = 3;  // Very small for high zoom
+        const positions = this.getIconPositions(skills.length, iconSize);
+        
+        // Draw each skill icon
+        skills.forEach((skill, index) => {
+            const pos = positions[index];
+            const iconX = x + pos.x - iconSize / 2;
+            const iconY = y + pos.y - iconSize / 2;
             
-        case 2:
-            // Two icons side by side
-            const offset2 = (iconSize + spacing) / 2;
-            return [
-                { x: -offset2, y: 0 },
-                { x: offset2, y: 0 }
-            ];
+            // Get icon from loading manager
+            const icon = loadingManager.getImage(`skill_${skill}`);
             
-        case 3:
-            // Triangle formation
-            const offset3 = (iconSize + spacing) / 2;
-            return [
-                { x: 0, y: -offset3 },
-                { x: -offset3, y: offset3 / 2 },
-                { x: offset3, y: offset3 / 2 }
-            ];
-            
-        case 4:
-            // 2x2 grid
-            const offset4 = (iconSize + spacing) / 2;
-            return [
-                { x: -offset4, y: -offset4 },
-                { x: offset4, y: -offset4 },
-                { x: -offset4, y: offset4 },
-                { x: offset4, y: offset4 }
-            ];
-            
-        default:
-            // For more than 4, just use first 4 positions
-            return this.getIconPositions(4, iconSize).slice(0, count);
+            if (icon) {
+                this.ctx.drawImage(icon, iconX, iconY, iconSize, iconSize);
+            } else {
+                // Fallback: colored square with initial
+                this.ctx.fillStyle = this.getSkillColor(skill);
+                this.ctx.fillRect(iconX, iconY, iconSize, iconSize);
+                
+                this.ctx.fillStyle = '#fff';
+                this.ctx.font = 'bold 3px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(skill.charAt(0).toUpperCase(), iconX + iconSize / 2, iconY + iconSize / 2);
+            }
+        });
+        
+        // Node name
+        this.ctx.font = '3px Arial';  // Very small for high zoom
+        this.ctx.fillStyle = '#fff';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 0.5;
+        this.ctx.textAlign = 'center';
+        this.ctx.strokeText(node.name, x, y + 5);
+        this.ctx.fillText(node.name, x, y + 5);
     }
-}
-            
-        case 3:
-            // Triangle formation
-            const offset3 = (iconSize + spacing) / 2;
-            return [
-                { x: 0, y: -offset3 },
-                { x: -offset3, y: offset3 / 2 },
-                { x: offset3, y: offset3 / 2 }
-            ];
-            
-        case 4:
-            // 2x2 grid
-            const offset4 = (iconSize + spacing) / 2;
-            return [
-                { x: -offset4, y: -offset4 },
-                { x: offset4, y: -offset4 },
-                { x: -offset4, y: offset4 },
-                { x: offset4, y: offset4 }
-            ];
-            
-        default:
-            // For more than 4, just use first 4 positions
-            return this.getIconPositions(4, iconSize).slice(0, count);
-    }
-}
 
-getSkillColor(skill) {
-    // Fallback colors for each skill type
-    const colors = {
-        bank: '#f1c40f',
-        quests: '#e74c3c',
-        combat: '#c0392b',
-        skills: '#f39c12',
-        attack: '#9b2c2c',
-        strength: '#2c9b2c',
-        defence: '#2c2c9b',
-        hitpoints: '#e74c3c',
-        ranged: '#4a7c59',
-        prayer: '#ecf0f1',
-        magic: '#9b59b6',
-        woodcutting: '#8b4513',
-        mining: '#696969',
-        fishing: '#4682b4',
-        cooking: '#ff6347',
-        crafting: '#8b7355',
-        smithing: '#708090',
-        agility: '#34495e',
-        thieving: '#2c3e50',
-        runecraft: '#8e44ad',
-        construction: '#795548',
-        herblore: '#27ae60',
-        fletching: '#16a085',
-        slayer: '#c0392b',
-        hunter: '#d35400',
-        farming: '#229954',
-        firemaking: '#e67e22'
-    };
-    
-    return colors[skill] || '#3498db';
-}
+    getNodeSkills(node) {
+        const skills = new Set();
+        
+        if (node.type === 'bank') {
+            skills.add('bank');
+        } else if (node.type === 'quest') {
+            skills.add('quests');
+        } else if (node.type === 'skill' && node.activities) {
+            // Get all unique skills from activities
+            const activities = loadingManager.getData('activities');
+            for (const activityId of node.activities) {
+                const activity = activities[activityId];
+                if (activity && activity.skill) {
+                    skills.add(activity.skill);
+                }
+            }
+        }
+        
+        return Array.from(skills);
+    }
+
+    getIconPositions(count, iconSize) {
+        const spacing = 1;  // Very small spacing for tiny icons
+        
+        switch (count) {
+            case 1:
+                // Single icon centered
+                return [{ x: 0, y: 0 }];
+                
+            case 2:
+                // Two icons side by side
+                const offset2 = (iconSize + spacing) / 2;
+                return [
+                    { x: -offset2, y: 0 },
+                    { x: offset2, y: 0 }
+                ];
+                
+            case 3:
+                // Triangle formation
+                const offset3 = (iconSize + spacing) / 2;
+                return [
+                    { x: 0, y: -offset3 },
+                    { x: -offset3, y: offset3 / 2 },
+                    { x: offset3, y: offset3 / 2 }
+                ];
+                
+            case 4:
+                // 2x2 grid
+                const offset4 = (iconSize + spacing) / 2;
+                return [
+                    { x: -offset4, y: -offset4 },
+                    { x: offset4, y: -offset4 },
+                    { x: -offset4, y: offset4 },
+                    { x: offset4, y: offset4 }
+                ];
+                
+            default:
+                // For more than 4, just use first 4 positions
+                return this.getIconPositions(4, iconSize).slice(0, count);
+        }
+    }
+
+    getSkillColor(skill) {
+        // Fallback colors for each skill type
+        const colors = {
+            bank: '#f1c40f',
+            quests: '#e74c3c',
+            combat: '#c0392b',
+            skills: '#f39c12',
+            attack: '#9b2c2c',
+            strength: '#2c9b2c',
+            defence: '#2c2c9b',
+            hitpoints: '#e74c3c',
+            ranged: '#4a7c59',
+            prayer: '#ecf0f1',
+            magic: '#9b59b6',
+            woodcutting: '#8b4513',
+            mining: '#696969',
+            fishing: '#4682b4',
+            cooking: '#ff6347',
+            crafting: '#8b7355',
+            smithing: '#708090',
+            agility: '#34495e',
+            thieving: '#2c3e50',
+            runecraft: '#8e44ad',
+            construction: '#795548',
+            herblore: '#27ae60',
+            fletching: '#16a085',
+            slayer: '#c0392b',
+            hunter: '#d35400',
+            farming: '#229954',
+            firemaking: '#e67e22'
+        };
+        
+        return colors[skill] || '#3498db';
+    }
 
     drawPlayer() {
-    const { x, y } = player.position;
+        const { x, y } = player.position;
 
-    // Player circle (smaller)
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, 1, 0, Math.PI * 2);  // Reduced from 6 to 2
-    this.ctx.fillStyle = '#2ecc71';
-    this.ctx.fill();
-    this.ctx.strokeStyle = '#27ae60';
-    this.ctx.lineWidth = 2;
-    this.ctx.stroke();
-
-    // Activity indicator
-    if (player.currentActivity) {
+        // Player circle
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 6 to 2
-        this.ctx.strokeStyle = '#f39c12';
-        this.ctx.lineWidth = 1;  // Reduced from 3 to 1
+        this.ctx.arc(x, y, 2, 0, Math.PI * 2);  // Small for high zoom
+        this.ctx.fillStyle = '#2ecc71';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#27ae60';
+        this.ctx.lineWidth = 0.5;
         this.ctx.stroke();
+
+        // Activity indicator
+        if (player.currentActivity) {
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));
+            this.ctx.strokeStyle = '#f39c12';
+            this.ctx.lineWidth = 0.5;
+            this.ctx.stroke();
+        }
     }
-}
+
     drawPlayerPath() {
         if (!player.targetPosition) return;
 
@@ -271,8 +246,8 @@ getSkillColor(skill) {
         this.ctx.moveTo(player.position.x, player.position.y);
         this.ctx.lineTo(player.targetPosition.x, player.targetPosition.y);
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 1;
-        this.ctx.setLineDash([5, 5]);
+        this.ctx.lineWidth = 0.5;
+        this.ctx.setLineDash([2, 2]);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }
