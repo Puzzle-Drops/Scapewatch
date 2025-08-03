@@ -25,7 +25,14 @@ class UIManager {
 
         if (player.currentActivity) {
             const activityData = loadingManager.getData('activities')[player.currentActivity];
-            activityName.textContent = activityData.name;
+            const currentNode = nodes.getNode(player.currentNode);
+            
+            // Format activity name with location
+            let displayName = activityData.name;
+            if (currentNode) {
+                displayName = `${activityData.name} at ${currentNode.name}`;
+            }
+            activityName.textContent = displayName;
 
             // Calculate actions per hour
             const duration = getActionDuration(
@@ -38,8 +45,10 @@ class UIManager {
 
             activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
         } else if (player.isMoving()) {
+            const targetNode = nodes.getNode(player.targetNode);
+            const targetName = targetNode ? targetNode.name : 'Unknown';
             activityName.textContent = 'Moving';
-            activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
+            activityStatus.textContent = `To: ${targetName}`;
         } else {
             activityName.textContent = 'Idle';
             activityStatus.textContent = 'Waiting for AI decision...';
