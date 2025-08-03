@@ -73,5 +73,45 @@
         "name": "Thieving",
         "category": "utility",
         "description": "Steal from NPCs"
+    },
+"runecraft": {
+        "name": "Runecraft",
+        "category": "production",
+        "description": "Create magical runes"
+    },
+    "hunter": {
+        "name": "Hunter",
+        "category": "gathering",
+        "description": "Track and trap creatures"
+    },
+    "farming": {
+        "name": "Farming",
+        "category": "gathering",
+        "description": "Grow crops and herbs"
+    },
+    "slayer": {
+        "name": "Slayer",
+        "category": "combat",
+        "description": "Kill assigned monsters"
+    },
+    "herblore": {
+        "name": "Herblore",
+        "category": "production",
+        "description": "Create potions from herbs"
+    },
+    "fletching": {
+        "name": "Fletching",
+        "category": "production",
+        "description": "Create ranged weapons and ammo"
+    },
+    "construction": {
+        "name": "Construction",
+        "category": "utility",
+        "description": "Build structures and furniture"
+    },
+    "firemaking": {
+        "name": "Firemaking",
+        "category": "utility",
+        "description": "Light fires"
     }
 }
