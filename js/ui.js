@@ -102,14 +102,30 @@ class UIManager {
             case 'skill_level':
                 const currentLevel = skills.getLevel(goal.skill);
                 const skillData = loadingManager.getData('skills')[goal.skill];
-                goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
                 
-                // Show XP progress as well
+                // Show starting level if different from current
+                if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
+                    goalName.textContent = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
+                } else {
+                    goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+                }
+                
+                // Calculate XP progress from starting point to target
                 const currentXp = skills.getXp(goal.skill);
                 const targetXp = getXpForLevel(goal.targetLevel);
-                const xpProgress = Math.floor((currentXp / targetXp) * 100);
                 
-                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}% XP)`;
+                let xpProgress;
+                if (goal.startingXp !== undefined) {
+                    // Calculate progress from starting XP to target XP
+                    const xpGained = currentXp - goal.startingXp;
+                    const xpNeeded = targetXp - goal.startingXp;
+                    xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
+                } else {
+                    // Fallback to old calculation
+                    xpProgress = Math.floor((currentXp / targetXp) * 100);
+                }
+                
+                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
                 break;
                 
             case 'bank_items':
@@ -117,7 +133,17 @@ class UIManager {
                 const itemData = loadingManager.getData('items')[goal.itemId];
                 goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
                 
-                const percentage = Math.floor((currentCount / goal.targetCount) * 100);
+                // Calculate progress from starting count to target
+                let percentage;
+                if (goal.startingCount !== undefined) {
+                    const itemsGained = currentCount - goal.startingCount;
+                    const itemsNeeded = goal.targetCount - goal.startingCount;
+                    percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
+                } else {
+                    // Fallback to old calculation
+                    percentage = Math.floor((currentCount / goal.targetCount) * 100);
+                }
+                
                 goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
                 break;
                 
@@ -241,7 +267,7 @@ class UIManager {
         // Total level
         const totalLevelItem = document.createElement('div');
         totalLevelItem.className = 'level-item';
-        totalLevelItem.title = 'Total Level';
+        totalLevelItem.style.position = 'relative';
         
         const totalIcon = document.createElement('img');
         totalIcon.className = 'level-icon';
@@ -256,15 +282,29 @@ class UIManager {
         totalText.style.color = '#f39c12';
         totalText.textContent = skills.getTotalLevel();
         
+        // Create tooltip for total level
+        const totalTooltip = document.createElement('div');
+        totalTooltip.className = 'skill-tooltip';
+        totalTooltip.style.textAlign = 'left';
+        
+        // Calculate total exp
+        let totalExp = 0;
+        for (const skill of Object.values(allSkills)) {
+            totalExp += Math.floor(skill.xp);
+        }
+        
+        totalTooltip.innerHTML = `Total Level: ${skills.getTotalLevel()}<br>Total Exp: ${formatNumber(totalExp)}`;
+        
         if (skillsIcon) {
             totalLevelItem.appendChild(totalIcon);
         }
         totalLevelItem.appendChild(totalText);
+        totalLevelItem.appendChild(totalTooltip);
         
         // Combat level
         const combatLevelItem = document.createElement('div');
         combatLevelItem.className = 'level-item';
-        combatLevelItem.title = 'Combat Level';
+        combatLevelItem.style.position = 'relative';
         
         const combatIcon = document.createElement('img');
         combatIcon.className = 'level-icon';
@@ -279,10 +319,17 @@ class UIManager {
         combatText.style.color = '#e74c3c';
         combatText.textContent = skills.getCombatLevel();
         
+        // Create tooltip for combat level
+        const combatTooltip = document.createElement('div');
+        combatTooltip.className = 'skill-tooltip';
+        combatTooltip.style.textAlign = 'left';
+        combatTooltip.innerHTML = `Combat Level: ${skills.getCombatLevel()}`;
+        
         if (combatIconImg) {
             combatLevelItem.appendChild(combatIcon);
         }
         combatLevelItem.appendChild(combatText);
+        combatLevelItem.appendChild(combatTooltip);
         
         levelDiv.appendChild(totalLevelItem);
         levelDiv.appendChild(combatLevelItem);
