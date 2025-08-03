@@ -156,8 +156,8 @@ class MapRenderer {
         if (!player.targetPosition) return;
 
         this.ctx.beginPath();
-        this.ctx.moveTo(player.position.x, player.position.y);
-        this.ctx.lineTo(player.targetPosition.x, player.targetPosition.y);
+        this.ctx.moveTo(player.targetPosition.x, player.targetPosition.y);
+        this.ctx.lineTo(player.position.x, player.position.y);
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
         this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.setLineDash([1, 1]); // reduced from [5, 5]
