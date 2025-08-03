@@ -140,7 +140,7 @@ class MapRenderer {
 
     // Player circle (smaller)
     this.ctx.beginPath();
-    this.ctx.arc(x, y, 6, 0, Math.PI * 2);  // Reduced from 8 to 6
+    this.ctx.arc(x, y, 2, 0, Math.PI * 2);  // Reduced from 6 to 2
     this.ctx.fillStyle = '#2ecc71';
     this.ctx.fill();
     this.ctx.strokeStyle = '#27ae60';
@@ -150,9 +150,9 @@ class MapRenderer {
     // Activity indicator
     if (player.currentActivity) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 10, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 12 to 10
+        this.ctx.arc(x, y, 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 6 to 3
         this.ctx.strokeStyle = '#f39c12';
-        this.ctx.lineWidth = 2;  // Reduced from 3 to 2
+        this.ctx.lineWidth = 1;  // Reduced from 3 to 1
         this.ctx.stroke();
     }
 }
