@@ -2,79 +2,68 @@
     "logs": {
         "id": "logs",
         "name": "Logs",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "oak_logs": {
         "id": "oak_logs",
         "name": "Oak Logs",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "willow_logs": {
         "id": "willow_logs",
         "name": "Willow Logs",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "yew_logs": {
         "id": "yew_logs",
         "name": "Yew Logs",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "copper_ore": {
         "id": "copper_ore",
         "name": "Copper Ore",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "tin_ore": {
         "id": "tin_ore",
         "name": "Tin Ore",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "iron_ore": {
         "id": "iron_ore",
         "name": "Iron Ore",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "raw_shrimp": {
         "id": "raw_shrimp",
         "name": "Raw Shrimp",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "shrimp": {
         "id": "shrimp",
         "name": "Shrimp",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "food",
         "healAmount": 3
     },
     "raw_lobster": {
         "id": "raw_lobster",
         "name": "Raw Lobster",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "lobster": {
         "id": "lobster",
         "name": "Lobster",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "food",
         "healAmount": 12
     },
@@ -82,7 +71,7 @@
         "id": "coins",
         "name": "Coins",
         "stackable": true,
-        "maxStack": 999999999,
+        "maxStack": 9999999999,
         "category": "currency"
     },
     "goblin_mail": {
@@ -94,15 +83,19 @@
     "bronze_bar": {
         "id": "bronze_bar",
         "name": "Bronze Bar",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
     },
     "iron_bar": {
         "id": "iron_bar",
         "name": "Iron Bar",
-        "stackable": true,
-        "maxStack": 10000,
+        "stackable": false,
         "category": "resource"
+    },
+    "burnt_lobster": {
+        "id": "burnt_lobster",
+        "name": "Burnt Lobster",
+        "stackable": false,
+        "category": "junk"
     }
 }
