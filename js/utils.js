@@ -15,14 +15,16 @@ function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-// Get XP required for level
+// Get XP required for level (RuneScape formula)
 function getXpForLevel(level) {
     if (level === 1) return 0;
-    let xp = 0;
+    if (level === 2) return 83;
+    
+    let total = 0;
     for (let i = 1; i < level; i++) {
-        xp += Math.floor(i + 300 * Math.pow(2, i / 7));
+        total += Math.floor(i + 300 * Math.pow(2, i / 7));
     }
-    return Math.floor(xp / 4);
+    return Math.floor(total / 4);
 }
 
 // Get level from XP
