@@ -48,25 +48,31 @@ class AIManager {
     }
 
     makeDecision() {
-        // If inventory is full, go to bank
-        if (inventory.isFull()) {
-            this.goToBank();
-            return;
-        }
-
-        // Check current goal
-        if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
-            this.selectNewGoal();
-        }
-
-        if (!this.currentGoal) {
-            console.log('No goals available');
-            return;
-        }
-
-        // Execute goal
-        this.executeGoal(this.currentGoal);
+    // If inventory is full, go to bank
+    if (inventory.isFull()) {
+        this.goToBank();
+        return;
     }
+
+    // Always check if current goal is complete before executing
+    if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
+        console.log(`Goal completed: ${this.getGoalDescription(this.currentGoal)}`);
+        this.currentGoal = null;
+    }
+
+    // Select new goal if needed
+    if (!this.currentGoal) {
+        this.selectNewGoal();
+    }
+
+    if (!this.currentGoal) {
+        console.log('No goals available');
+        return;
+    }
+
+    // Execute goal
+    this.executeGoal(this.currentGoal);
+}
 
     selectNewGoal() {
         // Find first incomplete goal
@@ -168,26 +174,33 @@ class AIManager {
         player.moveTo(targetNode.id);
     }
 
-    goToBank() {
-        // If already at bank, deposit all
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.type === 'bank') {
-            const deposited = bank.depositAll();
-            console.log(`Deposited ${deposited} items`);
-            ui.updateSkillsList(); // Update UI after banking
-            return;
+goToBank() {
+    // If already at bank, deposit all
+    const currentNode = nodes.getNode(player.currentNode);
+    if (currentNode && currentNode.type === 'bank') {
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        ui.updateSkillsList(); // Update UI after banking
+        
+        // Check if current goal is complete after banking
+        if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
+            console.log('Goal completed after banking!');
+            this.currentGoal = null; // Clear current goal to force new selection
         }
-
-        // Find nearest bank
-        const nearestBank = nodes.getNearestBank(player.position);
-        if (!nearestBank) {
-            console.log('No bank found!');
-            return;
-        }
-
-        // Move to bank
-        player.moveTo(nearestBank.id);
+        
+        return;
     }
+
+    // Find nearest bank
+    const nearestBank = nodes.getNearestBank(player.position);
+    if (!nearestBank) {
+        console.log('No bank found!');
+        return;
+    }
+
+    // Move to bank
+    player.moveTo(nearestBank.id);
+}
 
     doQuest(questId) {
         // TODO: Implement quest system
@@ -233,4 +246,20 @@ class AIManager {
                 return 'Working on goal...';
         }
     }
+
+    getGoalDescription(goal) {
+    switch (goal.type) {
+        case 'skill_level':
+            return `${goal.skill} level ${goal.targetLevel}`;
+        case 'bank_items':
+            const itemData = loadingManager.getData('items')[goal.itemId];
+            return `Bank ${goal.targetCount} ${itemData.name}`;
+        case 'complete_quest':
+            return `Quest: ${goal.questId}`;
+        default:
+            return 'Unknown goal';
+    }
+}
+
+    
 }
