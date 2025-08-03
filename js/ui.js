@@ -143,19 +143,30 @@ update() {
 
             if (slot) {
     const itemData = loadingManager.getData('items')[slot.itemId];
-    const hasImage = false; // Set to true when you add item images
     
-    if (hasImage) {
-        slotDiv.style.backgroundImage = `url(assets/items/${slot.itemId}.png)`;
-        slotDiv.style.backgroundSize = 'contain';
-        slotDiv.style.backgroundPosition = 'center';
-        slotDiv.style.backgroundRepeat = 'no-repeat';
-    } else {
-        slotDiv.innerHTML = `<div style="font-size: 12px;">${itemData.name.substring(0, 3)}</div>`;
-    }
+    // Create image element
+    const img = document.createElement('img');
+    img.src = `assets/items/${slot.itemId}.png`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    
+    // Handle missing images
+    img.onerror = function() {
+        this.style.display = 'none';
+        const textDiv = document.createElement('div');
+        textDiv.style.fontSize = '12px';
+        textDiv.textContent = itemData.name.substring(0, 3);
+        slotDiv.appendChild(textDiv);
+    };
+    
+    slotDiv.appendChild(img);
     
     if (slot.quantity > 1) {
-        slotDiv.innerHTML += `<div class="item-count">${formatNumber(slot.quantity)}</div>`;
+        const countDiv = document.createElement('div');
+        countDiv.className = 'item-count';
+        countDiv.textContent = formatNumber(slot.quantity);
+        slotDiv.appendChild(countDiv);
     }
     
     slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
@@ -165,25 +176,38 @@ update() {
         }
     }
 
-    updateBank() {
-        const bankGrid = document.getElementById('bank-grid');
-        bankGrid.innerHTML = '';
+    for (const [itemId, quantity] of Object.entries(bankItems)) {
+    const itemData = loadingManager.getData('items')[itemId];
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'bank-slot';
+    
+    // Create image element
+    const img = document.createElement('img');
+    img.src = `assets/items/${itemId}.png`;
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.objectFit = 'contain';
+    
+    // Handle missing images
+    img.onerror = function() {
+        this.style.display = 'none';
+        const textDiv = document.createElement('div');
+        textDiv.style.fontSize = '12px';
+        textDiv.textContent = itemData.name.substring(0, 3);
+        slotDiv.appendChild(textDiv);
+    };
+    
+    slotDiv.appendChild(img);
+    
+    const countDiv = document.createElement('div');
+    countDiv.className = 'item-count';
+    countDiv.textContent = formatNumber(quantity);
+    slotDiv.appendChild(countDiv);
+    
+    slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
 
-        const bankItems = bank.getAllItems();
-
-        for (const [itemId, quantity] of Object.entries(bankItems)) {
-            const itemData = loadingManager.getData('items')[itemId];
-            const slotDiv = document.createElement('div');
-            slotDiv.className = 'bank-slot';
-            
-            slotDiv.innerHTML = `
-                <div style="font-size: 12px;">${itemData.name.substring(0, 3)}</div>
-                <div class="item-count">${formatNumber(quantity)}</div>
-            `;
-            slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
-
-            bankGrid.appendChild(slotDiv);
-        }
+    bankGrid.appendChild(slotDiv);
+}
     }
 
     toggleBank() {
