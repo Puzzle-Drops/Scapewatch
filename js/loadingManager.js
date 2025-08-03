@@ -10,6 +10,8 @@ class LoadingManager {
         this.onComplete = null;
         this.progressBar = document.querySelector('.loading-progress');
         this.loadingText = document.querySelector('.loading-text');
+        this.currentlyLoading = null;
+        this.hasError = false;
     }
 
     addImage(key, path) {
@@ -24,6 +26,14 @@ class LoadingManager {
 
     async loadAll() {
         for (const item of this.loadQueue) {
+            if (this.hasError) {
+                console.error('Stopping load due to previous error');
+                return;
+            }
+
+            this.currentlyLoading = item;
+            this.updateLoadingDisplay(`Loading ${item.type}: ${item.path}`);
+
             try {
                 if (item.type === 'image') {
                     await this.loadImage(item.key, item.path);
@@ -31,12 +41,15 @@ class LoadingManager {
                     await this.loadJSON(item.key, item.path);
                 }
             } catch (error) {
-                console.error(`Failed to load ${item.type}: ${item.path}`, error);
-                // Continue loading other assets even if one fails
+                this.hasError = true;
+                const errorMsg = `Failed to load ${item.type}: ${item.path} - ${error.message}`;
+                console.error(errorMsg);
+                this.updateLoadingDisplay(errorMsg, true);
+                throw error; // Re-throw to stop the loading process
             }
         }
 
-        if (this.onComplete) {
+        if (!this.hasError && this.onComplete) {
             this.onComplete();
         }
     }
@@ -74,7 +87,15 @@ class LoadingManager {
         this.loaded++;
         const progress = (this.loaded / this.total) * 100;
         this.progressBar.style.width = `${progress}%`;
-        this.loadingText.textContent = `Loading assets... ${this.loaded}/${this.total}`;
+    }
+
+    updateLoadingDisplay(message, isError = false) {
+        this.loadingText.textContent = message;
+        if (isError) {
+            this.loadingText.style.color = '#e74c3c';
+        } else {
+            this.loadingText.style.color = '#aaa';
+        }
     }
 
     getImage(key) {
