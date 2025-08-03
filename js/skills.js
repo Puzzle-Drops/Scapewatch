@@ -27,37 +27,29 @@ class SkillsManager {
     }
 
     addXp(skillId, amount) {
-    const skill = this.skills[skillId];
-    if (!skill) {
-        console.error(`Skill ${skillId} not found`);
-        return;
-    }
+        const skill = this.skills[skillId];
+        if (!skill) {
+            console.error(`Skill ${skillId} not found`);
+            return;
+        }
 
-    skill.xp += amount;
-    
-    // Check for level up
-    const oldLevel = skill.level;
-    skill.level = getLevelFromXp(skill.xp);
-    
-    if (skill.level !== oldLevel) {
-        this.onLevelUp(skillId, skill.level);
-    }
+        skill.xp += amount;
+        
+        // Check for level up
+        const oldLevel = skill.level;
+        skill.level = getLevelFromXp(skill.xp);
+        
+        if (skill.level !== oldLevel) {
+            this.onLevelUp(skillId, skill.level);
+        }
 
-    skill.xpForNextLevel = getXpForLevel(skill.level + 1);
-    
-    // Update UI immediately after XP gain
-    if (window.ui) {
-        window.ui.updateSkillsList();
+        skill.xpForNextLevel = getXpForLevel(skill.level + 1);
     }
-}
 
     onLevelUp(skillId, newLevel) {
-    console.log(`Level up! ${this.skills[skillId].name} is now level ${newLevel}`);
-    // Update UI immediately
-    if (window.ui) {
-        window.ui.updateSkillsList();
+        console.log(`Level up! ${this.skills[skillId].name} is now level ${newLevel}`);
+        // Could add visual/audio feedback here
     }
-}
 
     getLevel(skillId) {
         return this.skills[skillId]?.level || 1;
@@ -107,4 +99,3 @@ class SkillsManager {
         return this.skills;
     }
 }
-window.AIManager = AIManager;
