@@ -8,6 +8,7 @@ class MapRenderer {
             zoom: 6.25 // increased by 1/4 from 5
         };
         this.worldMap = loadingManager.getImage('worldMap');
+        this.showNodeText = false; // Flag for showing node text
     }
 
     render() {
@@ -77,30 +78,6 @@ class MapRenderer {
     drawNode(node) {
         const { x, y } = node.position;
 
-        // Node circle (reduced to 1/5 of original size)
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 1, 0, Math.PI * 2); // was 5, now 1
-
-        // Color based on type
-        switch (node.type) {
-            case 'bank':
-                this.ctx.fillStyle = '#f1c40f';
-                break;
-            case 'skill':
-                this.ctx.fillStyle = '#3498db';
-                break;
-            case 'quest':
-                this.ctx.fillStyle = '#e74c3c';
-                break;
-            default:
-                this.ctx.fillStyle = '#95a5a6';
-        }
-
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 0.5; // reduced from 2
-        this.ctx.stroke();
-
         // Draw icons based on node type
         if (node.type === 'bank') {
             const bankIcon = loadingManager.getImage('skill_bank');
@@ -140,15 +117,17 @@ class MapRenderer {
             });
         }
 
-        // Node name (smaller font)
-        this.ctx.font = '2px Arial'; // reduced from 8px
-        this.ctx.fillStyle = '#fff';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 0.25; // reduced from 1
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'bottom';
-        this.ctx.strokeText(node.name, x, y - 5); // adjusted for smaller icons
-        this.ctx.fillText(node.name, x, y - 5);
+        // Node name (only if flag is set)
+        if (this.showNodeText) {
+            this.ctx.font = '2px Arial'; // reduced from 8px
+            this.ctx.fillStyle = '#fff';
+            this.ctx.strokeStyle = '#000';
+            this.ctx.lineWidth = 0.25; // reduced from 1
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'bottom';
+            this.ctx.strokeText(node.name, x, y - 5); // adjusted for smaller icons
+            this.ctx.fillText(node.name, x, y - 5);
+        }
     }
 
     drawPlayer() {
