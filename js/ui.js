@@ -186,7 +186,7 @@ class UIManager {
     };
     
     const totalText = document.createElement('div');
-    totalText.style.fontSize = '16px';
+    totalText.style.fontSize = '20px';
     totalText.style.fontWeight = 'bold';
     totalText.style.color = '#f39c12';
     totalText.textContent = skills.getTotalLevel();
@@ -207,7 +207,7 @@ class UIManager {
     };
     
     const combatText = document.createElement('div');
-    combatText.style.fontSize = '16px';
+    combatText.style.fontSize = '20px';
     combatText.style.fontWeight = 'bold';
     combatText.style.color = '#e74c3c';
     combatText.textContent = skills.getCombatLevel();
