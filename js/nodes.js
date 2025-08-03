@@ -1,83 +1,81 @@
-class AIManager {
+class NodeManager {
     constructor() {
-        this.currentGoal = null;
-        this.goals = [];
-        this.decisionCooldown = 0;
-        this.initializeGoals();
+        this.nodes = {};
+        this.loadNodes();
     }
 
-    initializeGoals() {
-        // Set up initial goals
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 15,
-            priority: 1
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'oak_logs',
-            targetCount: 100,
-            priority: 2
-        });
-
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'mining',
-            targetLevel: 15,
-            priority: 3
-        });
+    loadNodes() {
+        this.nodes = loadingManager.getData('nodes');
     }
 
-    addGoal(goal) {
-        this.goals.push(goal);
-        this.goals.sort((a, b) => a.priority - b.priority);
+    getNode(nodeId) {
+        return this.nodes[nodeId];
     }
 
-    update(deltaTime) {
-        // Cooldown to prevent too frequent decisions
-        this.decisionCooldown -= deltaTime;
-        if (this.decisionCooldown > 0) return;
-
-        // Check if we need to make a decision
-        if (!player.isBusy() || inventory.isFull()) {
-            this.makeDecision();
-            this.decisionCooldown = 1000; // 1 second cooldown
-        }
+    getNodesOfType(type) {
+        return Object.values(this.nodes).filter(node => node.type === type);
     }
 
-    makeDecision() {
-        // If inventory is full, go to bank
-        if (inventory.isFull()) {
-            this.goToBank();
-            return;
-        }
+    getNearestBank(position) {
+        const banks = this.getNodesOfType('bank');
+        let nearest = null;
+        let minDistance = Infinity;
 
-        // Check current goal
-        if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
-            this.selectNewGoal();
-        }
-
-        if (!this.currentGoal) {
-            console.log('No goals available');
-            return;
-        }
-
-        // Execute goal
-        this.executeGoal(this.currentGoal);
-    }
-
-    selectNewGoal() {
-        // Find first incomplete goal
-        for (const goal of this.goals) {
-            if (!this.isGoalComplete(goal)) {
-                this.currentGoal = goal;
-                console.log('New goal:', goal);
-                return;
+        for (const bank of banks) {
+            const dist = distance(position.x, position.y, bank.position.x, bank.position.y);
+            if (dist < minDistance) {
+                minDistance = dist;
+                nearest = bank;
             }
         }
 
+        return nearest;
+    }
+
+    getNearestNodeWithActivity(position, activityId) {
+        const nodesWithActivity = Object.values(this.nodes).filter(
+            node => node.activities && node.activities.includes(activityId)
+        );
+
+        let nearest = null;
+        let minDistance = Infinity;
+
+        for (const node of nodesWithActivity) {
+            const dist = distance(position.x, position.y, node.position.x, node.position.y);
+            if (dist < minDistance) {
+                minDistance = dist;
+                nearest = node;
+            }
+        }
+
+        return nearest;
+    }
+
+    getAvailableActivities(nodeId) {
+        const node = this.nodes[nodeId];
+        if (!node || !node.activities) return [];
+
+        const activities = loadingManager.getData('activities');
+        return node.activities.filter(activityId => {
+            const activity = activities[activityId];
+            return activity && skills.canPerformActivity(activityId);
+        });
+    }
+
+    getAllNodes() {
+        return this.nodes;
+    }
+
+    getNodeAt(x, y, radius = 3) {  // Reduced from 15 to 3 (1/5 of original)
+        for (const [id, node] of Object.entries(this.nodes)) {
+            const dist = distance(x, y, node.position.x, node.position.y);
+            if (dist <= radius) {
+                return node;
+            }
+        }
+        return null;
+    }
+}
         // All goals complete - add new ones
         this.generateNewGoals();
     }
