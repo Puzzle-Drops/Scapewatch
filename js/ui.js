@@ -94,42 +94,123 @@ class UIManager {
 
         const allSkills = skills.getAllSkills();
         
-        // Group by category
-        const categories = ['combat', 'gathering', 'production', 'utility'];
-        
-        for (const category of categories) {
-            const categorySkills = Object.values(allSkills).filter(s => s.category === category);
-            
-            for (const skill of categorySkills) {
+        // Define skill layout order
+        const skillLayout = [
+            // Column 1
+            ['attack', 'strength', 'defence', 'ranged', 'prayer', 'magic', 'runecraft', 'construction'],
+            // Column 2
+            ['hitpoints', 'agility', 'herblore', 'thieving', 'crafting', 'fletching', 'slayer', 'hunter'],
+            // Column 3
+            ['mining', 'smithing', 'fishing', 'cooking', 'firemaking', 'woodcutting', 'farming']
+        ];
+
+        // Create skills in column order
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 3; col++) {
+                const skillId = skillLayout[col][row];
+                if (!skillId || !allSkills[skillId]) continue;
+
+                const skill = allSkills[skillId];
                 const skillDiv = document.createElement('div');
                 skillDiv.className = 'skill-item';
+                
+                // Create skill icon
+                const icon = document.createElement('img');
+                icon.className = 'skill-icon';
+                icon.src = `assets/skills/${skillId}.png`;
+                icon.onerror = function() {
+                    this.style.display = 'none';
+                    const textDiv = document.createElement('div');
+                    textDiv.style.fontSize = '16px';
+                    textDiv.style.fontWeight = 'bold';
+                    textDiv.textContent = skill.name.substring(0, 3);
+                    skillDiv.insertBefore(textDiv, skillDiv.firstChild);
+                };
+                
+                // Create level display
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'skill-level';
+                levelDiv.textContent = skill.level;
+                
+                // Create progress bar
+                const progressBar = document.createElement('div');
+                progressBar.className = 'skill-progress-bar';
+                
+                const progressFill = document.createElement('div');
+                progressFill.className = 'skill-progress-fill';
                 
                 const xpPercent = skill.level < 99 ? 
                     ((skill.xp - getXpForLevel(skill.level)) / 
                     (getXpForLevel(skill.level + 1) - getXpForLevel(skill.level))) * 100 : 100;
-
-                skillDiv.innerHTML = `
-                    <div class="skill-name">${skill.name}</div>
-                    <div class="skill-level">Level ${skill.level}</div>
-                    <div class="skill-xp">${formatNumber(Math.floor(skill.xp))} XP</div>
-                    <div class="skill-progress" style="width: ${xpPercent}%; height: 2px; background: #f39c12; margin-top: 2px;"></div>
-                `;
+                
+                progressFill.style.width = `${xpPercent}%`;
+                progressBar.appendChild(progressFill);
+                
+                // Create tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'skill-tooltip';
+                tooltip.textContent = `${skill.name} - ${formatNumber(Math.floor(skill.xp))} XP`;
+                
+                // Assemble skill item
+                skillDiv.appendChild(icon);
+                skillDiv.appendChild(levelDiv);
+                skillDiv.appendChild(progressBar);
+                skillDiv.appendChild(tooltip);
                 
                 skillsList.appendChild(skillDiv);
             }
         }
 
-        // Add total level
-        const totalDiv = document.createElement('div');
-        totalDiv.className = 'skill-item';
-        totalDiv.style.gridColumn = '1 / -1';
-        totalDiv.style.textAlign = 'center';
-        totalDiv.style.marginTop = '10px';
-        totalDiv.innerHTML = `
-            <div class="skill-name">Total Level: ${skills.getTotalLevel()}</div>
-            <div class="skill-level">Combat Level: ${skills.getCombatLevel()}</div>
-        `;
-        skillsList.appendChild(totalDiv);
+        // Add total level and combat level
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'level-total';
+        
+        // Total level
+        const totalLevelItem = document.createElement('div');
+        totalLevelItem.className = 'level-item';
+        totalLevelItem.title = 'Total Level';
+        
+        const totalIcon = document.createElement('img');
+        totalIcon.className = 'level-icon';
+        totalIcon.src = 'assets/skills/skills.png';
+        totalIcon.onerror = function() {
+            this.style.display = 'none';
+        };
+        
+        const totalText = document.createElement('div');
+        totalText.style.fontSize = '16px';
+        totalText.style.fontWeight = 'bold';
+        totalText.style.color = '#f39c12';
+        totalText.textContent = skills.getTotalLevel();
+        
+        totalLevelItem.appendChild(totalIcon);
+        totalLevelItem.appendChild(totalText);
+        
+        // Combat level
+        const combatLevelItem = document.createElement('div');
+        combatLevelItem.className = 'level-item';
+        combatLevelItem.title = 'Combat Level';
+        
+        const combatIcon = document.createElement('img');
+        combatIcon.className = 'level-icon';
+        combatIcon.src = 'assets/skills/combat.png';
+        combatIcon.onerror = function() {
+            this.style.display = 'none';
+        };
+        
+        const combatText = document.createElement('div');
+        combatText.style.fontSize = '16px';
+        combatText.style.fontWeight = 'bold';
+        combatText.style.color = '#e74c3c';
+        combatText.textContent = skills.getCombatLevel();
+        
+        combatLevelItem.appendChild(combatIcon);
+        combatLevelItem.appendChild(combatText);
+        
+        levelDiv.appendChild(totalLevelItem);
+        levelDiv.appendChild(combatLevelItem);
+        
+        skillsList.appendChild(levelDiv);
     }
 
     updateInventory() {
