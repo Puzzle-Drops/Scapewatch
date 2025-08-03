@@ -237,13 +237,11 @@ class UIManager {
                 let tooltipContent = `${skill.name}<br>Level ${skill.level}<br>`;
                 
                 if (skill.level < 99) {
-                    const currentLevelXp = getXpForLevel(skill.level);
+                    const totalXp = Math.floor(skill.xp);
                     const nextLevelXp = getXpForLevel(skill.level + 1);
-                    const xpIntoLevel = Math.floor(skill.xp - currentLevelXp);
-                    const xpForLevel = nextLevelXp - currentLevelXp;
-                    const xpToNext = nextLevelXp - Math.floor(skill.xp);
+                    const xpToNext = nextLevelXp - totalXp;
                     
-                    tooltipContent += `${formatNumber(xpIntoLevel)}/${formatNumber(xpForLevel)} exp<br>`;
+                    tooltipContent += `${formatNumber(totalXp)}/${formatNumber(nextLevelXp)} exp<br>`;
                     tooltipContent += `${formatNumber(xpToNext)} exp to level ${skill.level + 1}`;
                 } else {
                     tooltipContent += `${formatNumber(Math.floor(skill.xp))} exp`;
