@@ -175,6 +175,15 @@ class AIManager {
             const deposited = bank.depositAll();
             console.log(`Deposited ${deposited} items`);
             ui.updateSkillsList(); // Update UI after banking
+            
+            // Check if current goal is complete
+            if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
+                console.log('Goal complete:', this.currentGoal);
+                this.currentGoal = null;
+            }
+            
+            // Make a new decision (will continue current goal if not complete)
+            this.makeDecision();
             return;
         }
 
