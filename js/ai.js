@@ -11,14 +11,14 @@ class AIManager {
         this.addGoal({
             type: 'skill_level',
             skill: 'woodcutting',
-            targetLevel: 5,
+            targetLevel: 15,
             priority: 1
         });
 
         this.addGoal({
             type: 'bank_items',
-            itemId: 'logs',
-            targetCount: 10,
+            itemId: 'oak_logs',
+            targetCount: 100,
             priority: 2
         });
 
@@ -40,6 +40,13 @@ class AIManager {
         this.decisionCooldown -= deltaTime;
         if (this.decisionCooldown > 0) return;
 
+        // Always check if current goal is complete
+        if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
+            console.log('Goal complete during update:', this.currentGoal);
+            this.currentGoal = null;
+            this.selectNewGoal();
+        }
+
         // Check if we need to make a decision
         if (!player.isBusy() || inventory.isFull()) {
             this.makeDecision();
@@ -54,7 +61,7 @@ class AIManager {
             return;
         }
 
-        // Check current goal
+        // Check current goal - if none or complete, select new one
         if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
             this.selectNewGoal();
         }
@@ -64,7 +71,8 @@ class AIManager {
             return;
         }
 
-        // Execute goal
+        // Always try to execute the current goal when making a decision
+        // This ensures we don't get stuck after banking or reaching a location
         this.executeGoal(this.currentGoal);
     }
 
@@ -138,6 +146,23 @@ class AIManager {
     }
 
     gatherItems(itemId) {
+        // Check if we already have enough in bank
+        if (bank.getItemCount(itemId) >= this.currentGoal.targetCount) {
+            console.log(`Already have enough ${itemId} in bank`);
+            return;
+        }
+
+        // If we have items in inventory but not enough total, bank first
+        const inventoryCount = inventory.getItemCount(itemId);
+        const bankCount = bank.getItemCount(itemId);
+        const totalCount = inventoryCount + bankCount;
+        
+        if (inventoryCount > 0 && totalCount < this.currentGoal.targetCount) {
+            // Bank what we have first
+            this.goToBank();
+            return;
+        }
+
         // Find activities that give this item
         const activities = loadingManager.getData('activities');
         const itemActivities = Object.entries(activities)
@@ -182,21 +207,22 @@ class AIManager {
             console.log(`Deposited ${deposited} items`);
             ui.updateSkillsList(); // Update UI after banking
             
-            // Check if current goal is complete
+            // Check if current goal is complete after banking
             if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
-                console.log('Goal complete:', this.currentGoal);
+                console.log('Goal complete after banking:', this.currentGoal);
                 this.currentGoal = null;
+                // Select new goal immediately
+                this.selectNewGoal();
             }
             
-            // Reset decision cooldown to make a new decision immediately
+            // Reset decision cooldown and make a new decision immediately
             this.decisionCooldown = 0;
             
-            // Force a new decision in the next frame
-            setTimeout(() => {
-                if (!player.isBusy()) {
-                    this.makeDecision();
-                }
-            }, 100);
+            // Execute current goal (whether it's new or continuing)
+            if (this.currentGoal) {
+                console.log('Continuing/starting goal after banking:', this.currentGoal);
+                this.executeGoal(this.currentGoal);
+            }
             
             return;
         }
@@ -220,44 +246,45 @@ class AIManager {
     generateNewGoals() {
         // Generate new goals based on current progress
         const totalLevel = skills.getTotalLevel();
+        const baseGoalCount = this.goals.length;
 
-        // Add some higher level goals
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 30,
-            priority: this.goals.length + 1
-        });
+        // Generate skill goals for each skill, progressively
+        const skillIds = ['woodcutting', 'mining', 'fishing', 'attack', 'cooking', 'smithing'];
+        
+        for (const skillId of skillIds) {
+            const currentLevel = skills.getLevel(skillId);
+            
+            // Add a goal 10 levels higher than current
+            if (currentLevel < 90) {
+                this.addGoal({
+                    type: 'skill_level',
+                    skill: skillId,
+                    targetLevel: Math.min(currentLevel + 10, 99),
+                    priority: baseGoalCount + this.goals.length + 1
+                });
+            }
+        }
 
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'willow_logs',
-            targetCount: 500,
-            priority: this.goals.length + 2
-        });
+        // Add some item banking goals based on what we can gather
+        const itemGoals = [
+            { itemId: 'oak_logs', count: 250, minLevel: 15, skill: 'woodcutting' },
+            { itemId: 'willow_logs', count: 500, minLevel: 30, skill: 'woodcutting' },
+            { itemId: 'iron_ore', count: 300, minLevel: 15, skill: 'mining' },
+            { itemId: 'raw_shrimp', count: 200, minLevel: 1, skill: 'fishing' }
+        ];
 
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'mining',
-            targetLevel: 30,
-            priority: this.goals.length + 3
-        });
+        for (const itemGoal of itemGoals) {
+            if (skills.getLevel(itemGoal.skill) >= itemGoal.minLevel) {
+                this.addGoal({
+                    type: 'bank_items',
+                    itemId: itemGoal.itemId,
+                    targetCount: itemGoal.count,
+                    priority: baseGoalCount + this.goals.length + 1
+                });
+            }
+        }
 
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'fishing',
-            targetLevel: 20,
-            priority: this.goals.length + 4
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'iron_ore',
-            targetCount: 200,
-            priority: this.goals.length + 5
-        });
-
-        console.log('Generated new goals');
+        console.log(`Generated ${this.goals.length - baseGoalCount} new goals`);
     }
 
     getStatus() {
