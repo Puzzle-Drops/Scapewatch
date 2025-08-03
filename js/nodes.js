@@ -66,7 +66,7 @@ class NodeManager {
         return this.nodes;
     }
 
-    getNodeAt(x, y, radius = 12) {  // Reduced to match smaller icons
+    getNodeAt(x, y, radius = 5) {
     for (const [id, node] of Object.entries(this.nodes)) {
         const dist = distance(x, y, node.position.x, node.position.y);
         if (dist <= radius) {
