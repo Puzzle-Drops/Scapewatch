@@ -105,6 +105,22 @@ class LoadingManager {
     getData(key) {
         return this.assets.data[key];
     }
+
+    checkForScriptErrors() {
+    if (window.scriptErrors && window.scriptErrors.length > 0) {
+        const errors = window.scriptErrors;
+        let errorMsg = 'JavaScript errors detected:\n';
+        errors.forEach(err => {
+            const filename = err.file.split('/').pop();
+            errorMsg += `${filename} (line ${err.line}): ${err.message}\n`;
+        });
+        this.updateLoadingDisplay(errorMsg, true);
+        return false;
+    }
+    return true;
+}
+
+    
 }
 
 // Create global instance
