@@ -179,7 +179,7 @@ body {
     margin-bottom: 8px;
     z-index: 10;
     border: 1px solid #444;
-    text-align: center;
+    text-align: left;
 }
 
 .skill-item:hover .skill-tooltip {
