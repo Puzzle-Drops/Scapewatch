@@ -127,12 +127,12 @@ class MapRenderer {
         }
 
         // Node name
-        this.ctx.font = '10px Arial';
+        this.ctx.font = '8px Arial';
         this.ctx.fillStyle = '#fff';
         this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeText(node.name, x, y + 25);
-        this.ctx.fillText(node.name, x, y + 25);
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeText(node.name, x, y + 15);
+        this.ctx.fillText(node.name, x, y + 15);
     }
 
     drawPlayer() {
