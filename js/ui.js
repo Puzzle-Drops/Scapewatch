@@ -50,8 +50,15 @@ class UIManager {
             activityName.textContent = 'Moving';
             activityStatus.textContent = `To: ${targetName}`;
         } else {
-            activityName.textContent = 'Idle';
-            activityStatus.textContent = 'Waiting for AI decision...';
+            // Check if we're at a bank
+            const currentNode = nodes.getNode(player.currentNode);
+            if (currentNode && currentNode.type === 'bank') {
+                activityName.textContent = 'Banking';
+                activityStatus.textContent = 'Depositing items...';
+            } else {
+                activityName.textContent = 'Idle';
+                activityStatus.textContent = 'Waiting for AI decision...';
+            }
         }
     }
 
@@ -60,8 +67,28 @@ class UIManager {
         const goalProgress = document.getElementById('goal-progress');
         
         if (!window.ai || !window.ai.currentGoal) {
-            goalName.textContent = 'No active goal';
-            goalProgress.textContent = '-';
+            // Check if AI is selecting a new goal
+            if (window.ai && window.ai.goals.length > 0) {
+                // Find next incomplete goal
+                let nextGoal = null;
+                for (const goal of window.ai.goals) {
+                    if (!window.ai.isGoalComplete(goal)) {
+                        nextGoal = goal;
+                        break;
+                    }
+                }
+                
+                if (nextGoal) {
+                    goalName.textContent = 'Selecting next goal...';
+                    goalProgress.textContent = 'Planning...';
+                } else {
+                    goalName.textContent = 'All goals complete!';
+                    goalProgress.textContent = 'Generating new goals...';
+                }
+            } else {
+                goalName.textContent = 'No active goal';
+                goalProgress.textContent = '-';
+            }
             return;
         }
 
@@ -72,14 +99,22 @@ class UIManager {
                 const currentLevel = skills.getLevel(goal.skill);
                 const skillData = loadingManager.getData('skills')[goal.skill];
                 goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
-                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel}`;
+                
+                // Show XP progress as well
+                const currentXp = skills.getXp(goal.skill);
+                const targetXp = getXpForLevel(goal.targetLevel);
+                const xpProgress = Math.floor((currentXp / targetXp) * 100);
+                
+                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}% XP)`;
                 break;
                 
             case 'bank_items':
                 const currentCount = bank.getItemCount(goal.itemId);
                 const itemData = loadingManager.getData('items')[goal.itemId];
                 goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
-                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}`;
+                
+                const percentage = Math.floor((currentCount / goal.targetCount) * 100);
+                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
                 break;
                 
             case 'complete_quest':
