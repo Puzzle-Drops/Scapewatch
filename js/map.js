@@ -5,7 +5,7 @@ class MapRenderer {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 5 // higher number is zoom in
+            zoom: 20 // higher number is zoom in
         };
         this.worldMap = loadingManager.getImage('worldMap');
     }
