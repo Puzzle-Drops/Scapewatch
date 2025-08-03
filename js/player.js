@@ -121,6 +121,18 @@ class Player {
             }
         }
 
+        // Check if current goal is complete after this action
+        if (window.ai && window.ai.currentGoal && window.ai.isGoalComplete(window.ai.currentGoal)) {
+            console.log('Goal completed after action!');
+            this.stopActivity();
+            // Force AI to make a new decision immediately
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+                window.ai.currentGoal = null;
+            }
+            return;
+        }
+
         // Reset for next action if we're continuing
         if (this.currentActivity) {
             this.activityProgress = 0;
