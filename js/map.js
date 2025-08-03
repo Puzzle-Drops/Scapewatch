@@ -1,252 +1,245 @@
-class MapRenderer {
+class AIManager {
     constructor() {
-        this.canvas = document.getElementById('game-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.camera = {
-            x: 0,
-            y: 0,
-            zoom: 6.25 // increased by 1/4 from 5
-        };
-        this.worldMap = loadingManager.getImage('worldMap');
+        this.currentGoal = null;
+        this.goals = [];
+        this.decisionCooldown = 0;
+        this.initializeGoals();
     }
 
-    render() {
-        // Clear canvas
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    initializeGoals() {
+        // Set up initial goals
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'woodcutting',
+            targetLevel: 15,
+            priority: 1
+        });
 
-        // Update camera to follow player
-        this.updateCamera();
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'oak_logs',
+            targetCount: 100,
+            priority: 2
+        });
 
-        // Save context state
-        this.ctx.save();
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'mining',
+            targetLevel: 15,
+            priority: 3
+        });
+    }
 
-        // Apply camera transform
-        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
-        this.ctx.scale(this.camera.zoom, this.camera.zoom);
-        this.ctx.translate(-this.camera.x, -this.camera.y);
+    addGoal(goal) {
+        this.goals.push(goal);
+        this.goals.sort((a, b) => a.priority - b.priority);
+    }
 
-        // Draw world map
-        if (this.worldMap) {
-            this.ctx.drawImage(this.worldMap, 0, 0);
+    update(deltaTime) {
+        // Cooldown to prevent too frequent decisions
+        this.decisionCooldown -= deltaTime;
+        if (this.decisionCooldown > 0) return;
+
+        // Check if we need to make a decision
+        if (!player.isBusy() || inventory.isFull()) {
+            this.makeDecision();
+            this.decisionCooldown = 1000; // 1 second cooldown
+        }
+    }
+
+    makeDecision() {
+        // If inventory is full, go to bank
+        if (inventory.isFull()) {
+            this.goToBank();
+            return;
         }
 
-        // Draw nodes
-        this.drawNodes();
+        // Check current goal
+        if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
+            this.selectNewGoal();
+        }
 
-        // Draw player
-        this.drawPlayer();
+        if (!this.currentGoal) {
+            console.log('No goals available');
+            return;
+        }
 
-        // Draw player path
-        this.drawPlayerPath();
-
-        // Restore context state
-        this.ctx.restore();
-
-        // Draw UI elements (not affected by camera)
-        this.drawMinimap();
+        // Execute goal
+        this.executeGoal(this.currentGoal);
     }
 
-    updateCamera() {
-        // Smooth camera follow
-        const targetX = player.position.x;
-        const targetY = player.position.y;
-
-        this.camera.x = lerp(this.camera.x, targetX, 0.1);
-        this.camera.y = lerp(this.camera.y, targetY, 0.1);
-    }
-
-    drawNodes() {
-        const allNodes = nodes.getAllNodes();
-
-        for (const [id, node] of Object.entries(allNodes)) {
-            // Only draw nodes within view
-            const screenDist = distance(
-                node.position.x,
-                node.position.y,
-                this.camera.x,
-                this.camera.y
-            );
-
-            if (screenDist < 1500 / this.camera.zoom) {
-                this.drawNode(node);
+    selectNewGoal() {
+        // Find first incomplete goal
+        for (const goal of this.goals) {
+            if (!this.isGoalComplete(goal)) {
+                this.currentGoal = goal;
+                console.log('New goal:', goal);
+                return;
             }
         }
+
+        // All goals complete - add new ones
+        this.generateNewGoals();
     }
 
-    drawNode(node) {
-        const { x, y } = node.position;
-
-        // Node circle (reduced to 1/5 of original size)
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 1, 0, Math.PI * 2); // was 5, now 1
-
-        // Color based on type
-        switch (node.type) {
-            case 'bank':
-                this.ctx.fillStyle = '#f1c40f';
-                break;
-            case 'skill':
-                this.ctx.fillStyle = '#3498db';
-                break;
-            case 'quest':
-                this.ctx.fillStyle = '#e74c3c';
-                break;
+    isGoalComplete(goal) {
+        switch (goal.type) {
+            case 'skill_level':
+                return skills.getLevel(goal.skill) >= goal.targetLevel;
+            
+            case 'bank_items':
+                return bank.getItemCount(goal.itemId) >= goal.targetCount;
+            
+            case 'complete_quest':
+                // TODO: Implement quest completion check
+                return false;
+            
             default:
-                this.ctx.fillStyle = '#95a5a6';
+                return false;
+        }
+    }
+
+    executeGoal(goal) {
+        switch (goal.type) {
+            case 'skill_level':
+                this.trainSkill(goal.skill);
+                break;
+            
+            case 'bank_items':
+                this.gatherItems(goal.itemId);
+                break;
+            
+            case 'complete_quest':
+                this.doQuest(goal.questId);
+                break;
+        }
+    }
+
+    trainSkill(skillId) {
+        // Find best activity for training this skill
+        const activities = loadingManager.getData('activities');
+        const skillActivities = Object.entries(activities)
+            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id))
+            .sort((a, b) => b[1].xpPerAction - a[1].xpPerAction);
+
+        if (skillActivities.length === 0) {
+            console.log(`No available activities for ${skillId}`);
+            return;
         }
 
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 0.5; // reduced from 2
-        this.ctx.stroke();
+        const [bestActivityId] = skillActivities[0];
+        this.doActivity(bestActivityId);
+    }
 
-        // Draw icons based on node type
-        if (node.type === 'bank') {
-            const bankIcon = loadingManager.getImage('skill_bank');
-            if (bankIcon) {
-                this.ctx.drawImage(bankIcon, x - 4, y - 4, 8, 8);
-            }
-        } else if (node.type === 'quest') {
-            const questIcon = loadingManager.getImage('skill_quests');
-            if (questIcon) {
-                this.ctx.drawImage(questIcon, x - 4, y - 4, 8, 8);
-            }
-        } else if (node.type === 'skill' && node.activities) {
-            // Get unique skills from activities
-            const skillSet = new Set();
-            const activities = loadingManager.getData('activities');
-            
-            for (const activityId of node.activities) {
-                const activity = activities[activityId];
-                if (activity && activity.skill) {
-                    skillSet.add(activity.skill);
-                }
-            }
-            
-            const uniqueSkills = Array.from(skillSet);
-            const iconSize = 8;
-            const spacing = 1;
-            const totalWidth = uniqueSkills.length * iconSize + (uniqueSkills.length - 1) * spacing;
-            const startX = x - totalWidth / 2;
-            
-            // Draw skill icons
-            uniqueSkills.forEach((skill, index) => {
-                const skillIcon = loadingManager.getImage(`skill_${skill}`);
-                if (skillIcon) {
-                    const iconX = startX + index * (iconSize + spacing);
-                    this.ctx.drawImage(skillIcon, iconX, y - 4, iconSize, iconSize);
-                }
+    gatherItems(itemId) {
+        // Find activities that give this item
+        const activities = loadingManager.getData('activities');
+        const itemActivities = Object.entries(activities)
+            .filter(([id, data]) => {
+                if (!skills.canPerformActivity(id)) return false;
+                return data.rewards?.some(r => r.itemId === itemId);
             });
+
+        if (itemActivities.length === 0) {
+            console.log(`No activities found for item ${itemId}`);
+            return;
         }
 
-        // Node name (smaller font)
-        this.ctx.font = '2px Arial'; // reduced from 8px
-        this.ctx.fillStyle = '#fff';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 0.25; // reduced from 1
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'bottom';
-        this.ctx.strokeText(node.name, x, y - 8); // positioned above icons
-        this.ctx.fillText(node.name, x, y - 8);
+        const [activityId] = itemActivities[0];
+        this.doActivity(activityId);
     }
 
-    drawPlayer() {
-        const { x, y } = player.position;
-
-        // Player circle (reduced to 1/5 of original size)
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4; // reduced from 2
-        this.ctx.stroke();
-
-        // Activity indicator
-        if (player.currentActivity) {
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 0.4;  // reduced from 2
-            this.ctx.stroke();
+    doActivity(activityId) {
+        // Check if we're at a node with this activity
+        const currentNode = nodes.getNode(player.currentNode);
+        if (currentNode && currentNode.activities?.includes(activityId)) {
+            player.startActivity(activityId);
+            return;
         }
+
+        // Find nearest node with this activity
+        const targetNode = nodes.getNearestNodeWithActivity(player.position, activityId);
+        if (!targetNode) {
+            console.log(`No node found for activity ${activityId}`);
+            return;
+        }
+
+        // Move to the node
+        player.moveTo(targetNode.id);
     }
 
-    drawPlayerPath() {
-        if (!player.targetPosition) return;
-
-        this.ctx.beginPath();
-        this.ctx.moveTo(player.position.x, player.position.y);
-        this.ctx.lineTo(player.targetPosition.x, player.targetPosition.y);
-        this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 0.4; // reduced from 2
-        this.ctx.setLineDash([1, 1]); // reduced from [5, 5]
-        this.ctx.stroke();
-        this.ctx.setLineDash([]);
-    }
-
-    drawMinimap() {
-        const minimapSize = 150;
-        const minimapX = this.canvas.width - minimapSize - 10;
-        const minimapY = 10;
-
-        // Minimap background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(minimapX, minimapY, minimapSize, minimapSize);
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
-
-        // Scale factor for minimap
-        const scale = minimapSize / 1000; // Assuming world is roughly 1000x1000
-
-        // Draw nodes on minimap
-        const allNodes = nodes.getAllNodes();
-        for (const node of Object.values(allNodes)) {
-            const mx = minimapX + node.position.x * scale;
-            const my = minimapY + node.position.y * scale;
-
-            this.ctx.beginPath();
-            this.ctx.arc(mx, my, 2, 0, Math.PI * 2);
-
-            switch (node.type) {
-                case 'bank':
-                    this.ctx.fillStyle = '#f1c40f';
-                    break;
-                case 'skill':
-                    this.ctx.fillStyle = '#3498db';
-                    break;
-                case 'quest':
-                    this.ctx.fillStyle = '#e74c3c';
-                    break;
-                default:
-                    this.ctx.fillStyle = '#95a5a6';
+    goToBank() {
+        // If already at bank, deposit all
+        const currentNode = nodes.getNode(player.currentNode);
+        if (currentNode && currentNode.type === 'bank') {
+            const deposited = bank.depositAll();
+            console.log(`Deposited ${deposited} items`);
+            ui.updateSkillsList(); // Update UI after banking
+            
+            // Check if current goal is complete
+            if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
+                console.log('Goal complete:', this.currentGoal);
+                this.currentGoal = null;
             }
-
-            this.ctx.fill();
+            
+            // Make a new decision (will continue current goal if not complete)
+            this.makeDecision();
+            return;
         }
 
-        // Draw player on minimap
-        const px = minimapX + player.position.x * scale;
-        const py = minimapY + player.position.y * scale;
+        // Find nearest bank
+        const nearestBank = nodes.getNearestBank(player.position);
+        if (!nearestBank) {
+            console.log('No bank found!');
+            return;
+        }
 
-        this.ctx.beginPath();
-        this.ctx.arc(px, py, 3, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
+        // Move to bank
+        player.moveTo(nearestBank.id);
     }
 
-    handleClick(x, y) {
-        // Convert screen coordinates to world coordinates
-        const worldX = (x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
-        const worldY = (y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
+    doQuest(questId) {
+        // TODO: Implement quest system
+        console.log(`Quest system not yet implemented: ${questId}`);
+    }
 
-        // Check if clicked on a node
-        const clickedNode = nodes.getNodeAt(worldX, worldY);
-        if (clickedNode) {
-            console.log('Clicked node:', clickedNode.name);
-            // Could add manual node interaction here
+    generateNewGoals() {
+        // Generate new goals based on current progress
+        const totalLevel = skills.getTotalLevel();
+
+        // Add some higher level goals
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'woodcutting',
+            targetLevel: 30,
+            priority: this.goals.length + 1
+        });
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'willow_logs',
+            targetCount: 500,
+            priority: this.goals.length + 2
+        });
+
+        console.log('Generated new goals');
+    }
+
+    getStatus() {
+        if (!this.currentGoal) return 'No active goal';
+
+        switch (this.currentGoal.type) {
+            case 'skill_level':
+                const currentLevel = skills.getLevel(this.currentGoal.skill);
+                return `Training ${this.currentGoal.skill} to level ${this.currentGoal.targetLevel} (current: ${currentLevel})`;
+            
+            case 'bank_items':
+                const currentCount = bank.getItemCount(this.currentGoal.itemId);
+                const itemData = loadingManager.getData('items')[this.currentGoal.itemId];
+                return `Banking ${itemData.name}: ${currentCount}/${this.currentGoal.targetCount}`;
+            
+            default:
+                return 'Working on goal...';
         }
     }
 }
