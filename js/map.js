@@ -5,7 +5,7 @@ class MapRenderer {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 5 // higher number is zoom in
+            zoom: 6.25 // increased by 1/4 from 5
         };
         this.worldMap = loadingManager.getImage('worldMap');
     }
@@ -77,9 +77,9 @@ class MapRenderer {
     drawNode(node) {
         const { x, y } = node.position;
 
-        // Node circle
+        // Node circle (reduced to 1/5 of original size)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 5, 0, Math.PI * 2);
+        this.ctx.arc(x, y, 1, 0, Math.PI * 2); // was 5, now 1
 
         // Color based on type
         switch (node.type) {
@@ -98,64 +98,79 @@ class MapRenderer {
 
         this.ctx.fill();
         this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 0.5; // reduced from 2
         this.ctx.stroke();
 
-        // Node icon or text
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = 'bold 10px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-
-        // Simple icon based on type
+        // Draw icons based on node type
         if (node.type === 'bank') {
-            this.ctx.fillText('$', x, y);
-        } else if (node.type === 'skill' && node.activities) {
-            // Show first activity icon
-            const firstActivity = node.activities[0];
-            if (firstActivity.includes('chop')) {
-                this.ctx.fillText('🌳', x, y);
-            } else if (firstActivity.includes('mine')) {
-                this.ctx.fillText('⛏', x, y);
-            } else if (firstActivity.includes('fish')) {
-                this.ctx.fillText('🎣', x, y);
-            } else if (firstActivity.includes('fight')) {
-                this.ctx.fillText('⚔', x, y);
+            const bankIcon = loadingManager.getImage('skill_bank');
+            if (bankIcon) {
+                this.ctx.drawImage(bankIcon, x - 4, y - 4, 8, 8);
             }
         } else if (node.type === 'quest') {
-            this.ctx.fillText('!', x, y);
+            const questIcon = loadingManager.getImage('skill_quests');
+            if (questIcon) {
+                this.ctx.drawImage(questIcon, x - 4, y - 4, 8, 8);
+            }
+        } else if (node.type === 'skill' && node.activities) {
+            // Get unique skills from activities
+            const skillSet = new Set();
+            const activities = loadingManager.getData('activities');
+            
+            for (const activityId of node.activities) {
+                const activity = activities[activityId];
+                if (activity && activity.skill) {
+                    skillSet.add(activity.skill);
+                }
+            }
+            
+            const uniqueSkills = Array.from(skillSet);
+            const iconSize = 8;
+            const spacing = 1;
+            const totalWidth = uniqueSkills.length * iconSize + (uniqueSkills.length - 1) * spacing;
+            const startX = x - totalWidth / 2;
+            
+            // Draw skill icons
+            uniqueSkills.forEach((skill, index) => {
+                const skillIcon = loadingManager.getImage(`skill_${skill}`);
+                if (skillIcon) {
+                    const iconX = startX + index * (iconSize + spacing);
+                    this.ctx.drawImage(skillIcon, iconX, y - 4, iconSize, iconSize);
+                }
+            });
         }
 
-        // Node name
-        this.ctx.font = '8px Arial';
+        // Node name (smaller font)
+        this.ctx.font = '2px Arial'; // reduced from 8px
         this.ctx.fillStyle = '#fff';
         this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeText(node.name, x, y + 15);
-        this.ctx.fillText(node.name, x, y + 15);
+        this.ctx.lineWidth = 0.25; // reduced from 1
+        this.ctx.strokeText(node.name, x, y + 4); // reduced offset from 15
+        this.ctx.fillText(node.name, x, y + 4);
     }
 
     drawPlayer() {
-    const { x, y } = player.position;
+        const { x, y } = player.position;
 
-    // Player circle (smaller)
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, 6, 0, Math.PI * 2);  // Reduced from 8 to 6
-    this.ctx.fillStyle = '#2ecc71';
-    this.ctx.fill();
-    this.ctx.strokeStyle = '#27ae60';
-    this.ctx.lineWidth = 2;
-    this.ctx.stroke();
-
-    // Activity indicator
-    if (player.currentActivity) {
+        // Player circle (reduced to 1/5 of original size)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 10, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 12 to 10
-        this.ctx.strokeStyle = '#f39c12';
-        this.ctx.lineWidth = 2;  // Reduced from 3 to 2
+        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+        this.ctx.fillStyle = '#2ecc71';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#27ae60';
+        this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
+
+        // Activity indicator
+        if (player.currentActivity) {
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+            this.ctx.strokeStyle = '#f39c12';
+            this.ctx.lineWidth = 0.4;  // reduced from 2
+            this.ctx.stroke();
+        }
     }
-}
+
     drawPlayerPath() {
         if (!player.targetPosition) return;
 
@@ -163,8 +178,8 @@ class MapRenderer {
         this.ctx.moveTo(player.position.x, player.position.y);
         this.ctx.lineTo(player.targetPosition.x, player.targetPosition.y);
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 2;
-        this.ctx.setLineDash([5, 5]);
+        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.setLineDash([1, 1]); // reduced from [5, 5]
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }
