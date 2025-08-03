@@ -93,21 +93,22 @@ class MapRenderer {
         const iconX = x + pos.x - iconSize / 2;
         const iconY = y + pos.y - iconSize / 2;
         
-        // Try to draw the icon image
-        const img = new Image();
-        img.src = `assets/skills/${skill}.png`;
+        // Get icon from loading manager
+        const icon = loadingManager.getImage(`skill_${skill}`);
         
-        // For now, draw a placeholder rectangle
-        // In a real implementation, you'd need to preload these or handle async loading
-        this.ctx.fillStyle = this.getSkillColor(skill);
-        this.ctx.fillRect(iconX, iconY, iconSize, iconSize);
-        
-        // Draw skill initial as fallback
-        this.ctx.fillStyle = '#fff';
-        this.ctx.font = 'bold 12px Arial';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(skill.charAt(0).toUpperCase(), iconX + iconSize / 2, iconY + iconSize / 2);
+        if (icon) {
+            this.ctx.drawImage(icon, iconX, iconY, iconSize, iconSize);
+        } else {
+            // Fallback: colored square with initial
+            this.ctx.fillStyle = this.getSkillColor(skill);
+            this.ctx.fillRect(iconX, iconY, iconSize, iconSize);
+            
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = 'bold 12px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText(skill.charAt(0).toUpperCase(), iconX + iconSize / 2, iconY + iconSize / 2);
+        }
     });
     
     // Node name
@@ -187,14 +188,31 @@ getSkillColor(skill) {
     const colors = {
         bank: '#f1c40f',
         quests: '#e74c3c',
+        combat: '#c0392b',
+        skills: '#f39c12',
         attack: '#9b2c2c',
         strength: '#2c9b2c',
         defence: '#2c2c9b',
+        hitpoints: '#e74c3c',
+        ranged: '#4a7c59',
+        prayer: '#ecf0f1',
+        magic: '#9b59b6',
         woodcutting: '#8b4513',
         mining: '#696969',
         fishing: '#4682b4',
         cooking: '#ff6347',
-        // Add more as needed
+        crafting: '#8b7355',
+        smithing: '#708090',
+        agility: '#34495e',
+        thieving: '#2c3e50',
+        runecraft: '#8e44ad',
+        construction: '#795548',
+        herblore: '#27ae60',
+        fletching: '#16a085',
+        slayer: '#c0392b',
+        hunter: '#d35400',
+        farming: '#229954',
+        firemaking: '#e67e22'
     };
     
     return colors[skill] || '#3498db';
@@ -205,7 +223,7 @@ getSkillColor(skill) {
 
     // Player circle (smaller)
     this.ctx.beginPath();
-    this.ctx.arc(x, y, 2, 0, Math.PI * 2);  // Reduced from 6 to 2
+    this.ctx.arc(x, y, 1, 0, Math.PI * 2);  // Reduced from 6 to 2
     this.ctx.fillStyle = '#2ecc71';
     this.ctx.fill();
     this.ctx.strokeStyle = '#27ae60';
@@ -215,7 +233,7 @@ getSkillColor(skill) {
     // Activity indicator
     if (player.currentActivity) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 3, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 6 to 3
+        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 6 to 2
         this.ctx.strokeStyle = '#f39c12';
         this.ctx.lineWidth = 1;  // Reduced from 3 to 1
         this.ctx.stroke();
@@ -228,7 +246,7 @@ getSkillColor(skill) {
         this.ctx.moveTo(player.position.x, player.position.y);
         this.ctx.lineTo(player.targetPosition.x, player.targetPosition.y);
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 1;
         this.ctx.setLineDash([5, 5]);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
