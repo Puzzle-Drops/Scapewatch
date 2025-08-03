@@ -66,7 +66,7 @@ class NodeManager {
         return this.nodes;
     }
 
-    getNodeAt(x, y, radius = 3) {  // Reduced from 15 to 3 (1/5 of original)
+    getNodeAt(x, y, radius = 2) {  // Adjusted to match icon size (half of 4x4 icon)
         for (const [id, node] of Object.entries(this.nodes)) {
             const dist = distance(x, y, node.position.x, node.position.y);
             if (dist <= radius) {
