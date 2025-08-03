@@ -3,13 +3,13 @@
         "id": "lumbridge_bank",
         "name": "Lumbridge Bank",
         "type": "bank",
-        "position": {"x": 4795, "y": 1882}
+        "position": {"x": 4370, "y": 1886}
     },
     "lumbridge_trees": {
         "id": "lumbridge_trees",
         "name": "Lumbridge Trees",
         "type": "skill",
-        "position": {"x": 4734, "y": 1627},
+        "position": {"x": 4348, "y": 1832},
         "activities": ["chop_tree", "chop_oak"]
     },
     "lumbridge_goblins": {
