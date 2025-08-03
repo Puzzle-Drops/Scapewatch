@@ -32,6 +32,17 @@
             {"itemId": "willow_logs", "quantity": 1, "chance": 1.0}
         ]
     },
+    "chop_maple": {
+        "id": "chop_maple",
+        "name": "Chop Maple Tree",
+        "skill": "woodcutting",
+        "requiredLevel": 45,
+        "xpPerAction": 100,
+        "baseDuration": 5000,
+        "rewards": [
+            {"itemId": "maple_logs", "quantity": 1, "chance": 1.0}
+        ]
+    },
     "chop_yew": {
         "id": "chop_yew",
         "name": "Chop Yew Tree",
@@ -41,6 +52,50 @@
         "baseDuration": 8000,
         "rewards": [
             {"itemId": "yew_logs", "quantity": 1, "chance": 1.0}
+        ]
+    },
+    "chop_magic": {
+        "id": "chop_magic",
+        "name": "Chop Magic Tree",
+        "skill": "woodcutting",
+        "requiredLevel": 75,
+        "xpPerAction": 250,
+        "baseDuration": 8000,
+        "rewards": [
+            {"itemId": "magic_logs", "quantity": 1, "chance": 1.0}
+        ]
+    },
+    "chop_redwood": {
+        "id": "chop_redwood",
+        "name": "Chop Redwood Tree",
+        "skill": "woodcutting",
+        "requiredLevel": 90,
+        "xpPerAction": 380,
+        "baseDuration": 8000,
+        "rewards": [
+            {"itemId": "redwood_logs", "quantity": 1, "chance": 1.0}
+        ]
+    },
+    "chop_teak": {
+        "id": "chop_teak",
+        "name": "Chop Teak Tree",
+        "skill": "woodcutting",
+        "requiredLevel": 35,
+        "xpPerAction": 85,
+        "baseDuration": 4000,
+        "rewards": [
+            {"itemId": "teak_logs", "quantity": 1, "chance": 1.0}
+        ]
+    },
+    "chop_mahogany": {
+        "id": "chop_mahogany",
+        "name": "Chop Mahogany Tree",
+        "skill": "woodcutting",
+        "requiredLevel": 50,
+        "xpPerAction": 125,
+        "baseDuration": 6000,
+        "rewards": [
+            {"itemId": "mahogany_logs", "quantity": 1, "chance": 1.0}
         ]
     },
     "mine_copper": {
