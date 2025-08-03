@@ -8,12 +8,25 @@ window.gameState = {
 
 // Initialize the game
 async function init() {
-    // Add assets to load
-    loadingManager.addImage('worldMap', 'assets/map.png');
-    loadingManager.addJSON('skills', 'data/skills.json');
-    loadingManager.addJSON('items', 'data/items.json');
-    loadingManager.addJSON('nodes', 'data/nodes.json');
-    loadingManager.addJSON('activities', 'data/activities.json');
+// Add assets to load
+loadingManager.addImage('worldMap', 'assets/map.png');
+loadingManager.addJSON('skills', 'data/skills.json');
+loadingManager.addJSON('items', 'data/items.json');
+loadingManager.addJSON('nodes', 'data/nodes.json');
+loadingManager.addJSON('activities', 'data/activities.json');
+
+// Load skill icons
+const skillIconsToLoad = [
+    'bank', 'quests', 'combat', 'skills', 'attack', 'strength', 'defence', 'hitpoints',
+    'ranged', 'prayer', 'magic', 'woodcutting', 'mining', 'fishing',
+    'cooking', 'crafting', 'smithing', 'agility', 'thieving', 'runecraft',
+    'construction', 'herblore', 'fletching', 'slayer', 'hunter', 'farming', 
+    'firemaking'
+];
+
+for (const icon of skillIconsToLoad) {
+    loadingManager.addImage(`skill_${icon}`, `assets/skills/${icon}.png`);
+}
 
     // Set completion callback
     loadingManager.onComplete = () => {
