@@ -17,9 +17,39 @@
         "stackable": false,
         "category": "resource"
     },
+    "maple_logs": {
+        "id": "maple_logs",
+        "name": "Maple Logs",
+        "stackable": false,
+        "category": "resource"
+    },
     "yew_logs": {
         "id": "yew_logs",
         "name": "Yew Logs",
+        "stackable": false,
+        "category": "resource"
+    },
+    "magic_logs": {
+        "id": "magic_logs",
+        "name": "Magic Logs",
+        "stackable": false,
+        "category": "resource"
+    },
+    "redwood_logs": {
+        "id": "redwood_logs",
+        "name": "Redwood Logs",
+        "stackable": false,
+        "category": "resource"
+    },
+    "teak_logs": {
+        "id": "teak_logs",
+        "name": "Teak Logs",
+        "stackable": false,
+        "category": "resource"
+    },
+    "mahogany_logs": {
+        "id": "mahogany_logs",
+        "name": "Mahogany Logs",
         "stackable": false,
         "category": "resource"
     },
