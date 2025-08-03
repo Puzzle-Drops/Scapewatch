@@ -45,6 +45,14 @@ class AIManager {
     }
 
     addGoal(goal) {
+        // Store starting values when goal is created
+        if (goal.type === 'skill_level') {
+            goal.startingLevel = skills.getLevel(goal.skill);
+            goal.startingXp = skills.getXp(goal.skill);
+        } else if (goal.type === 'bank_items') {
+            goal.startingCount = bank.getItemCount(goal.itemId);
+        }
+        
         this.goals.push(goal);
         this.goals.sort((a, b) => a.priority - b.priority);
     }
