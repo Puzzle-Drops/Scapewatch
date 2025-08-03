@@ -5,7 +5,7 @@ class MapRenderer {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 3 // higher number is zoom in
+            zoom: 5 // higher number is zoom in
         };
         this.worldMap = loadingManager.getImage('worldMap');
     }
@@ -79,7 +79,7 @@ class MapRenderer {
 
         // Node circle
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 15, 0, Math.PI * 2);
+        this.ctx.arc(x, y, 5, 0, Math.PI * 2);
 
         // Color based on type
         switch (node.type) {
