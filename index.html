@@ -76,16 +76,19 @@
         </div>
     </div>
 
-    <script src="js/loadingManager.js" onerror="alert('Failed to load loadingManager.js')"></script>
-    <script src="js/utils.js" onerror="alert('Failed to load utils.js')"></script>
-    <script src="js/skills.js" onerror="alert('Failed to load skills.js')"></script>
-    <script src="js/inventory.js" onerror="alert('Failed to load inventory.js')"></script>
-    <script src="js/bank.js" onerror="alert('Failed to load bank.js')"></script>
-    <script src="js/player.js" onerror="alert('Failed to load player.js')"></script>
-    <script src="js/nodes.js" onerror="alert('Failed to load nodes.js')"></script>
-    <script src="js/map.js" onerror="alert('Failed to load map.js - check for syntax errors')"></script>
-    <script src="js/ui.js" onerror="alert('Failed to load ui.js')"></script>
-    <script src="js/ai.js" onerror="alert('Failed to load ai.js')"></script>
-    <script src="js/main.js" onerror="alert('Failed to load main.js')"></script>
+    <script>
+        console.log('Loading scripts...');
+    </script>
+    <script src="js/loadingManager.js" onload="console.log('✓ loadingManager.js')" onerror="console.error('✗ loadingManager.js failed')"></script>
+    <script src="js/utils.js" onload="console.log('✓ utils.js')" onerror="console.error('✗ utils.js failed')"></script>
+    <script src="js/skills.js" onload="console.log('✓ skills.js')" onerror="console.error('✗ skills.js failed')"></script>
+    <script src="js/inventory.js" onload="console.log('✓ inventory.js')" onerror="console.error('✗ inventory.js failed')"></script>
+    <script src="js/bank.js" onload="console.log('✓ bank.js')" onerror="console.error('✗ bank.js failed')"></script>
+    <script src="js/player.js" onload="console.log('✓ player.js')" onerror="console.error('✗ player.js failed')"></script>
+    <script src="js/nodes.js" onload="console.log('✓ nodes.js')" onerror="console.error('✗ nodes.js failed')"></script>
+    <script src="js/map.js" onload="console.log('✓ map.js')" onerror="console.error('✗ map.js failed')"></script>
+    <script src="js/ui.js" onload="console.log('✓ ui.js')" onerror="console.error('✗ ui.js failed')"></script>
+    <script src="js/ai.js" onload="console.log('✓ ai.js')" onerror="console.error('✗ ai.js failed')"></script>
+    <script src="js/main.js" onload="console.log('✓ main.js')" onerror="console.error('✗ main.js failed')"></script>
 </body>
 </html>
