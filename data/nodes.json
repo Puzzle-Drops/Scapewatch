@@ -133,7 +133,7 @@
     },
     "west_varrock_mine": {
         "id": "west_varrock_mine",
-        "name": "West Varrock Mine",
+        "name": "W Varrock Mine",
         "type": "skill",
         "position": {
             "x": 4523,
@@ -143,14 +143,224 @@
             "mine_iron"
         ]
     },
-    "cook_quest": {
+    "cooks_assistant_quest": {
         "id": "cook_quest",
         "name": "Cook's Assistant",
         "type": "quest",
         "position": {
-            "x": 4371,
-            "y": 1887
+            "x": 4734,
+            "y": 2137
         },
         "questId": "cooks_assistant"
+    },
+    "demon_slayer_quest": {
+        "id": "demon_slayer_quest",
+        "name": "Demon Slayer",
+        "type": "quest",
+        "position": {
+            "x": 4361,
+            "y": 1470
+        },
+        "questId": "demon_slayer"
+    },
+    "the_restless_ghost_quest": {
+        "id": "ghostless_ghost_quest",
+        "name": "Restless Ghost",
+        "type": "quest",
+        "position": {
+            "x": 4438,
+            "y": 1897
+        },
+        "questId": "restless_ghost"
+    },
+    "romeo_&_juliet_quest": {
+        "id": "romeo_&_juliet_quest",
+        "name": "Romeo & Juliet",
+        "type": "quest",
+        "position": {
+            "x": 4373,
+            "y": 1472
+        },
+        "questId": "romeo_&_juliet"
+    },
+    "sheep_shearer_quest": {
+        "id": "sheep_shearer_quest",
+        "name": "Sheep Shearer",
+        "type": "quest",
+        "position": {
+            "x": 4330,
+            "y": 1771
+        },
+        "questId": "sheep_shearer"
+    },
+    "shield_of_arrav_quest": {
+        "id": "shield_of_arrav_quest",
+        "name": "Shield of Arrav",
+        "type": "quest",
+        "position": {
+            "x": 4370,
+            "y": 1330
+        },
+        "questId": "shield_of_arrav"
+    },
+    "ernest_the_chicken_quest": {
+        "id": "ernest_the_chicken_quest",
+        "name": "Ernest the Chicken",
+        "type": "quest",
+        "position": {
+            "x": 4171,
+            "y": 1659
+        },
+        "questId": "ernest_the_chicken"
+    },
+    "vampyre_slayer_quest": {
+        "id": "vampyre_slayer_quest",
+        "name": "Vampyre Slayer",
+        "type": "quest",
+        "position": {
+            "x": 4146,
+            "y": 1786
+        },
+        "questId": "vampyre_slayer"
+    },
+    "imp_catcher_quest": {
+        "id": "imp_catcher_quest",
+        "name": "Imp Catcher",
+        "type": "quest",
+        "position": {
+            "x": 4157,
+            "y": 1992
+        },
+        "questId": "imp_catcher"
+    },
+    "prince_ali_rescue_quest": {
+        "id": "prince_ali_rescue_quest",
+        "name": "Prince Ali Rescue",
+        "type": "quest",
+        "position": {
+            "x": 4556,
+            "y": 1994
+        },
+        "questId": "prince_ali_rescue"
+    },
+    "dorics_quest": {
+        "id": "dorics_quest",
+        "name": "Doric's",
+        "type": "quest",
+        "position": {
+            "x": 3856,
+            "y": 1418
+        },
+        "questId": "dorics"
+    },
+    "black_knights_fortress_quest": {
+        "id": "black_knights_fortress_quest",
+        "name": "Black Knights' Fortress",
+        "type": "quest",
+        "position": {
+            "x": 3872,
+            "y": 1644
+        },
+        "questId": "black_knights_fortress"
+    },
+    "witchs_potion_quest": {
+        "id": "witchs_potion_quest",
+        "name": "Witch's Potion",
+        "type": "quest",
+        "position": {
+            "x": 3887,
+            "y": 1908
+        },
+        "questId": "witchs_potion"
+    },
+    "the_knights_sword_quest": {
+        "id": "the_knights_sword_quest",
+        "name": "The Knight's Sword",
+        "type": "quest",
+        "position": {
+            "x": 3903,
+            "y": 1637
+        },
+        "questId": "the_knights_sword"
+    },
+    "goblin_diplomacy_quest": {
+        "id": "goblin_diplomacy_quest",
+        "name": "Goblin Diplomacy",
+        "type": "quest",
+        "position": {
+            "x": 3866,
+            "y": 1294
+        },
+        "questId": "goblin_diplomacy"
+    },
+    "pirates_treasure_quest": {
+        "id": "pirates_treasure_quest",
+        "name": "Pirate's Treasure",
+        "type": "quest",
+        "position": {
+            "x": 4055,
+            "y": 1816
+        },
+        "questId": "pirates_treasure"
+    },
+    "dragon_slayer_i_quest": {
+        "id": "dragon_slayer_i_quest",
+        "name": "Dragon Slayer I",
+        "type": "quest",
+        "position": {
+            "x": 4333,
+            "y": 1597
+        },
+        "questId": "dragon_slayer_i"
+    },
+    "rune_mysteries_quest": {
+        "id": "rune_mysteries_quest",
+        "name": "Rune Mysteries",
+        "type": "quest",
+        "position": {
+            "x": 4369,
+            "y": 1875
+        },
+        "questId": "rune_mysteries"
+    },
+    "misthalin_mystery_quest": {
+        "id": "misthalin_mystery_quest",
+        "name": "Misthalin Mystery",
+        "type": "quest",
+        "position": {
+            "x": 4422,
+            "y": 2010
+        },
+        "questId": "misthalin_mystery"
+    },
+    "the_corsair_curse_quest": {
+        "id": "the_corsair_curse_quest",
+        "name": "The Corsair Curse",
+        "type": "quest",
+        "position": {
+            "x": 4012,
+            "y": 1772
+        },
+        "questId": "the_corsair_curse"
+    },
+    "x_marks_the_spot_quest": {
+        "id": "x_marks_the_spot_quest",
+        "name": "X Marks the Spot",
+        "type": "quest",
+        "position": {
+            "x": 4408,
+            "y": 1836
+        },
+        "questId": "x_marks_the_spot"
+    },
+    "below_ice_mountain_quest": {
+        "id": "below_ice_mountain_quest",
+        "name": "Below Ice Mountain",
+        "type": "quest",
+        "position": {
+            "x": 3952,
+            "y": 1448
+        },
+        "questId": "below_ice_mountain"
     }
 }
