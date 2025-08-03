@@ -5,7 +5,7 @@ class MapRenderer {
         this.camera = {
             x: 0,
             y: 0,
-            zoom: 2
+            zoom: 3 // higher number is zoom in
         };
         this.worldMap = loadingManager.getImage('worldMap');
     }
@@ -136,27 +136,26 @@ class MapRenderer {
     }
 
     drawPlayer() {
-        const { x, y } = player.position;
+    const { x, y } = player.position;
 
-        // Player circle
+    // Player circle (smaller)
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 6, 0, Math.PI * 2);  // Reduced from 8 to 6
+    this.ctx.fillStyle = '#2ecc71';
+    this.ctx.fill();
+    this.ctx.strokeStyle = '#27ae60';
+    this.ctx.lineWidth = 2;
+    this.ctx.stroke();
+
+    // Activity indicator
+    if (player.currentActivity) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 8, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 2;
+        this.ctx.arc(x, y, 10, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // Reduced from 12 to 10
+        this.ctx.strokeStyle = '#f39c12';
+        this.ctx.lineWidth = 2;  // Reduced from 3 to 2
         this.ctx.stroke();
-
-        // Activity indicator
-        if (player.currentActivity) {
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 12, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));
-            this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 3;
-            this.ctx.stroke();
-        }
     }
-
+}
     drawPlayerPath() {
         if (!player.targetPosition) return;
 
