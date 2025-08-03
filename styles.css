@@ -214,6 +214,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    position: relative;
+}
+
+.level-item:hover .skill-tooltip {
+    opacity: 1;
 }
 
 .level-icon {
