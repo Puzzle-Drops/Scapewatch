@@ -34,8 +34,8 @@
         ]
     },
     "west_lumbridge_mine": {
-        "id": "lumbridge_mine",
-        "name": "Lumbridge Mine",
+        "id": "west_lumbridge_mine",
+        "name": "West Lumbridge Mine",
         "type": "skill",
         "position": {
             "x": 4245,
@@ -47,8 +47,8 @@
         ]
     },
     "east_lumbridge_mine": {
-        "id": "lumbridge_mine",
-        "name": "Lumbridge Mine",
+        "id": "east_lumbridge_mine",
+        "name": "East Lumbridge Mine",
         "type": "skill",
         "position": {
             "x": 4406,
@@ -133,7 +133,7 @@
     },
     "west_varrock_mine": {
         "id": "west_varrock_mine",
-        "name": "W Varrock Mine",
+        "name": "West Varrock Mine",
         "type": "skill",
         "position": {
             "x": 4523,
