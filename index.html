@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scapewatch</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <h1>Scapewatch</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p class="loading-text">Loading assets...</p>
+        </div>
+    </div>
+
+    <div id="game-container" class="game-container" style="display: none;">
+        <div class="map-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
+        
+        <div class="ui-panel">
+            <div class="current-activity panel">
+                <h3>Current Activity</h3>
+                <p id="activity-name">Idle</p>
+                <div class="progress-bar">
+                    <div id="activity-progress" class="progress-fill"></div>
+                </div>
+                <p id="activity-status">Waiting for instructions...</p>
+            </div>
+
+            <div class="skills-panel panel">
+                <h3>Skills</h3>
+                <div id="skills-list" class="skills-list"></div>
+            </div>
+
+            <div class="inventory-panel panel">
+                <h3>Inventory</h3>
+                <div id="inventory-grid" class="inventory-grid"></div>
+            </div>
+
+            <div class="controls panel">
+                <button id="bank-toggle">View Bank</button>
+                <button id="pause-toggle">Pause AI</button>
+            </div>
+        </div>
+
+        <div id="bank-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Bank</h2>
+                <div id="bank-grid" class="bank-grid"></div>
+                <button id="close-bank">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/loadingManager.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/skills.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/bank.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/nodes.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
