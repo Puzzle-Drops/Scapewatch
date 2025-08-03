@@ -10,13 +10,14 @@ class UIManager {
         this.updateBank();
     }
 
-    update() {
-        this.updateActivity();
-        this.updateInventory();
-        if (this.bankOpen) {
-            this.updateBank();
-        }
+update() {
+    this.updateActivity();
+    this.updateGoal();
+    this.updateInventory();
+    if (this.bankOpen) {
+        this.updateBank();
     }
+}
 
     updateActivity() {
     const activityName = document.getElementById('activity-name');
@@ -46,6 +47,44 @@ class UIManager {
         activityName.textContent = 'Idle';
         activityProgress.style.width = '0%';
         activityStatus.textContent = 'Waiting for AI decision...';
+    }
+}
+
+    updateGoal() {
+    const goalName = document.getElementById('goal-name');
+    const goalProgress = document.getElementById('goal-progress');
+    
+    if (!window.ai || !window.ai.currentGoal) {
+        goalName.textContent = 'No active goal';
+        goalProgress.textContent = '-';
+        return;
+    }
+
+    const goal = window.ai.currentGoal;
+    
+    switch (goal.type) {
+        case 'skill_level':
+            const currentLevel = skills.getLevel(goal.skill);
+            const skillData = loadingManager.getData('skills')[goal.skill];
+            goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+            goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel}`;
+            break;
+            
+        case 'bank_items':
+            const currentCount = bank.getItemCount(goal.itemId);
+            const itemData = loadingManager.getData('items')[goal.itemId];
+            goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
+            goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}`;
+            break;
+            
+        case 'complete_quest':
+            goalName.textContent = `Complete quest: ${goal.questId}`;
+            goalProgress.textContent = 'In progress';
+            break;
+            
+        default:
+            goalName.textContent = 'Unknown goal';
+            goalProgress.textContent = '-';
     }
 }
 
@@ -103,13 +142,24 @@ class UIManager {
             slotDiv.className = 'inventory-slot';
 
             if (slot) {
-                const itemData = loadingManager.getData('items')[slot.itemId];
-                slotDiv.innerHTML = `
-                    <div style="font-size: 12px;">${itemData.name.substring(0, 3)}</div>
-                    ${slot.quantity > 1 ? `<div class="item-count">${formatNumber(slot.quantity)}</div>` : ''}
-                `;
-                slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
-            }
+    const itemData = loadingManager.getData('items')[slot.itemId];
+    const hasImage = false; // Set to true when you add item images
+    
+    if (hasImage) {
+        slotDiv.style.backgroundImage = `url(assets/items/${slot.itemId}.png)`;
+        slotDiv.style.backgroundSize = 'contain';
+        slotDiv.style.backgroundPosition = 'center';
+        slotDiv.style.backgroundRepeat = 'no-repeat';
+    } else {
+        slotDiv.innerHTML = `<div style="font-size: 12px;">${itemData.name.substring(0, 3)}</div>`;
+    }
+    
+    if (slot.quantity > 1) {
+        slotDiv.innerHTML += `<div class="item-count">${formatNumber(slot.quantity)}</div>`;
+    }
+    
+    slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
+}
 
             inventoryGrid.appendChild(slotDiv);
         }
