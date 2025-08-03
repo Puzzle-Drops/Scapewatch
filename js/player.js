@@ -3,6 +3,7 @@ class Player {
         this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
         this.targetPosition = null;
         this.currentNode = 'lumbridge_bank';
+        this.targetNode = null; // Store target node ID
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
@@ -123,17 +124,17 @@ class Player {
         }
     }
 
-    moveTo(targetNode) {
+    moveTo(targetNodeId) {
         const nodesData = loadingManager.getData('nodes');
-        const node = nodesData[targetNode];
+        const node = nodesData[targetNodeId];
         
         if (!node) {
-            console.error(`Node ${targetNode} not found`);
+            console.error(`Node ${targetNodeId} not found`);
             return;
         }
 
         this.targetPosition = { ...node.position };
-        this.targetNode = targetNode;
+        this.targetNode = targetNodeId;
         this.stopActivity();
     }
 
