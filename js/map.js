@@ -31,14 +31,15 @@ class MapRenderer {
             this.ctx.drawImage(this.worldMap, 0, 0);
         }
 
-        // Draw nodes
-        this.drawNodes();
-
-        // Draw player
-        this.drawPlayer();
 
         // Draw player path
         this.drawPlayerPath();
+        
+        // Draw player
+        this.drawPlayer();
+
+        // Draw nodes
+        this.drawNodes();
 
         // Restore context state
         this.ctx.restore();
@@ -75,65 +76,129 @@ class MapRenderer {
     }
 
     drawNode(node) {
-        const { x, y } = node.position;
-
-        // Node circle
-        this.ctx.beginPath();
-        this.ctx.arc(x, y, 3, 0, Math.PI * 2);
-
-        // Color based on type
-        switch (node.type) {
-            case 'bank':
-                this.ctx.fillStyle = '#f1c40f';
-                break;
-            case 'skill':
-                this.ctx.fillStyle = '#3498db';
-                break;
-            case 'quest':
-                this.ctx.fillStyle = '#e74c3c';
-                break;
-            default:
-                this.ctx.fillStyle = '#95a5a6';
-        }
-
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.stroke();
-
-        // Node icon or text
+    const { x, y } = node.position;
+    
+    // Get unique skills from activities
+    const skills = this.getNodeSkills(node);
+    
+    if (skills.length === 0) return;
+    
+    // Calculate icon positions based on count
+    const iconSize = 24;
+    const positions = this.getIconPositions(skills.length, iconSize);
+    
+    // Draw each skill icon
+    skills.forEach((skill, index) => {
+        const pos = positions[index];
+        const iconX = x + pos.x - iconSize / 2;
+        const iconY = y + pos.y - iconSize / 2;
+        
+        // Try to draw the icon image
+        const img = new Image();
+        img.src = `assets/skills/${skill}.png`;
+        
+        // For now, draw a placeholder rectangle
+        // In a real implementation, you'd need to preload these or handle async loading
+        this.ctx.fillStyle = this.getSkillColor(skill);
+        this.ctx.fillRect(iconX, iconY, iconSize, iconSize);
+        
+        // Draw skill initial as fallback
         this.ctx.fillStyle = '#fff';
-        this.ctx.font = 'bold 10px Arial';
+        this.ctx.font = 'bold 12px Arial';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
+        this.ctx.fillText(skill.charAt(0).toUpperCase(), iconX + iconSize / 2, iconY + iconSize / 2);
+    });
+    
+    // Node name
+    this.ctx.font = '9px Arial';
+    this.ctx.fillStyle = '#fff';
+    this.ctx.strokeStyle = '#000';
+    this.ctx.lineWidth = 2;
+    this.ctx.textAlign = 'center';
+    this.ctx.strokeText(node.name, x, y + 30);
+    this.ctx.fillText(node.name, x, y + 30);
+}
 
-        // Simple icon based on type
-        if (node.type === 'bank') {
-            this.ctx.fillText('$', x, y);
-        } else if (node.type === 'skill' && node.activities) {
-            // Show first activity icon
-            const firstActivity = node.activities[0];
-            if (firstActivity.includes('chop')) {
-                this.ctx.fillText('🌳', x, y);
-            } else if (firstActivity.includes('mine')) {
-                this.ctx.fillText('⛏', x, y);
-            } else if (firstActivity.includes('fish')) {
-                this.ctx.fillText('🎣', x, y);
-            } else if (firstActivity.includes('fight')) {
-                this.ctx.fillText('⚔', x, y);
+getNodeSkills(node) {
+    const skills = new Set();
+    
+    if (node.type === 'bank') {
+        skills.add('bank');
+    } else if (node.type === 'quest') {
+        skills.add('quests');
+    } else if (node.type === 'skill' && node.activities) {
+        // Get all unique skills from activities
+        const activities = loadingManager.getData('activities');
+        for (const activityId of node.activities) {
+            const activity = activities[activityId];
+            if (activity && activity.skill) {
+                skills.add(activity.skill);
             }
-        } else if (node.type === 'quest') {
-            this.ctx.fillText('!', x, y);
         }
-
-        // Node name
-        this.ctx.font = '8px Arial';
-        this.ctx.fillStyle = '#fff';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeText(node.name, x, y + 15);
-        this.ctx.fillText(node.name, x, y + 15);
     }
+    
+    return Array.from(skills);
+}
+
+getIconPositions(count, iconSize) {
+    const spacing = 4;
+    
+    switch (count) {
+        case 1:
+            // Single icon centered
+            return [{ x: 0, y: 0 }];
+            
+        case 2:
+            // Two icons side by side
+            const offset2 = (iconSize + spacing) / 2;
+            return [
+                { x: -offset2, y: 0 },
+                { x: offset2, y: 0 }
+            ];
+            
+        case 3:
+            // Triangle formation
+            const offset3 = (iconSize + spacing) / 2;
+            return [
+                { x: 0, y: -offset3 },
+                { x: -offset3, y: offset3 / 2 },
+                { x: offset3, y: offset3 / 2 }
+            ];
+            
+        case 4:
+            // 2x2 grid
+            const offset4 = (iconSize + spacing) / 2;
+            return [
+                { x: -offset4, y: -offset4 },
+                { x: offset4, y: -offset4 },
+                { x: -offset4, y: offset4 },
+                { x: offset4, y: offset4 }
+            ];
+            
+        default:
+            // For more than 4, just use first 4 positions
+            return this.getIconPositions(4, iconSize).slice(0, count);
+    }
+}
+
+getSkillColor(skill) {
+    // Fallback colors for each skill type
+    const colors = {
+        bank: '#f1c40f',
+        quests: '#e74c3c',
+        attack: '#9b2c2c',
+        strength: '#2c9b2c',
+        defence: '#2c2c9b',
+        woodcutting: '#8b4513',
+        mining: '#696969',
+        fishing: '#4682b4',
+        cooking: '#ff6347',
+        // Add more as needed
+    };
+    
+    return colors[skill] || '#3498db';
+}
 
     drawPlayer() {
     const { x, y } = player.position;
