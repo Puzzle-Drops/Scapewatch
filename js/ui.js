@@ -167,7 +167,24 @@ class UIManager {
                 // Create tooltip
                 const tooltip = document.createElement('div');
                 tooltip.className = 'skill-tooltip';
-                tooltip.textContent = `${skill.name} - ${formatNumber(Math.floor(skill.xp))} XP`;
+                
+                // Build tooltip content
+                let tooltipContent = `${skill.name}<br>Level ${skill.level}<br>`;
+                
+                if (skill.level < 99) {
+                    const currentLevelXp = getXpForLevel(skill.level);
+                    const nextLevelXp = getXpForLevel(skill.level + 1);
+                    const xpIntoLevel = Math.floor(skill.xp - currentLevelXp);
+                    const xpForLevel = nextLevelXp - currentLevelXp;
+                    const xpToNext = nextLevelXp - Math.floor(skill.xp);
+                    
+                    tooltipContent += `${formatNumber(xpIntoLevel)}/${formatNumber(xpForLevel)} exp<br>`;
+                    tooltipContent += `${formatNumber(xpToNext)} exp to level ${skill.level + 1}`;
+                } else {
+                    tooltipContent += `${formatNumber(Math.floor(skill.xp))} exp`;
+                }
+                
+                tooltip.innerHTML = tooltipContent;
                 
                 // Assemble skill item
                 skillDiv.appendChild(contentDiv);
