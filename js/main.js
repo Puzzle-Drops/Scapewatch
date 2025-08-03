@@ -6,47 +6,8 @@ window.gameState = {
     deltaTime: 0
 };
 
-// Check if all required classes are loaded
-function checkRequiredClasses() {
-    const requiredClasses = [
-        { name: 'SkillsManager', class: window.SkillsManager },
-        { name: 'Inventory', class: window.Inventory },
-        { name: 'Bank', class: window.Bank },
-        { name: 'Player', class: window.Player },
-        { name: 'NodeManager', class: window.NodeManager },
-        { name: 'MapRenderer', class: window.MapRenderer },
-        { name: 'UIManager', class: window.UIManager },
-        { name: 'AIManager', class: window.AIManager }
-    ];
-
-    const missing = [];
-    for (const req of requiredClasses) {
-        if (!req.class) {
-            missing.push(req.name);
-        }
-    }
-
-    if (missing.length > 0) {
-        const errorMsg = `Failed to load required classes: ${missing.join(', ')}. Check console for syntax errors.`;
-        console.error(errorMsg);
-        return { success: false, error: errorMsg };
-    }
-
-    return { success: true };
-}
-
 // Initialize the game
 async function init() {
-    // Check if LoadingManager exists first
-    if (!window.loadingManager) {
-        console.error('LoadingManager not found. Check if loadingManager.js loaded correctly.');
-        if (document.querySelector('.loading-text')) {
-            document.querySelector('.loading-text').textContent = 'Failed to load LoadingManager. Check console for errors.';
-            document.querySelector('.loading-text').style.color = '#e74c3c';
-        }
-        return;
-    }
-
     // Add assets to load
     loadingManager.addImage('worldMap', 'assets/map.png');
     loadingManager.addJSON('skills', 'data/skills.json');
@@ -54,29 +15,9 @@ async function init() {
     loadingManager.addJSON('nodes', 'data/nodes.json');
     loadingManager.addJSON('activities', 'data/activities.json');
 
-    // Load skill icons
-    const skillIconsToLoad = [
-        'bank', 'quests', 'attack', 'strength', 'defence', 'hitpoints',
-        'ranged', 'prayer', 'magic', 'woodcutting', 'mining', 'fishing',
-        'cooking', 'crafting', 'smithing', 'agility', 'thieving', 'runecraft',
-        'construction', 'herblore', 'fletching', 'slayer', 'hunter', 'farming', 
-        'firemaking', 'combat', 'skills'
-    ];
-
-    for (const icon of skillIconsToLoad) {
-        loadingManager.addImage(`skill_${icon}`, `assets/skills/${icon}.png`);
-    }
-
     // Set completion callback
     loadingManager.onComplete = () => {
-        // Check classes only after assets are loaded
-        const classCheck = checkRequiredClasses();
-        if (classCheck.success) {
-            startGame();
-        } else {
-            document.querySelector('.loading-text').textContent = classCheck.error;
-            document.querySelector('.loading-text').style.color = '#e74c3c';
-        }
+        startGame();
     };
 
     // Start loading
@@ -89,57 +30,50 @@ async function init() {
 }
 
 function startGame() {
-    try {
-        // Hide loading screen
-        document.getElementById('loading-screen').style.display = 'none';
-        document.getElementById('game-container').style.display = 'flex';
+    // Hide loading screen
+    document.getElementById('loading-screen').style.display = 'none';
+    document.getElementById('game-container').style.display = 'flex';
 
-        // Initialize game systems
-        window.skills = new SkillsManager();
-        window.inventory = new Inventory();
-        window.bank = new Bank();
-        window.player = new Player();
-        window.nodes = new NodeManager();
-        window.map = new MapRenderer();
-        window.ui = new UIManager();
-        window.ai = new AIManager();
+    // Initialize game systems
+    window.skills = new SkillsManager();
+    window.inventory = new Inventory();
+    window.bank = new Bank();
+    window.player = new Player();
+    window.nodes = new NodeManager();
+    window.map = new MapRenderer();
+    window.ui = new UIManager();
+    window.ai = new AIManager();
 
-        // Set up canvas
-        const canvas = document.getElementById('game-canvas');
-        const mapContainer = document.querySelector('.map-container');
+    // Set up canvas
+    const canvas = document.getElementById('game-canvas');
+    const mapContainer = document.querySelector('.map-container');
+    canvas.width = mapContainer.clientWidth;
+    canvas.height = mapContainer.clientHeight;
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
         canvas.width = mapContainer.clientWidth;
         canvas.height = mapContainer.clientHeight;
+        map.render();
+    });
 
-        // Handle window resize
-        window.addEventListener('resize', () => {
-            canvas.width = mapContainer.clientWidth;
-            canvas.height = mapContainer.clientHeight;
-            map.render();
-        });
+    // Set up controls
+    document.getElementById('bank-toggle').addEventListener('click', () => {
+        ui.toggleBank();
+    });
 
-        // Set up controls
-        document.getElementById('bank-toggle').addEventListener('click', () => {
-            ui.toggleBank();
-        });
+    document.getElementById('pause-toggle').addEventListener('click', () => {
+        gameState.paused = !gameState.paused;
+        document.getElementById('pause-toggle').textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
+    });
 
-        document.getElementById('pause-toggle').addEventListener('click', () => {
-            gameState.paused = !gameState.paused;
-            document.getElementById('pause-toggle').textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
-        });
+    document.getElementById('close-bank').addEventListener('click', () => {
+        ui.toggleBank();
+    });
 
-        document.getElementById('close-bank').addEventListener('click', () => {
-            ui.toggleBank();
-        });
-
-        // Start game loop
-        gameState.running = true;
-        requestAnimationFrame(gameLoop);
-    } catch (error) {
-        console.error('Failed to start game:', error);
-        document.getElementById('loading-screen').style.display = 'flex';
-        document.querySelector('.loading-text').textContent = `Failed to start game: ${error.message}`;
-        document.querySelector('.loading-text').style.color = '#e74c3c';
-    }
+    // Start game loop
+    gameState.running = true;
+    requestAnimationFrame(gameLoop);
 }
 
 function gameLoop(currentTime) {
@@ -163,5 +97,5 @@ function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
 }
 
-// Start initialization when ALL resources (including scripts) are loaded
-window.addEventListener('load', init);
+// Start initialization when page loads
+window.addEventListener('DOMContentLoaded', init);
