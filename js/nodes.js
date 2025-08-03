@@ -66,13 +66,13 @@ class NodeManager {
         return this.nodes;
     }
 
-    getNodeAt(x, y, radius = 15) {  // Reduced from 20 to 15
-    for (const [id, node] of Object.entries(this.nodes)) {
-        const dist = distance(x, y, node.position.x, node.position.y);
-        if (dist <= radius) {
-            return node;
+    getNodeAt(x, y, radius = 3) {  // Reduced from 15 to 3 (1/5 of original)
+        for (const [id, node] of Object.entries(this.nodes)) {
+            const dist = distance(x, y, node.position.x, node.position.y);
+            if (dist <= radius) {
+                return node;
+            }
         }
+        return null;
     }
-    return null;
-}
 }
