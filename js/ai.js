@@ -31,7 +31,7 @@ class AIManager {
 
         this.addGoal({
             type: 'bank_items',
-            itemId: 'copper',
+            itemId: 'tin_ore',
             targetCount: 50,
             priority: 4
         });
