@@ -1,245 +1,326 @@
-class AIManager {
+class UIManager {
     constructor() {
-        this.currentGoal = null;
-        this.goals = [];
-        this.decisionCooldown = 0;
-        this.initializeGoals();
+        this.bankOpen = false;
+        this.initializeUI();
     }
 
-    initializeGoals() {
-        // Set up initial goals
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 15,
-            priority: 1
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'oak_logs',
-            targetCount: 100,
-            priority: 2
-        });
-
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'mining',
-            targetLevel: 15,
-            priority: 3
-        });
+    initializeUI() {
+        this.updateSkillsList();
+        this.updateInventory();
+        this.updateBank();
     }
 
-    addGoal(goal) {
-        this.goals.push(goal);
-        this.goals.sort((a, b) => a.priority - b.priority);
-    }
-
-    update(deltaTime) {
-        // Cooldown to prevent too frequent decisions
-        this.decisionCooldown -= deltaTime;
-        if (this.decisionCooldown > 0) return;
-
-        // Check if we need to make a decision
-        if (!player.isBusy() || inventory.isFull()) {
-            this.makeDecision();
-            this.decisionCooldown = 1000; // 1 second cooldown
+    update() {
+        this.updateActivity();
+        this.updateGoal();
+        this.updateInventory();
+        if (this.bankOpen) {
+            this.updateBank();
         }
     }
 
-    makeDecision() {
-        // If inventory is full, go to bank
-        if (inventory.isFull()) {
-            this.goToBank();
+    updateActivity() {
+        const activityName = document.getElementById('activity-name');
+        const activityStatus = document.getElementById('activity-status');
+
+        if (player.currentActivity) {
+            const activityData = loadingManager.getData('activities')[player.currentActivity];
+            activityName.textContent = activityData.name;
+
+            // Calculate actions per hour
+            const duration = getActionDuration(
+                activityData.baseDuration,
+                skills.getLevel(activityData.skill),
+                activityData.requiredLevel
+            );
+            const actionsPerHour = Math.floor(3600000 / duration);
+            const xpPerHour = actionsPerHour * activityData.xpPerAction;
+
+            activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
+        } else if (player.isMoving()) {
+            activityName.textContent = 'Moving';
+            activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
+        } else {
+            activityName.textContent = 'Idle';
+            activityStatus.textContent = 'Waiting for AI decision...';
+        }
+    }
+
+    updateGoal() {
+        const goalName = document.getElementById('goal-name');
+        const goalProgress = document.getElementById('goal-progress');
+        
+        if (!window.ai || !window.ai.currentGoal) {
+            goalName.textContent = 'No active goal';
+            goalProgress.textContent = '-';
             return;
         }
 
-        // Check current goal
-        if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
-            this.selectNewGoal();
+        const goal = window.ai.currentGoal;
+        
+        switch (goal.type) {
+            case 'skill_level':
+                const currentLevel = skills.getLevel(goal.skill);
+                const skillData = loadingManager.getData('skills')[goal.skill];
+                goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel}`;
+                break;
+                
+            case 'bank_items':
+                const currentCount = bank.getItemCount(goal.itemId);
+                const itemData = loadingManager.getData('items')[goal.itemId];
+                goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
+                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}`;
+                break;
+                
+            case 'complete_quest':
+                goalName.textContent = `Complete quest: ${goal.questId}`;
+                goalProgress.textContent = 'In progress';
+                break;
+                
+            default:
+                goalName.textContent = 'Unknown goal';
+                goalProgress.textContent = '-';
         }
-
-        if (!this.currentGoal) {
-            console.log('No goals available');
-            return;
-        }
-
-        // Execute goal
-        this.executeGoal(this.currentGoal);
     }
 
-    selectNewGoal() {
-        // Find first incomplete goal
-        for (const goal of this.goals) {
-            if (!this.isGoalComplete(goal)) {
-                this.currentGoal = goal;
-                console.log('New goal:', goal);
-                return;
+    updateSkillsList() {
+        const skillsList = document.getElementById('skills-list');
+        skillsList.innerHTML = '';
+
+        const allSkills = skills.getAllSkills();
+        
+        // Define skill layout order
+        const skillLayout = [
+            // Column 1
+            ['attack', 'strength', 'defence', 'ranged', 'prayer', 'magic', 'runecraft', 'construction'],
+            // Column 2
+            ['hitpoints', 'agility', 'herblore', 'thieving', 'crafting', 'fletching', 'slayer', 'hunter'],
+            // Column 3
+            ['mining', 'smithing', 'fishing', 'cooking', 'firemaking', 'woodcutting', 'farming']
+        ];
+
+        // Create skills in column order
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 3; col++) {
+                const skillId = skillLayout[col][row];
+                if (!skillId || !allSkills[skillId]) continue;
+
+                const skill = allSkills[skillId];
+                const skillDiv = document.createElement('div');
+                skillDiv.className = 'skill-item';
+                
+                // Create content container
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'skill-content';
+                
+                // Use preloaded skill icon
+                const icon = document.createElement('img');
+                icon.className = 'skill-icon';
+                const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
+                if (preloadedIcon) {
+                    icon.src = preloadedIcon.src;
+                } else {
+                    // Fallback text if icon not loaded
+                    const textDiv = document.createElement('div');
+                    textDiv.style.fontSize = '12px';
+                    textDiv.style.fontWeight = 'bold';
+                    textDiv.style.width = '24px';
+                    textDiv.textContent = skill.name.substring(0, 3);
+                    contentDiv.appendChild(textDiv);
+                }
+                
+                // Create level display
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'skill-level';
+                levelDiv.textContent = skill.level;
+                
+                // Add icon and level to content
+                if (preloadedIcon) {
+                    contentDiv.appendChild(icon);
+                }
+                contentDiv.appendChild(levelDiv);
+                
+                // Create progress bar
+                const progressBar = document.createElement('div');
+                progressBar.className = 'skill-progress-bar';
+                
+                const progressFill = document.createElement('div');
+                progressFill.className = 'skill-progress-fill';
+                
+                const xpPercent = skill.level < 99 ? 
+                    ((skill.xp - getXpForLevel(skill.level)) / 
+                    (getXpForLevel(skill.level + 1) - getXpForLevel(skill.level))) * 100 : 100;
+                
+                progressFill.style.width = `${xpPercent}%`;
+                progressBar.appendChild(progressFill);
+                
+                // Create tooltip
+                const tooltip = document.createElement('div');
+                tooltip.className = 'skill-tooltip';
+                tooltip.textContent = `${skill.name} - ${formatNumber(Math.floor(skill.xp))} XP`;
+                
+                // Assemble skill item
+                skillDiv.appendChild(contentDiv);
+                skillDiv.appendChild(progressBar);
+                skillDiv.appendChild(tooltip);
+                
+                skillsList.appendChild(skillDiv);
             }
         }
 
-        // All goals complete - add new ones
-        this.generateNewGoals();
+        // Add total level and combat level
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'level-total';
+        
+        // Total level
+        const totalLevelItem = document.createElement('div');
+        totalLevelItem.className = 'level-item';
+        totalLevelItem.title = 'Total Level';
+        
+        const totalIcon = document.createElement('img');
+        totalIcon.className = 'level-icon';
+        const skillsIcon = loadingManager.getImage('skill_skills');
+        if (skillsIcon) {
+            totalIcon.src = skillsIcon.src;
+        }
+        
+        const totalText = document.createElement('div');
+        totalText.style.fontSize = '20px';
+        totalText.style.fontWeight = 'bold';
+        totalText.style.color = '#f39c12';
+        totalText.textContent = skills.getTotalLevel();
+        
+        if (skillsIcon) {
+            totalLevelItem.appendChild(totalIcon);
+        }
+        totalLevelItem.appendChild(totalText);
+        
+        // Combat level
+        const combatLevelItem = document.createElement('div');
+        combatLevelItem.className = 'level-item';
+        combatLevelItem.title = 'Combat Level';
+        
+        const combatIcon = document.createElement('img');
+        combatIcon.className = 'level-icon';
+        const combatIconImg = loadingManager.getImage('skill_combat');
+        if (combatIconImg) {
+            combatIcon.src = combatIconImg.src;
+        }
+        
+        const combatText = document.createElement('div');
+        combatText.style.fontSize = '20px';
+        combatText.style.fontWeight = 'bold';
+        combatText.style.color = '#e74c3c';
+        combatText.textContent = skills.getCombatLevel();
+        
+        if (combatIconImg) {
+            combatLevelItem.appendChild(combatIcon);
+        }
+        combatLevelItem.appendChild(combatText);
+        
+        levelDiv.appendChild(totalLevelItem);
+        levelDiv.appendChild(combatLevelItem);
+        
+        skillsList.appendChild(levelDiv);
     }
 
-    isGoalComplete(goal) {
-        switch (goal.type) {
-            case 'skill_level':
-                return skills.getLevel(goal.skill) >= goal.targetLevel;
-            
-            case 'bank_items':
-                return bank.getItemCount(goal.itemId) >= goal.targetCount;
-            
-            case 'complete_quest':
-                // TODO: Implement quest completion check
-                return false;
-            
-            default:
-                return false;
-        }
-    }
+    updateInventory() {
+        const inventoryGrid = document.getElementById('inventory-grid');
+        inventoryGrid.innerHTML = '';
 
-    executeGoal(goal) {
-        switch (goal.type) {
-            case 'skill_level':
-                this.trainSkill(goal.skill);
-                break;
-            
-            case 'bank_items':
-                this.gatherItems(goal.itemId);
-                break;
-            
-            case 'complete_quest':
-                this.doQuest(goal.questId);
-                break;
-        }
-    }
+        for (let i = 0; i < inventory.maxSlots; i++) {
+            const slot = inventory.slots[i];
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'inventory-slot';
 
-    trainSkill(skillId) {
-        // Find best activity for training this skill
-        const activities = loadingManager.getData('activities');
-        const skillActivities = Object.entries(activities)
-            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id))
-            .sort((a, b) => b[1].xpPerAction - a[1].xpPerAction);
-
-        if (skillActivities.length === 0) {
-            console.log(`No available activities for ${skillId}`);
-            return;
-        }
-
-        const [bestActivityId] = skillActivities[0];
-        this.doActivity(bestActivityId);
-    }
-
-    gatherItems(itemId) {
-        // Find activities that give this item
-        const activities = loadingManager.getData('activities');
-        const itemActivities = Object.entries(activities)
-            .filter(([id, data]) => {
-                if (!skills.canPerformActivity(id)) return false;
-                return data.rewards?.some(r => r.itemId === itemId);
-            });
-
-        if (itemActivities.length === 0) {
-            console.log(`No activities found for item ${itemId}`);
-            return;
-        }
-
-        const [activityId] = itemActivities[0];
-        this.doActivity(activityId);
-    }
-
-    doActivity(activityId) {
-        // Check if we're at a node with this activity
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.activities?.includes(activityId)) {
-            player.startActivity(activityId);
-            return;
-        }
-
-        // Find nearest node with this activity
-        const targetNode = nodes.getNearestNodeWithActivity(player.position, activityId);
-        if (!targetNode) {
-            console.log(`No node found for activity ${activityId}`);
-            return;
-        }
-
-        // Move to the node
-        player.moveTo(targetNode.id);
-    }
-
-    goToBank() {
-        // If already at bank, deposit all
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.type === 'bank') {
-            const deposited = bank.depositAll();
-            console.log(`Deposited ${deposited} items`);
-            ui.updateSkillsList(); // Update UI after banking
-            
-            // Check if current goal is complete
-            if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
-                console.log('Goal complete:', this.currentGoal);
-                this.currentGoal = null;
+            if (slot) {
+                const itemData = loadingManager.getData('items')[slot.itemId];
+                
+                // Create image element
+                const img = document.createElement('img');
+                img.src = `assets/items/${slot.itemId}.png`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+                
+                // Handle missing images
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    const textDiv = document.createElement('div');
+                    textDiv.style.fontSize = '12px';
+                    textDiv.textContent = itemData.name.substring(0, 3);
+                    slotDiv.appendChild(textDiv);
+                };
+                
+                slotDiv.appendChild(img);
+                
+                if (slot.quantity > 1) {
+                    const countDiv = document.createElement('div');
+                    countDiv.className = 'item-count';
+                    countDiv.textContent = formatNumber(slot.quantity);
+                    slotDiv.appendChild(countDiv);
+                }
+                
+                slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
             }
-            
-            // Make a new decision (will continue current goal if not complete)
-            this.makeDecision();
-            return;
-        }
 
-        // Find nearest bank
-        const nearestBank = nodes.getNearestBank(player.position);
-        if (!nearestBank) {
-            console.log('No bank found!');
-            return;
+            inventoryGrid.appendChild(slotDiv);
         }
-
-        // Move to bank
-        player.moveTo(nearestBank.id);
     }
 
-    doQuest(questId) {
-        // TODO: Implement quest system
-        console.log(`Quest system not yet implemented: ${questId}`);
-    }
+    updateBank() {
+        const bankGrid = document.getElementById('bank-grid');
+        bankGrid.innerHTML = '';
 
-    generateNewGoals() {
-        // Generate new goals based on current progress
-        const totalLevel = skills.getTotalLevel();
+        const bankItems = bank.getAllItems();
 
-        // Add some higher level goals
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 30,
-            priority: this.goals.length + 1
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'willow_logs',
-            targetCount: 500,
-            priority: this.goals.length + 2
-        });
-
-        console.log('Generated new goals');
-    }
-
-    getStatus() {
-        if (!this.currentGoal) return 'No active goal';
-
-        switch (this.currentGoal.type) {
-            case 'skill_level':
-                const currentLevel = skills.getLevel(this.currentGoal.skill);
-                return `Training ${this.currentGoal.skill} to level ${this.currentGoal.targetLevel} (current: ${currentLevel})`;
+        for (const [itemId, quantity] of Object.entries(bankItems)) {
+            const itemData = loadingManager.getData('items')[itemId];
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'bank-slot';
             
-            case 'bank_items':
-                const currentCount = bank.getItemCount(this.currentGoal.itemId);
-                const itemData = loadingManager.getData('items')[this.currentGoal.itemId];
-                return `Banking ${itemData.name}: ${currentCount}/${this.currentGoal.targetCount}`;
+            // Create image element
+            const img = document.createElement('img');
+            img.src = `assets/items/${itemId}.png`;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
             
-            default:
-                return 'Working on goal...';
+            // Handle missing images
+            img.onerror = function() {
+                this.style.display = 'none';
+                const textDiv = document.createElement('div');
+                textDiv.style.fontSize = '12px';
+                textDiv.textContent = itemData.name.substring(0, 3);
+                slotDiv.appendChild(textDiv);
+            };
+            
+            slotDiv.appendChild(img);
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'item-count';
+            countDiv.textContent = formatNumber(quantity);
+            slotDiv.appendChild(countDiv);
+            
+            slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
+
+            bankGrid.appendChild(slotDiv);
         }
+    }
+
+    toggleBank() {
+        this.bankOpen = !this.bankOpen;
+        const modal = document.getElementById('bank-modal');
+        modal.style.display = this.bankOpen ? 'flex' : 'none';
+        
+        if (this.bankOpen) {
+            this.updateBank();
+        }
+    }
+
+    showNotification(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        // Could add visual notifications here
     }
 }
