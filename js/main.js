@@ -9,7 +9,6 @@ window.gameState = {
 // Check if all required classes are loaded
 function checkRequiredClasses() {
     const requiredClasses = [
-        { name: 'LoadingManager', class: window.LoadingManager },
         { name: 'SkillsManager', class: window.SkillsManager },
         { name: 'Inventory', class: window.Inventory },
         { name: 'Bank', class: window.Bank },
@@ -29,19 +28,22 @@ function checkRequiredClasses() {
 
     if (missing.length > 0) {
         const errorMsg = `Failed to load required classes: ${missing.join(', ')}. Check console for syntax errors.`;
-        document.querySelector('.loading-text').textContent = errorMsg;
-        document.querySelector('.loading-text').style.color = '#e74c3c';
         console.error(errorMsg);
-        return false;
+        return { success: false, error: errorMsg };
     }
 
-    return true;
+    return { success: true };
 }
 
 // Initialize the game
 async function init() {
-    // First check if all JS files loaded correctly
-    if (!checkRequiredClasses()) {
+    // Check if LoadingManager exists first
+    if (!window.loadingManager) {
+        console.error('LoadingManager not found. Check if loadingManager.js loaded correctly.');
+        if (document.querySelector('.loading-text')) {
+            document.querySelector('.loading-text').textContent = 'Failed to load LoadingManager. Check console for errors.';
+            document.querySelector('.loading-text').style.color = '#e74c3c';
+        }
         return;
     }
 
@@ -67,9 +69,13 @@ async function init() {
 
     // Set completion callback
     loadingManager.onComplete = () => {
-        // Double-check classes are still available
-        if (checkRequiredClasses()) {
+        // Check classes only after assets are loaded
+        const classCheck = checkRequiredClasses();
+        if (classCheck.success) {
             startGame();
+        } else {
+            document.querySelector('.loading-text').textContent = classCheck.error;
+            document.querySelector('.loading-text').style.color = '#e74c3c';
         }
     };
 
@@ -157,5 +163,5 @@ function gameLoop(currentTime) {
     requestAnimationFrame(gameLoop);
 }
 
-// Start initialization when page loads
-window.addEventListener('DOMContentLoaded', init);
+// Start initialization when ALL resources (including scripts) are loaded
+window.addEventListener('load', init);
