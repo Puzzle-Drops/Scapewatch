@@ -10,83 +10,83 @@ class UIManager {
         this.updateBank();
     }
 
-update() {
-    this.updateActivity();
-    this.updateGoal();
-    this.updateInventory();
-    if (this.bankOpen) {
-        this.updateBank();
+    update() {
+        this.updateActivity();
+        this.updateGoal();
+        this.updateInventory();
+        if (this.bankOpen) {
+            this.updateBank();
+        }
     }
-}
 
     updateActivity() {
-    const activityName = document.getElementById('activity-name');
-    const activityProgress = document.getElementById('activity-progress');
-    const activityStatus = document.getElementById('activity-status');
+        const activityName = document.getElementById('activity-name');
+        const activityProgress = document.getElementById('activity-progress');
+        const activityStatus = document.getElementById('activity-status');
 
-    if (player.currentActivity) {
-        const activityData = loadingManager.getData('activities')[player.currentActivity];
-        activityName.textContent = activityData.name;
-        activityProgress.style.width = `${player.activityProgress * 100}%`;
+        if (player.currentActivity) {
+            const activityData = loadingManager.getData('activities')[player.currentActivity];
+            activityName.textContent = activityData.name;
+            activityProgress.style.width = `${player.activityProgress * 100}%`;
 
-        // Calculate actions per hour
-        const duration = getActionDuration(
-            activityData.baseDuration,
-            skills.getLevel(activityData.skill),
-            activityData.requiredLevel
-        );
-        const actionsPerHour = Math.floor(3600000 / duration);
-        const xpPerHour = actionsPerHour * activityData.xpPerAction;
+            // Calculate actions per hour
+            const duration = getActionDuration(
+                activityData.baseDuration,
+                skills.getLevel(activityData.skill),
+                activityData.requiredLevel
+            );
+            const actionsPerHour = Math.floor(3600000 / duration);
+            const xpPerHour = actionsPerHour * activityData.xpPerAction;
 
-        activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
-    } else if (player.isMoving()) {
-        activityName.textContent = 'Moving';
-        activityProgress.style.width = '0%';
-        activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
-    } else {
-        activityName.textContent = 'Idle';
-        activityProgress.style.width = '0%';
-        activityStatus.textContent = 'Waiting for AI decision...';
+            activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
+        } else if (player.isMoving()) {
+            activityName.textContent = 'Moving';
+            activityProgress.style.width = '0%';
+            activityStatus.textContent = `To: ${player.targetNode || 'Unknown'}`;
+        } else {
+            activityName.textContent = 'Idle';
+            activityProgress.style.width = '0%';
+            activityStatus.textContent = 'Waiting for AI decision...';
+        }
     }
-}
 
     updateGoal() {
-    const goalName = document.getElementById('goal-name');
-    const goalProgress = document.getElementById('goal-progress');
-    
-    if (!window.ai || !window.ai.currentGoal) {
-        goalName.textContent = 'No active goal';
-        goalProgress.textContent = '-';
-        return;
-    }
-
-    const goal = window.ai.currentGoal;
-    
-    switch (goal.type) {
-        case 'skill_level':
-            const currentLevel = skills.getLevel(goal.skill);
-            const skillData = loadingManager.getData('skills')[goal.skill];
-            goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
-            goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel}`;
-            break;
-            
-        case 'bank_items':
-            const currentCount = bank.getItemCount(goal.itemId);
-            const itemData = loadingManager.getData('items')[goal.itemId];
-            goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
-            goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}`;
-            break;
-            
-        case 'complete_quest':
-            goalName.textContent = `Complete quest: ${goal.questId}`;
-            goalProgress.textContent = 'In progress';
-            break;
-            
-        default:
-            goalName.textContent = 'Unknown goal';
+        const goalName = document.getElementById('goal-name');
+        const goalProgress = document.getElementById('goal-progress');
+        
+        if (!window.ai || !window.ai.currentGoal) {
+            goalName.textContent = 'No active goal';
             goalProgress.textContent = '-';
+            return;
+        }
+
+        const goal = window.ai.currentGoal;
+        
+        switch (goal.type) {
+            case 'skill_level':
+                const currentLevel = skills.getLevel(goal.skill);
+                const skillData = loadingManager.getData('skills')[goal.skill];
+                goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel}`;
+                break;
+                
+            case 'bank_items':
+                const currentCount = bank.getItemCount(goal.itemId);
+                const itemData = loadingManager.getData('items')[goal.itemId];
+                goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
+                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}`;
+                break;
+                
+            case 'complete_quest':
+                goalName.textContent = `Complete quest: ${goal.questId}`;
+                goalProgress.textContent = 'In progress';
+                break;
+                
+            default:
+                goalName.textContent = 'Unknown goal';
+                goalProgress.textContent = '-';
+        }
     }
-}
 
     updateSkillsList() {
         const skillsList = document.getElementById('skills-list');
@@ -142,72 +142,78 @@ update() {
             slotDiv.className = 'inventory-slot';
 
             if (slot) {
-    const itemData = loadingManager.getData('items')[slot.itemId];
-    
-    // Create image element
-    const img = document.createElement('img');
-    img.src = `assets/items/${slot.itemId}.png`;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'contain';
-    
-    // Handle missing images
-    img.onerror = function() {
-        this.style.display = 'none';
-        const textDiv = document.createElement('div');
-        textDiv.style.fontSize = '12px';
-        textDiv.textContent = itemData.name.substring(0, 3);
-        slotDiv.appendChild(textDiv);
-    };
-    
-    slotDiv.appendChild(img);
-    
-    if (slot.quantity > 1) {
-        const countDiv = document.createElement('div');
-        countDiv.className = 'item-count';
-        countDiv.textContent = formatNumber(slot.quantity);
-        slotDiv.appendChild(countDiv);
-    }
-    
-    slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
-}
+                const itemData = loadingManager.getData('items')[slot.itemId];
+                
+                // Create image element
+                const img = document.createElement('img');
+                img.src = `assets/items/${slot.itemId}.png`;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'contain';
+                
+                // Handle missing images
+                img.onerror = function() {
+                    this.style.display = 'none';
+                    const textDiv = document.createElement('div');
+                    textDiv.style.fontSize = '12px';
+                    textDiv.textContent = itemData.name.substring(0, 3);
+                    slotDiv.appendChild(textDiv);
+                };
+                
+                slotDiv.appendChild(img);
+                
+                if (slot.quantity > 1) {
+                    const countDiv = document.createElement('div');
+                    countDiv.className = 'item-count';
+                    countDiv.textContent = formatNumber(slot.quantity);
+                    slotDiv.appendChild(countDiv);
+                }
+                
+                slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
+            }
 
             inventoryGrid.appendChild(slotDiv);
         }
     }
 
-    for (const [itemId, quantity] of Object.entries(bankItems)) {
-    const itemData = loadingManager.getData('items')[itemId];
-    const slotDiv = document.createElement('div');
-    slotDiv.className = 'bank-slot';
-    
-    // Create image element
-    const img = document.createElement('img');
-    img.src = `assets/items/${itemId}.png`;
-    img.style.width = '100%';
-    img.style.height = '100%';
-    img.style.objectFit = 'contain';
-    
-    // Handle missing images
-    img.onerror = function() {
-        this.style.display = 'none';
-        const textDiv = document.createElement('div');
-        textDiv.style.fontSize = '12px';
-        textDiv.textContent = itemData.name.substring(0, 3);
-        slotDiv.appendChild(textDiv);
-    };
-    
-    slotDiv.appendChild(img);
-    
-    const countDiv = document.createElement('div');
-    countDiv.className = 'item-count';
-    countDiv.textContent = formatNumber(quantity);
-    slotDiv.appendChild(countDiv);
-    
-    slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
+    updateBank() {
+        const bankGrid = document.getElementById('bank-grid');
+        bankGrid.innerHTML = '';
 
-    bankGrid.appendChild(slotDiv);
-}
+        const bankItems = bank.getAllItems();
+
+        for (const [itemId, quantity] of Object.entries(bankItems)) {
+            const itemData = loadingManager.getData('items')[itemId];
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'bank-slot';
+            
+            // Create image element
+            const img = document.createElement('img');
+            img.src = `assets/items/${itemId}.png`;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'contain';
+            
+            // Handle missing images
+            img.onerror = function() {
+                this.style.display = 'none';
+                const textDiv = document.createElement('div');
+                textDiv.style.fontSize = '12px';
+                textDiv.textContent = itemData.name.substring(0, 3);
+                slotDiv.appendChild(textDiv);
+            };
+            
+            slotDiv.appendChild(img);
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'item-count';
+            countDiv.textContent = formatNumber(quantity);
+            slotDiv.appendChild(countDiv);
+            
+            slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
+
+            bankGrid.appendChild(slotDiv);
+        }
     }
 
     toggleBank() {
