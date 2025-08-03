@@ -9,24 +9,38 @@ class AIManager {
     initializeGoals() {
         // Set up initial goals
         this.addGoal({
+            type: 'bank_items',
+            itemId: 'logs',
+            targetCount: 10,
+            priority: 1
+        });
+
+        this.addGoal({
             type: 'skill_level',
             skill: 'woodcutting',
             targetLevel: 15,
-            priority: 1
+            priority: 2
         });
 
         this.addGoal({
             type: 'bank_items',
             itemId: 'oak_logs',
-            targetCount: 100,
-            priority: 2
+            targetCount: 50,
+            priority: 3
+        });
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'copper',
+            targetCount: 50,
+            priority: 4
         });
 
         this.addGoal({
             type: 'skill_level',
             skill: 'mining',
             targetLevel: 15,
-            priority: 3
+            priority: 5
         });
     }
 
