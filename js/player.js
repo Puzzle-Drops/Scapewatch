@@ -1,184 +1,91 @@
-class Player {
-    constructor() {
-        this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
-        this.targetPosition = null;
-        this.currentNode = 'lumbridge_bank';
-        this.currentActivity = null;
-        this.activityProgress = 0;
-        this.activityStartTime = 0;
-        this.movementSpeed = 5; // pixels per second base
-        this.path = [];
-        this.pathIndex = 0;
-    }
-
-    update(deltaTime) {
-        // Handle movement
-        if (this.targetPosition) {
-            this.updateMovement(deltaTime);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+    window.scriptErrors = [];
+    window.addEventListener('error', function(e) {
+        if (e.filename && e.filename.includes('.js')) {
+            window.scriptErrors.push({
+                file: e.filename,
+                line: e.lineno,
+                col: e.colno,
+                message: e.message
+            });
         }
+    });
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scapewatch</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <h1>Scapewatch</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p class="loading-text">Loading assets...</p>
+        </div>
+    </div>
 
-        // Handle activity
-        if (this.currentActivity) {
-            this.updateActivity(deltaTime);
-        }
-    }
-
-    updateMovement(deltaTime) {
-        const speed = this.getMovementSpeed();
-        const moveDistance = (speed * deltaTime) / 1000;
-
-        const dx = this.targetPosition.x - this.position.x;
-        const dy = this.targetPosition.y - this.position.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        if (distance <= moveDistance) {
-            // Reached target
-            this.position = { ...this.targetPosition };
-            this.targetPosition = null;
-            this.onReachedTarget();
-        } else {
-            // Move towards target
-            const ratio = moveDistance / distance;
-            this.position.x += dx * ratio;
-            this.position.y += dy * ratio;
-        }
-    }
-
-    updateActivity(deltaTime) {
-        if (!this.currentActivity) return;
-
-        const activityData = loadingManager.getData('activities')[this.currentActivity];
-        if (!activityData) return;
-
-        const duration = getActionDuration(
-            activityData.baseDuration,
-            skills.getLevel(activityData.skill),
-            activityData.requiredLevel
-        );
-
-        if (!duration) {
-            this.stopActivity();
-            return;
-        }
-
-        const elapsed = Date.now() - this.activityStartTime;
-        this.activityProgress = Math.min(1, elapsed / duration);
-
-        if (this.activityProgress >= 1) {
-            this.completeActivity();
-        }
-    }
-
-    completeActivity() {
-        const activityData = loadingManager.getData('activities')[this.currentActivity];
+    <div id="game-container" class="game-container" style="display: none;">
+        <div class="map-container">
+            <canvas id="game-canvas"></canvas>
+        </div>
         
-        // Check for required items
-        if (activityData.requiredItems) {
-            for (const req of activityData.requiredItems) {
-                if (!inventory.hasItem(req.itemId, req.quantity)) {
-                    this.stopActivity();
-                    return;
-                }
-            }
-            // Consume required items
-            for (const req of activityData.requiredItems) {
-                inventory.removeItem(req.itemId, req.quantity);
-            }
-        }
+        <div class="ui-panel">
+            <div class="current-activity panel">
+                <h3>Current Activity</h3>
+                <p id="activity-name">Idle</p>
+                <p id="activity-status">Waiting for instructions...</p>
+            </div>
 
-        // Grant XP
-        skills.addXp(activityData.skill, activityData.xpPerAction);
+            <div class="current-goal panel">
+    <h3>Current Goal</h3>
+    <p id="goal-name">No active goal</p>
+    <p id="goal-progress">-</p>
+</div>
 
-        // Grant additional XP (for combat)
-        if (activityData.additionalXp) {
-            for (const xp of activityData.additionalXp) {
-                skills.addXp(xp.skill, xp.amount);
-            }
-        }
+            <div class="skills-panel panel">
+                <h3>Skills</h3>
+                <div id="skills-list" class="skills-list"></div>
+            </div>
 
-        // Give rewards
-        if (activityData.rewards) {
-            for (const reward of activityData.rewards) {
-                if (Math.random() <= reward.chance) {
-                    const added = inventory.addItem(reward.itemId, reward.quantity);
-                    if (added < reward.quantity) {
-                        // Inventory full
-                        console.log('Inventory full!');
-                        this.stopActivity();
-                        return;
-                    }
-                }
-            }
-        }
+            <div class="inventory-panel panel">
+                <h3>Inventory</h3>
+                <div id="inventory-grid" class="inventory-grid"></div>
+            </div>
 
-        // Reset for next action
-        this.activityProgress = 0;
-        this.activityStartTime = Date.now();
-    }
+            <div class="controls panel">
+                <button id="bank-toggle">View Bank</button>
+                <button id="pause-toggle">Pause AI</button>
+            </div>
+        </div>
 
-    moveTo(targetNode) {
-        const nodesData = loadingManager.getData('nodes');
-        const node = nodesData[targetNode];
-        
-        if (!node) {
-            console.error(`Node ${targetNode} not found`);
-            return;
-        }
+        <div id="bank-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Bank</h2>
+                <div id="bank-grid" class="bank-grid"></div>
+                <button id="close-bank">Close</button>
+            </div>
+        </div>
+    </div>
 
-        this.targetPosition = { ...node.position };
-        this.targetNode = targetNode;
-        this.stopActivity();
-    }
-
-    onReachedTarget() {
-        if (this.targetNode) {
-            this.currentNode = this.targetNode;
-            this.targetNode = null;
-        }
-    }
-
-    startActivity(activityId) {
-        const activityData = loadingManager.getData('activities')[activityId];
-        if (!activityData) {
-            console.error(`Activity ${activityId} not found`);
-            return;
-        }
-
-        if (!skills.canPerformActivity(activityId)) {
-            console.log(`Cannot perform activity ${activityId} - level too low`);
-            return;
-        }
-
-        this.currentActivity = activityId;
-        this.activityProgress = 0;
-        this.activityStartTime = Date.now();
-    }
-
-    stopActivity() {
-        this.currentActivity = null;
-        this.activityProgress = 0;
-    }
-
-    getMovementSpeed() {
-        // Base speed modified by agility level
-        const agilityLevel = skills.getLevel('agility');
-        const speedBonus = 1 + (agilityLevel - 1) * 0.01; // 1% per level
-        return this.movementSpeed * speedBonus;
-    }
-
-    isAtNode(nodeId) {
-        return this.currentNode === nodeId && !this.targetPosition;
-    }
-
-    isMoving() {
-        return this.targetPosition !== null;
-    }
-
-    isPerformingActivity() {
-        return this.currentActivity !== null;
-    }
-
-    isBusy() {
-        return this.isMoving() || this.isPerformingActivity();
-    }
-}
+    <script>
+        console.log('Loading scripts...');
+    </script>
+    <script src="js/loadingManager.js" onload="console.log('✓ loadingManager.js')" onerror="console.error('✗ loadingManager.js failed')"></script>
+    <script src="js/utils.js" onload="console.log('✓ utils.js')" onerror="console.error('✗ utils.js failed')"></script>
+    <script src="js/skills.js" onload="console.log('✓ skills.js')" onerror="console.error('✗ skills.js failed')"></script>
+    <script src="js/inventory.js" onload="console.log('✓ inventory.js')" onerror="console.error('✗ inventory.js failed')"></script>
+    <script src="js/bank.js" onload="console.log('✓ bank.js')" onerror="console.error('✗ bank.js failed')"></script>
+    <script src="js/player.js" onload="console.log('✓ player.js')" onerror="console.error('✗ player.js failed')"></script>
+    <script src="js/nodes.js" onload="console.log('✓ nodes.js')" onerror="console.error('✗ nodes.js failed')"></script>
+    <script src="js/map.js" onload="console.log('✓ map.js')" onerror="console.error('✗ map.js failed')"></script>
+    <script src="js/ui.js" onload="console.log('✓ ui.js')" onerror="console.error('✗ ui.js failed')"></script>
+    <script src="js/ai.js" onload="console.log('✓ ai.js')" onerror="console.error('✗ ai.js failed')"></script>
+    <script src="js/main.js" onload="console.log('✓ main.js')" onerror="console.error('✗ main.js failed')"></script>
+</body>
+</html>
