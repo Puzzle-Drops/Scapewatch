@@ -145,8 +145,10 @@ class MapRenderer {
         this.ctx.fillStyle = '#fff';
         this.ctx.strokeStyle = '#000';
         this.ctx.lineWidth = 0.25; // reduced from 1
-        this.ctx.strokeText(node.name, x, y + 4); // reduced offset from 15
-        this.ctx.fillText(node.name, x, y + 4);
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'bottom';
+        this.ctx.strokeText(node.name, x, y - 8); // positioned above icons
+        this.ctx.fillText(node.name, x, y - 8);
     }
 
     drawPlayer() {
