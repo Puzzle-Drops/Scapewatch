@@ -1,6 +1,6 @@
 class Player {
     constructor() {
-        this.position = { x: 500, y: 400 }; // Start at Lumbridge bank
+        this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
         this.targetPosition = null;
         this.currentNode = 'lumbridge_bank';
         this.currentActivity = null;
