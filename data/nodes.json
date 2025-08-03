@@ -3,67 +3,67 @@
         "id": "lumbridge_bank",
         "name": "Lumbridge Bank",
         "type": "bank",
-        "position": {"x": 500, "y": 400}
+        "position": {"x": 4795, "y": 1882}
     },
     "lumbridge_trees": {
         "id": "lumbridge_trees",
         "name": "Lumbridge Trees",
         "type": "skill",
-        "position": {"x": 450, "y": 350},
+        "position": {"x": 4734, "y": 1627},
         "activities": ["chop_tree", "chop_oak"]
     },
     "lumbridge_goblins": {
         "id": "lumbridge_goblins",
         "name": "Goblin Camp",
         "type": "skill",
-        "position": {"x": 600, "y": 380},
+        "position": {"x": 4541, "y": 1502},
         "activities": ["fight_goblin"]
     },
     "lumbridge_mine": {
         "id": "lumbridge_mine",
         "name": "Lumbridge Mine",
         "type": "skill",
-        "position": {"x": 550, "y": 450},
+        "position": {"x": 4342, "y": 1502},
         "activities": ["mine_copper", "mine_tin"]
     },
     "lumbridge_fishing": {
         "id": "lumbridge_fishing",
         "name": "River Lum",
         "type": "skill",
-        "position": {"x": 480, "y": 500},
+        "position": {"x": 4149, "y": 1627},
         "activities": ["fish_shrimp"]
     },
     "draynor_bank": {
         "id": "draynor_bank",
         "name": "Draynor Bank",
         "type": "bank",
-        "position": {"x": 300, "y": 350}
+        "position": {"x": 4088, "y": 1882}
     },
     "draynor_willows": {
         "id": "draynor_willows",
         "name": "Draynor Willows",
         "type": "skill",
-        "position": {"x": 280, "y": 380},
+        "position": {"x": 4149, "y": 2137},
         "activities": ["chop_willow"]
     },
     "varrock_bank": {
         "id": "varrock_bank",
         "name": "Varrock Bank",
         "type": "bank",
-        "position": {"x": 700, "y": 250}
+        "position": {"x": 4342, "y": 2262}
     },
     "varrock_mine": {
         "id": "varrock_mine",
         "name": "Varrock Mine",
         "type": "skill",
-        "position": {"x": 750, "y": 300},
+        "position": {"x": 4541, "y": 2262},
         "activities": ["mine_iron"]
     },
     "cook_quest": {
         "id": "cook_quest",
         "name": "Cook's Assistant",
         "type": "quest",
-        "position": {"x": 520, "y": 420},
+        "position": {"x": 4734, "y": 2137},
         "questId": "cooks_assistant"
     }
 }
