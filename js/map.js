@@ -58,22 +58,22 @@ class MapRenderer {
     }
 
     drawNodes() {
-        const allNodes = nodes.getAllNodes();
+    const allNodes = nodes.getAllNodes();
 
-        for (const [id, node] of Object.entries(allNodes)) {
-            // Only draw nodes within view
-            const screenDist = distance(
-                node.position.x,
-                node.position.y,
-                this.camera.x,
-                this.camera.y
-            );
+    for (const [id, node] of Object.entries(allNodes)) {
+        // Only draw nodes within view
+        const screenDist = distance(
+            node.position.x,
+            node.position.y,
+            this.camera.x,
+            this.camera.y
+        );
 
-            if (screenDist < 500 / this.camera.zoom) {
-                this.drawNode(node);
-            }
+        if (screenDist < 800 / this.camera.zoom) {  // Increased from 500 to 800
+            this.drawNode(node);
         }
     }
+}
 
     drawNode(node) {
     const { x, y } = node.position;
@@ -84,7 +84,7 @@ class MapRenderer {
     if (skills.length === 0) return;
     
     // Calculate icon positions based on count
-    const iconSize = 24;
+    const iconSize = 8;
     const positions = this.getIconPositions(skills.length, iconSize);
     
     // Draw each skill icon
@@ -112,13 +112,13 @@ class MapRenderer {
     });
     
     // Node name
-    this.ctx.font = '9px Arial';
+    this.ctx.font = '6px Arial';
     this.ctx.fillStyle = '#fff';
     this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 2;
+    this.ctx.lineWidth = 1;
     this.ctx.textAlign = 'center';
-    this.ctx.strokeText(node.name, x, y + 30);
-    this.ctx.fillText(node.name, x, y + 30);
+    this.ctx.strokeText(node.name, x, y + 10);
+    this.ctx.fillText(node.name, x, y + 10);
 }
 
 getNodeSkills(node) {
@@ -143,7 +143,7 @@ getNodeSkills(node) {
 }
 
 getIconPositions(count, iconSize) {
-    const spacing = 4;
+    const spacing = 2;  // Reduced spacing for smaller icons
     
     switch (count) {
         case 1:
@@ -157,6 +157,31 @@ getIconPositions(count, iconSize) {
                 { x: -offset2, y: 0 },
                 { x: offset2, y: 0 }
             ];
+            
+        case 3:
+            // Triangle formation
+            const offset3 = (iconSize + spacing) / 2;
+            return [
+                { x: 0, y: -offset3 },
+                { x: -offset3, y: offset3 / 2 },
+                { x: offset3, y: offset3 / 2 }
+            ];
+            
+        case 4:
+            // 2x2 grid
+            const offset4 = (iconSize + spacing) / 2;
+            return [
+                { x: -offset4, y: -offset4 },
+                { x: offset4, y: -offset4 },
+                { x: -offset4, y: offset4 },
+                { x: offset4, y: offset4 }
+            ];
+            
+        default:
+            // For more than 4, just use first 4 positions
+            return this.getIconPositions(4, iconSize).slice(0, count);
+    }
+}
             
         case 3:
             // Triangle formation
