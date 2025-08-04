@@ -41,7 +41,22 @@ class UIManager {
                 activityData.requiredLevel
             );
             const actionsPerHour = Math.floor(3600000 / duration);
-            const xpPerHour = actionsPerHour * activityData.xpPerAction;
+            
+            // For woodcutting, calculate XP/hr based on success rate
+            let xpPerHour;
+            if (activityData.skill === 'woodcutting' && activityData.rewards && activityData.rewards.length > 0) {
+                // Get the scaled chance for the main reward (logs)
+                const mainReward = activityData.rewards[0];
+                const successChance = getScaledChance(
+                    player.currentActivity,
+                    mainReward.chance,
+                    skills.getLevel('woodcutting')
+                );
+                xpPerHour = Math.floor(actionsPerHour * activityData.xpPerAction * successChance);
+            } else {
+                // For non-woodcutting activities, use the standard calculation
+                xpPerHour = actionsPerHour * activityData.xpPerAction;
+            }
 
             activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
         } else if (player.isMoving()) {
