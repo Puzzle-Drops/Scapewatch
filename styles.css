@@ -11,27 +11,6 @@ body {
     overflow: hidden;
 }
 
-/* Game Wrapper and Scaling */
-#game-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    /* Black bars background color - easy to find and change */
-    background-color: #000000;
-}
-
-#game-scaler {
-    width: 2560px;
-    height: 1440px;
-    transform-origin: center center;
-    position: relative;
-}
-
 /* Loading Screen */
 .loading-screen {
     position: fixed;
@@ -79,9 +58,7 @@ body {
 /* Game Container */
 .game-container {
     display: flex;
-    width: 2560px;
-    height: 1440px;
-    position: relative;
+    height: 100vh;
 }
 
 .map-container {
@@ -89,8 +66,6 @@ body {
     background-color: #000;
     position: relative;
     overflow: hidden;
-    width: 2210px;  /* 2560 - 350 (ui-panel width) */
-    height: 1440px;
 }
 
 #game-canvas {
@@ -105,7 +80,6 @@ body {
     background-color: #2a2a2a;
     padding: 20px;
     overflow-y: auto;
-    height: 1440px;
 }
 
 .panel {
@@ -312,11 +286,11 @@ body {
 
 /* Bank Modal */
 .modal {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 2560px;
-    height: 1440px;
+    width: 100%;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.8);
     display: flex;
     align-items: center;
