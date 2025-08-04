@@ -74,7 +74,7 @@
         "category": "utility",
         "description": "Steal from NPCs"
     },
-"runecraft": {
+    "runecraft": {
         "name": "Runecraft",
         "category": "production",
         "description": "Create magical runes"
