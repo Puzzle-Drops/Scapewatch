@@ -87,25 +87,20 @@ class Player {
             }
         }
 
-        // Grant XP
-        skills.addXp(activityData.skill, activityData.xpPerAction);
-
-        // Grant additional XP (for combat)
-        if (activityData.additionalXp) {
-            for (const xp of activityData.additionalXp) {
-                skills.addXp(xp.skill, xp.amount);
-            }
-        }
-        
-        // Update UI to show new XP/levels
-        if (window.ui) {
-            window.ui.updateSkillsList();
-        }
+        // Flag to track if we got a resource (for XP granting)
+        let gotResource = false;
 
         // Give rewards
         if (activityData.rewards) {
             for (const reward of activityData.rewards) {
-                if (Math.random() <= reward.chance) {
+                // Get scaled chance for woodcutting activities
+                const scaledChance = getScaledChance(
+                    this.currentActivity, 
+                    reward.chance, 
+                    skills.getLevel(activityData.skill)
+                );
+                
+                if (Math.random() <= scaledChance) {
                     const added = inventory.addItem(reward.itemId, reward.quantity);
                     if (added < reward.quantity) {
                         // Inventory full
@@ -117,8 +112,27 @@ class Player {
                         }
                         return;
                     }
+                    gotResource = true; // We successfully got a resource
                 }
             }
+        }
+
+        // Grant XP only if we got a resource (for woodcutting) or if it's not woodcutting
+        const isWoodcutting = activityData.skill === 'woodcutting';
+        if (!isWoodcutting || gotResource) {
+            skills.addXp(activityData.skill, activityData.xpPerAction);
+            
+            // Grant additional XP (for combat)
+            if (activityData.additionalXp) {
+                for (const xp of activityData.additionalXp) {
+                    skills.addXp(xp.skill, xp.amount);
+                }
+            }
+        }
+        
+        // Update UI to show new XP/levels
+        if (window.ui) {
+            window.ui.updateSkillsList();
         }
 
         // Check if current goal is complete after this action
