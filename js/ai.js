@@ -181,11 +181,7 @@ class AIManager {
             if (skillId === 'woodcutting' && activityData.rewards && activityData.rewards.length > 0) {
                 // Calculate effective XP based on success chance
                 const mainReward = activityData.rewards[0];
-                const successChance = getScaledChance(
-                    activityId,
-                    mainReward.chance,
-                    skills.getLevel('woodcutting')
-                );
+                const successChance = getScaledChance(mainReward, skills.getLevel('woodcutting'));
                 effectiveXp = activityData.xpPerAction * successChance;
             } else {
                 // For non-woodcutting activities, use base XP
@@ -307,7 +303,7 @@ class AIManager {
         const baseGoalCount = this.goals.length;
 
         // Generate skill goals for each skill, progressively
-        const skillIds = ['woodcutting', 'mining', 'fishing', 'attack', 'cooking', 'smithing'];
+        const skillIds = ['woodcutting', 'mining', 'fishing', 'attack'];
         
         for (const skillId of skillIds) {
             const currentLevel = skills.getLevel(skillId);
