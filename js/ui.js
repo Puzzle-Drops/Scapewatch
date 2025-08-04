@@ -1,33 +1,6 @@
 class UIManager {
     constructor() {
         this.bankOpen = false;
-        
-        // Cache previous values to detect changes
-        this.cache = {
-            activityName: '',
-            activityStatus: '',
-            goalName: '',
-            goalProgress: '',
-            inventoryHash: '',
-            skillsHash: ''
-        };
-        
-        // Update intervals (in ms)
-        this.updateIntervals = {
-            activity: 100,    // 10 times per second
-            goal: 500,        // 2 times per second
-            inventory: 250,   // 4 times per second
-            skills: 1000      // Once per second
-        };
-        
-        // Last update times
-        this.lastUpdate = {
-            activity: 0,
-            goal: 0,
-            inventory: 0,
-            skills: 0
-        };
-        
         this.initializeUI();
     }
 
@@ -38,24 +11,9 @@ class UIManager {
     }
 
     update() {
-        const now = Date.now();
-        
-        // Only update if enough time has passed
-        if (now - this.lastUpdate.activity >= this.updateIntervals.activity) {
-            this.updateActivity();
-            this.lastUpdate.activity = now;
-        }
-        
-        if (now - this.lastUpdate.goal >= this.updateIntervals.goal) {
-            this.updateGoal();
-            this.lastUpdate.goal = now;
-        }
-        
-        if (now - this.lastUpdate.inventory >= this.updateIntervals.inventory) {
-            this.updateInventory();
-            this.lastUpdate.inventory = now;
-        }
-        
+        this.updateActivity();
+        this.updateGoal();
+        this.updateInventory();
         if (this.bankOpen) {
             this.updateBank();
         }
@@ -64,19 +22,17 @@ class UIManager {
     updateActivity() {
         const activityName = document.getElementById('activity-name');
         const activityStatus = document.getElementById('activity-status');
-        
-        let newName = '';
-        let newStatus = '';
 
         if (player.currentActivity) {
             const activityData = loadingManager.getData('activities')[player.currentActivity];
             const currentNode = nodes.getNode(player.currentNode);
             
             // Format activity name with location
-            newName = activityData.name;
+            let displayName = activityData.name;
             if (currentNode) {
-                newName = `${activityData.name} at ${currentNode.name}`;
+                displayName = `${activityData.name} at ${currentNode.name}`;
             }
+            activityName.textContent = displayName;
 
             // Calculate actions per hour
             const duration = getActionDuration(
@@ -102,46 +58,32 @@ class UIManager {
                 xpPerHour = actionsPerHour * activityData.xpPerAction;
             }
 
-            newStatus = `${formatNumber(xpPerHour)} XP/hr`;
+            activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
         } else if (player.isMoving()) {
             const targetNode = nodes.getNode(player.targetNode);
             const targetName = targetNode ? targetNode.name : 'Unknown';
-            newName = 'Moving';
-            newStatus = `To: ${targetName}`;
+            activityName.textContent = 'Moving';
+            activityStatus.textContent = `To: ${targetName}`;
         } else {
             // Player is idle
             const currentNode = nodes.getNode(player.currentNode);
             if (currentNode) {
-                newName = `Idle at ${currentNode.name}`;
+                activityName.textContent = `Idle at ${currentNode.name}`;
                 if (window.ai && window.ai.currentGoal) {
-                    newStatus = 'Planning next action...';
+                    activityStatus.textContent = 'Planning next action...';
                 } else {
-                    newStatus = 'Waiting for AI decision...';
+                    activityStatus.textContent = 'Waiting for AI decision...';
                 }
             } else {
-                newName = 'Idle';
-                newStatus = 'Waiting for AI decision...';
+                activityName.textContent = 'Idle';
+                activityStatus.textContent = 'Waiting for AI decision...';
             }
-        }
-        
-        // Only update DOM if values changed
-        if (newName !== this.cache.activityName) {
-            activityName.textContent = newName;
-            this.cache.activityName = newName;
-        }
-        
-        if (newStatus !== this.cache.activityStatus) {
-            activityStatus.textContent = newStatus;
-            this.cache.activityStatus = newStatus;
         }
     }
 
     updateGoal() {
         const goalName = document.getElementById('goal-name');
         const goalProgress = document.getElementById('goal-progress');
-        
-        let newName = '';
-        let newProgress = '';
         
         if (!window.ai || !window.ai.currentGoal) {
             // Check if AI is selecting a new goal
@@ -156,109 +98,87 @@ class UIManager {
                 }
                 
                 if (nextGoal) {
-                    newName = 'Selecting next goal...';
-                    newProgress = 'Planning...';
+                    goalName.textContent = 'Selecting next goal...';
+                    goalProgress.textContent = 'Planning...';
                 } else {
-                    newName = 'All goals complete!';
-                    newProgress = 'Generating new goals...';
+                    goalName.textContent = 'All goals complete!';
+                    goalProgress.textContent = 'Generating new goals...';
                 }
             } else {
-                newName = 'No active goal';
-                newProgress = '-';
+                goalName.textContent = 'No active goal';
+                goalProgress.textContent = '-';
             }
-        } else {
-            const goal = window.ai.currentGoal;
-            
-            switch (goal.type) {
-                case 'skill_level':
-                    const currentLevel = skills.getLevel(goal.skill);
-                    const skillData = loadingManager.getData('skills')[goal.skill];
-                    
-                    // Show starting level if different from current
-                    if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
-                        newName = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
-                    } else {
-                        newName = `Train ${skillData.name} to ${goal.targetLevel}`;
-                    }
-                    
-                    // Calculate XP progress from starting point to target
-                    const currentXp = skills.getXp(goal.skill);
-                    const targetXp = getXpForLevel(goal.targetLevel);
-                    
-                    let xpProgress;
-                    if (goal.startingXp !== undefined) {
-                        // Calculate progress from starting XP to target XP
-                        const xpGained = currentXp - goal.startingXp;
-                        const xpNeeded = targetXp - goal.startingXp;
-                        xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
-                    } else {
-                        // Fallback to old calculation
-                        xpProgress = Math.floor((currentXp / targetXp) * 100);
-                    }
-                    
-                    newProgress = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
-                    break;
-                    
-                case 'bank_items':
-                    const currentCount = bank.getItemCount(goal.itemId);
-                    const itemData = loadingManager.getData('items')[goal.itemId];
-                    newName = `Bank ${goal.targetCount} ${itemData.name}`;
-                    
-                    // Calculate progress from starting count to target
-                    let percentage;
-                    if (goal.startingCount !== undefined) {
-                        const itemsGained = currentCount - goal.startingCount;
-                        const itemsNeeded = goal.targetCount - goal.startingCount;
-                        percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
-                    } else {
-                        // Fallback to old calculation
-                        percentage = Math.floor((currentCount / goal.targetCount) * 100);
-                    }
-                    
-                    newProgress = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
-                    break;
-                    
-                case 'complete_quest':
-                    newName = `Complete quest: ${goal.questId}`;
-                    newProgress = 'In progress';
-                    break;
-                    
-                default:
-                    newName = 'Unknown goal';
-                    newProgress = '-';
-            }
+            return;
         }
+
+        const goal = window.ai.currentGoal;
         
-        // Only update DOM if values changed
-        if (newName !== this.cache.goalName) {
-            goalName.textContent = newName;
-            this.cache.goalName = newName;
-        }
-        
-        if (newProgress !== this.cache.goalProgress) {
-            goalProgress.textContent = newProgress;
-            this.cache.goalProgress = newProgress;
+        switch (goal.type) {
+            case 'skill_level':
+                const currentLevel = skills.getLevel(goal.skill);
+                const skillData = loadingManager.getData('skills')[goal.skill];
+                
+                // Show starting level if different from current
+                if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
+                    goalName.textContent = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
+                } else {
+                    goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+                }
+                
+                // Calculate XP progress from starting point to target
+                const currentXp = skills.getXp(goal.skill);
+                const targetXp = getXpForLevel(goal.targetLevel);
+                
+                let xpProgress;
+                if (goal.startingXp !== undefined) {
+                    // Calculate progress from starting XP to target XP
+                    const xpGained = currentXp - goal.startingXp;
+                    const xpNeeded = targetXp - goal.startingXp;
+                    xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
+                } else {
+                    // Fallback to old calculation
+                    xpProgress = Math.floor((currentXp / targetXp) * 100);
+                }
+                
+                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
+                break;
+                
+            case 'bank_items':
+                const currentCount = bank.getItemCount(goal.itemId);
+                const itemData = loadingManager.getData('items')[goal.itemId];
+                goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
+                
+                // Calculate progress from starting count to target
+                let percentage;
+                if (goal.startingCount !== undefined) {
+                    const itemsGained = currentCount - goal.startingCount;
+                    const itemsNeeded = goal.targetCount - goal.startingCount;
+                    percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
+                } else {
+                    // Fallback to old calculation
+                    percentage = Math.floor((currentCount / goal.targetCount) * 100);
+                }
+                
+                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
+                break;
+                
+            case 'complete_quest':
+                goalName.textContent = `Complete quest: ${goal.questId}`;
+                goalProgress.textContent = 'In progress';
+                break;
+                
+            default:
+                goalName.textContent = 'Unknown goal';
+                goalProgress.textContent = '-';
         }
     }
 
     updateSkillsList() {
         const skillsList = document.getElementById('skills-list');
-        
-        // Generate a hash of current skill levels and XP
-        const allSkills = skills.getAllSkills();
-        let skillsHash = '';
-        for (const skill of Object.values(allSkills)) {
-            skillsHash += `${skill.level}:${Math.floor(skill.xp)};`;
-        }
-        
-        // Only update if skills changed
-        if (skillsHash === this.cache.skillsHash) {
-            return;
-        }
-        
-        this.cache.skillsHash = skillsHash;
         skillsList.innerHTML = '';
 
+        const allSkills = skills.getAllSkills();
+        
         // Define skill layout order
         const skillLayout = [
             // Column 1
@@ -431,23 +351,6 @@ class UIManager {
     }
 
     updateInventory() {
-        // Generate inventory hash
-        let inventoryHash = '';
-        for (const slot of inventory.slots) {
-            if (slot) {
-                inventoryHash += `${slot.itemId}:${slot.quantity};`;
-            } else {
-                inventoryHash += 'empty;';
-            }
-        }
-        
-        // Only update if inventory changed
-        if (inventoryHash === this.cache.inventoryHash) {
-            return;
-        }
-        
-        this.cache.inventoryHash = inventoryHash;
-        
         const inventoryGrid = document.getElementById('inventory-grid');
         inventoryGrid.innerHTML = '';
 
