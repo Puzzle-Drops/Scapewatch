@@ -3,15 +3,37 @@ class MapRenderer {
         this.canvas = document.getElementById('game-canvas');
         this.ctx = this.canvas.getContext('2d');
         this.camera = {
-            x: 0,
-            y: 0,
+            x: 4395, // Start at player position
+            y: 1882, // Start at player position
             zoom: 6.25 // increased by 1/4 from 5
         };
         this.worldMap = loadingManager.getImage('worldMap');
         this.showNodeText = false; // Flag for showing node text
+        this.mapCache = null; // Cached map canvas
+        this.initMapCache();
+    }
+
+    initMapCache() {
+        if (!this.worldMap) return;
+        
+        // Create offscreen canvas for map cache
+        this.mapCache = document.createElement('canvas');
+        this.mapCache.width = this.worldMap.width;
+        this.mapCache.height = this.worldMap.height;
+        
+        const cacheCtx = this.mapCache.getContext('2d');
+        // Render map once to cache
+        cacheCtx.drawImage(this.worldMap, 0, 0);
+        
+        console.log('Map cached to offscreen canvas');
     }
 
     render() {
+        // Initialize map cache if not done yet (in case image loaded after constructor)
+        if (!this.mapCache && this.worldMap) {
+            this.initMapCache();
+        }
+        
         // Clear canvas
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -27,9 +49,34 @@ class MapRenderer {
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
         this.ctx.translate(-this.camera.x, -this.camera.y);
 
-        // Draw world map
-        if (this.worldMap) {
-            this.ctx.drawImage(this.worldMap, 0, 0);
+        // Draw world map (only visible portion from cache)
+        if (this.mapCache) {
+            // Calculate visible bounds in world coordinates
+            const viewWidth = this.canvas.width / this.camera.zoom;
+            const viewHeight = this.canvas.height / this.camera.zoom;
+            
+            const viewLeft = this.camera.x - viewWidth / 2;
+            const viewRight = this.camera.x + viewWidth / 2;
+            const viewTop = this.camera.y - viewHeight / 2;
+            const viewBottom = this.camera.y + viewHeight / 2;
+            
+            // Clamp to map boundaries
+            const mapWidth = this.mapCache.width;
+            const mapHeight = this.mapCache.height;
+            
+            const sourceX = Math.max(0, viewLeft);
+            const sourceY = Math.max(0, viewTop);
+            const sourceWidth = Math.min(viewRight, mapWidth) - sourceX;
+            const sourceHeight = Math.min(viewBottom, mapHeight) - sourceY;
+            
+            // Only draw if there's something visible
+            if (sourceWidth > 0 && sourceHeight > 0) {
+                this.ctx.drawImage(
+                    this.mapCache,
+                    sourceX, sourceY, sourceWidth, sourceHeight,  // Source rectangle
+                    sourceX, sourceY, sourceWidth, sourceHeight   // Destination rectangle
+                );
+            }
         }
 
         // Draw nodes
