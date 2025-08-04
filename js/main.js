@@ -124,9 +124,11 @@ function gameLoop(currentTime) {
             player.update(gameState.deltaTime);
         }
 
-        // Render
-        map.render();
+        // Update UI only for frequently changing elements
         ui.update();
+
+        // Always render the map for smooth player movement and camera
+        map.render();
         
         // Subtract frame time from accumulator (don't reset to 0)
         gameState.accumulator -= gameState.frameTime;
