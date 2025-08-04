@@ -51,7 +51,8 @@ function startGame() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'flex';
 
-    // Initialize game systems
+    // Initialize game systems (order matters!)
+    // skillBehaviors is already instantiated in skillBehaviors.js
     window.skills = new SkillsManager();
     window.inventory = new Inventory();
     window.bank = new Bank();
