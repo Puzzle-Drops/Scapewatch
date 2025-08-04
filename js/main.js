@@ -6,6 +6,13 @@ window.gameState = {
     deltaTime: 0
 };
 
+// Fixed game dimensions
+const GAME_WIDTH = 2560;
+const GAME_HEIGHT = 1440;
+const UI_PANEL_WIDTH = 350;
+const CANVAS_WIDTH = GAME_WIDTH - UI_PANEL_WIDTH;
+const CANVAS_HEIGHT = GAME_HEIGHT;
+
 // Initialize the game
 async function init() {
     // Add assets to load
@@ -43,10 +50,24 @@ async function init() {
     }
 }
 
+function updateScale() {
+    const gameScaler = document.getElementById('game-scaler');
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Calculate scale to fit window while maintaining aspect ratio
+    const scaleX = windowWidth / GAME_WIDTH;
+    const scaleY = windowHeight / GAME_HEIGHT;
+    const scale = Math.min(scaleX, scaleY);
+    
+    // Apply scale transform
+    gameScaler.style.transform = `scale(${scale})`;
+}
+
 function startGame() {
     // Hide loading screen
     document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'flex';
+    document.getElementById('game-wrapper').style.display = 'flex';
 
     // Initialize game systems
     window.skills = new SkillsManager();
@@ -58,17 +79,17 @@ function startGame() {
     window.ui = new UIManager();
     window.ai = new AIManager();
 
-    // Set up canvas
+    // Set up canvas with fixed dimensions
     const canvas = document.getElementById('game-canvas');
-    const mapContainer = document.querySelector('.map-container');
-    canvas.width = mapContainer.clientWidth;
-    canvas.height = mapContainer.clientHeight;
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    // Set initial scale
+    updateScale();
 
     // Handle window resize
     window.addEventListener('resize', () => {
-        canvas.width = mapContainer.clientWidth;
-        canvas.height = mapContainer.clientHeight;
-        map.render();
+        updateScale();
     });
 
     // Set up controls
