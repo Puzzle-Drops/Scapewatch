@@ -92,7 +92,6 @@ class MapRenderer {
         this.ctx.restore();
 
         // Draw UI elements (not affected by camera)
-        this.drawMinimap();
         this.drawFPS();
     }
 
@@ -211,57 +210,6 @@ class MapRenderer {
         this.ctx.setLineDash([1, 1]); // reduced from [5, 5]
         this.ctx.stroke();
         this.ctx.setLineDash([]);
-    }
-
-    drawMinimap() {
-        const minimapSize = 150;
-        const minimapX = this.canvas.width - minimapSize - 10;
-        const minimapY = 10;
-
-        // Minimap background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(minimapX, minimapY, minimapSize, minimapSize);
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
-
-        // Scale factor for minimap
-        const scale = minimapSize / 1000; // Assuming world is roughly 1000x1000
-
-        // Draw nodes on minimap
-        const allNodes = nodes.getAllNodes();
-        for (const node of Object.values(allNodes)) {
-            const mx = minimapX + node.position.x * scale;
-            const my = minimapY + node.position.y * scale;
-
-            this.ctx.beginPath();
-            this.ctx.arc(mx, my, 2, 0, Math.PI * 2);
-
-            switch (node.type) {
-                case 'bank':
-                    this.ctx.fillStyle = '#f1c40f';
-                    break;
-                case 'skill':
-                    this.ctx.fillStyle = '#3498db';
-                    break;
-                case 'quest':
-                    this.ctx.fillStyle = '#e74c3c';
-                    break;
-                default:
-                    this.ctx.fillStyle = '#95a5a6';
-            }
-
-            this.ctx.fill();
-        }
-
-        // Draw player on minimap
-        const px = minimapX + player.position.x * scale;
-        const py = minimapY + player.position.y * scale;
-
-        this.ctx.beginPath();
-        this.ctx.arc(px, py, 3, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
     }
 
     drawFPS() {
