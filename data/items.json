@@ -17,9 +17,21 @@
         "stackable": false,
         "category": "resource"
     },
+    "teak_logs": {
+        "id": "teak_logs",
+        "name": "Teak Logs",
+        "stackable": false,
+        "category": "resource"
+    },
     "maple_logs": {
         "id": "maple_logs",
         "name": "Maple Logs",
+        "stackable": false,
+        "category": "resource"
+    },
+    "mahogany_logs": {
+        "id": "mahogany_logs",
+        "name": "Mahogany Logs",
         "stackable": false,
         "category": "resource"
     },
@@ -41,18 +53,6 @@
         "stackable": false,
         "category": "resource"
     },
-    "teak_logs": {
-        "id": "teak_logs",
-        "name": "Teak Logs",
-        "stackable": false,
-        "category": "resource"
-    },
-    "mahogany_logs": {
-        "id": "mahogany_logs",
-        "name": "Mahogany Logs",
-        "stackable": false,
-        "category": "resource"
-    },
     "copper_ore": {
         "id": "copper_ore",
         "name": "Copper Ore",
@@ -70,6 +70,72 @@
         "name": "Iron Ore",
         "stackable": false,
         "category": "resource"
+    },
+    "silver_ore": {
+        "id": "silver_ore",
+        "name": "Silver Ore",
+        "stackable": false,
+        "category": "resource"
+    },
+    "coal": {
+        "id": "coal",
+        "name": "Coal",
+        "stackable": false,
+        "category": "resource"
+    },
+    "gold_ore": {
+        "id": "gold_ore",
+        "name": "Gold Ore",
+        "stackable": false,
+        "category": "resource"
+    },
+    "mithril_ore": {
+        "id": "mithril_ore",
+        "name": "Mithril Ore",
+        "stackable": false,
+        "category": "resource"
+    },
+    "adamantite_ore": {
+        "id": "adamantite_ore",
+        "name": "Adamantite Ore",
+        "stackable": false,
+        "category": "resource"
+    },
+    "runite_ore": {
+        "id": "runite_ore",
+        "name": "Runite Ore",
+        "stackable": false,
+        "category": "resource"
+    },
+    "amethyst": {
+        "id": "amethyst",
+        "name": "Amethyst",
+        "stackable": false,
+        "category": "resource"
+    },
+    "uncut_sapphire": {
+        "id": "uncut_sapphire",
+        "name": "Uncut Sapphire",
+        "stackable": false,
+        "category": "gem"
+    },
+    "uncut_emerald": {
+        "id": "uncut_emerald",
+        "name": "Uncut Emerald",
+        "stackable": false,
+        "category": "gem"
+    },
+    "uncut_ruby": {
+        "id": "uncut_ruby",
+        "name": "Uncut Ruby",
+        "stackable": false,
+        "category": "gem"
+    },
+    "uncut_diamond": {
+        "id": "uncut_diamond",
+        "name": "Uncut Diamond",
+        "stackable": false,
+        "category": "gem"
     },
     "raw_shrimp": {
         "id": "raw_shrimp",
