@@ -115,7 +115,7 @@ class AIManager {
                 console.log('New goal selected:', goal);
                 // Update UI immediately when new goal is selected
                 if (window.ui) {
-                    window.ui.updateGoal();
+                    window.ui.forceGoalUpdate();
                 }
                 return;
             }
@@ -343,6 +343,11 @@ class AIManager {
         }
 
         console.log(`Generated ${this.goals.length - baseGoalCount} new goals`);
+        
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceGoalUpdate();
+        }
     }
 
     getStatus() {
