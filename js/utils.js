@@ -37,6 +37,7 @@ function getLevelFromXp(xp) {
 }
 
 // Get action duration with level scaling - MODIFIED to always return base duration
+// NOTE: This is deprecated - use skillBehaviors.getDuration() instead
 function getActionDuration(baseDuration, skillLevel, requiredLevel) {
     if (skillLevel < requiredLevel) return null;
     // No more scaling - always return base duration
@@ -44,6 +45,7 @@ function getActionDuration(baseDuration, skillLevel, requiredLevel) {
 }
 
 // Get scaled reward chance based on level
+// NOTE: This is deprecated - use skillBehaviors.getScaledChance() instead
 function getScaledChance(reward, skillLevel) {
     // If no scaling data, return the flat chance
     if (!reward.chanceScaling) {
