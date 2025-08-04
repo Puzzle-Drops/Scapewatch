@@ -5,7 +5,10 @@ window.gameState = {
     lastTime: 0,
     deltaTime: 0,
     frameTime: 1000 / 60, // 60 FPS limit
-    accumulator: 0
+    accumulator: 0,
+    fps: 0,
+    frameCount: 0,
+    fpsTime: 0
 };
 
 // Initialize the game
@@ -99,13 +102,21 @@ function gameLoop(currentTime) {
     const frameTime = currentTime - gameState.lastTime;
     gameState.lastTime = currentTime;
     
+    // Update FPS counter
+    gameState.frameCount++;
+    if (currentTime - gameState.fpsTime >= 1000) {
+        gameState.fps = gameState.frameCount;
+        gameState.frameCount = 0;
+        gameState.fpsTime = currentTime;
+    }
+    
     // Accumulate time for fixed timestep
     gameState.accumulator += frameTime;
     
     // Only update if enough time has passed (60 FPS limit)
     if (gameState.accumulator >= gameState.frameTime) {
-        // Calculate delta time (capped at 16.67ms for 60 FPS)
-        gameState.deltaTime = Math.min(gameState.accumulator, gameState.frameTime);
+        // Use the actual frame time for deltaTime (not the accumulator)
+        gameState.deltaTime = gameState.frameTime;
         
         // Update game systems
         if (!gameState.paused) {
@@ -117,8 +128,8 @@ function gameLoop(currentTime) {
         map.render();
         ui.update();
         
-        // Reset accumulator
-        gameState.accumulator = 0;
+        // Subtract frame time from accumulator (don't reset to 0)
+        gameState.accumulator -= gameState.frameTime;
     }
 
     // Continue loop
