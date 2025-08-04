@@ -218,7 +218,6 @@ class MapRenderer {
 
     handleClick(x, y) {
         // Convert screen coordinates to world coordinates
-        // Note: This would need to be updated to handle the scaling if click handling is implemented
         const worldX = (x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
         const worldY = (y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
 
