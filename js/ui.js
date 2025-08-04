@@ -106,23 +106,34 @@ class UIManager {
             }
             activityName.textContent = displayName;
 
-            // Calculate actions per hour
-            const duration = getActionDuration(
+            // Get skill-specific behavior
+            const behavior = skillBehaviors.getBehavior(activityData.skill);
+            
+            // Calculate actions per hour based on skill-specific duration
+            const duration = behavior.getDuration(
                 activityData.baseDuration,
                 skills.getLevel(activityData.skill),
-                activityData.requiredLevel
+                activityData
             );
             const actionsPerHour = Math.floor(3600000 / duration);
             
-            // For woodcutting, calculate XP/hr based on success rate
+            // Calculate XP/hr based on skill-specific mechanics
             let xpPerHour;
-            if (activityData.skill === 'woodcutting' && activityData.rewards && activityData.rewards.length > 0) {
-                // Get the scaled chance for the main reward (logs)
-                const mainReward = activityData.rewards[0];
-                const successChance = getScaledChance(mainReward, skills.getLevel('woodcutting'));
+            
+            // For skills that only grant XP on success (woodcutting, mining)
+            if (activityData.skill === 'woodcutting' || activityData.skill === 'mining') {
+                let successChance = 1.0;
+                
+                if (activityData.rewards && activityData.rewards.length > 0) {
+                    const mainReward = activityData.rewards[0];
+                    successChance = mainReward.chanceScaling ? 
+                        behavior.getScaledChance(mainReward, skills.getLevel(activityData.skill)) :
+                        (mainReward.chance || 1.0);
+                }
+                
                 xpPerHour = Math.floor(actionsPerHour * activityData.xpPerAction * successChance);
             } else {
-                // For non-woodcutting activities, use the standard calculation
+                // For other activities, use the standard calculation
                 xpPerHour = actionsPerHour * activityData.xpPerAction;
             }
 
