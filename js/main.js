@@ -3,7 +3,9 @@ window.gameState = {
     running: false,
     paused: false,
     lastTime: 0,
-    deltaTime: 0
+    deltaTime: 0,
+    frameTime: 1000 / 60, // 60 FPS limit
+    accumulator: 0
 };
 
 // Initialize the game
@@ -93,19 +95,31 @@ function startGame() {
 function gameLoop(currentTime) {
     if (!gameState.running) return;
 
-    // Calculate delta time
-    gameState.deltaTime = currentTime - gameState.lastTime;
+    // Calculate time since last frame
+    const frameTime = currentTime - gameState.lastTime;
     gameState.lastTime = currentTime;
+    
+    // Accumulate time for fixed timestep
+    gameState.accumulator += frameTime;
+    
+    // Only update if enough time has passed (60 FPS limit)
+    if (gameState.accumulator >= gameState.frameTime) {
+        // Calculate delta time (capped at 16.67ms for 60 FPS)
+        gameState.deltaTime = Math.min(gameState.accumulator, gameState.frameTime);
+        
+        // Update game systems
+        if (!gameState.paused) {
+            ai.update(gameState.deltaTime);
+            player.update(gameState.deltaTime);
+        }
 
-    // Update game systems
-    if (!gameState.paused) {
-        ai.update(gameState.deltaTime);
-        player.update(gameState.deltaTime);
+        // Render
+        map.render();
+        ui.update();
+        
+        // Reset accumulator
+        gameState.accumulator = 0;
     }
-
-    // Render
-    map.render();
-    ui.update();
 
     // Continue loop
     requestAnimationFrame(gameLoop);
