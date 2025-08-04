@@ -8,6 +8,11 @@ class Bank {
             this.items[itemId] = 0;
         }
         this.items[itemId] += quantity;
+        
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceBankUpdate();
+        }
     }
 
     withdraw(itemId, quantity) {
@@ -18,6 +23,11 @@ class Bank {
         this.items[itemId] -= quantity;
         if (this.items[itemId] <= 0) {
             delete this.items[itemId];
+        }
+
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceBankUpdate();
         }
 
         return quantity;
@@ -40,6 +50,9 @@ class Bank {
         }
 
         inventory.clear();
+        
+        // Note: deposit() and clear() already notify UI, no need to do it again
+        
         return deposited;
     }
 
