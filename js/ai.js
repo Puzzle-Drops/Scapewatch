@@ -171,20 +171,31 @@ class AIManager {
             return;
         }
 
-        // For woodcutting, calculate effective XP/action based on success rate
+        // Calculate effective XP/action based on skill-specific mechanics
         let bestActivity = null;
         let bestEffectiveXp = 0;
 
         for (const [activityId, activityData] of skillActivities) {
             let effectiveXp;
             
-            if (skillId === 'woodcutting' && activityData.rewards && activityData.rewards.length > 0) {
-                // Calculate effective XP based on success chance
-                const mainReward = activityData.rewards[0];
-                const successChance = getScaledChance(mainReward, skills.getLevel('woodcutting'));
+            // Get skill-specific behavior
+            const behavior = skillBehaviors.getBehavior(skillId);
+            
+            // For skills that only grant XP on success (woodcutting, mining)
+            if (skillId === 'woodcutting' || skillId === 'mining') {
+                // Estimate success rate based on rewards
+                let successChance = 1.0;
+                
+                if (activityData.rewards && activityData.rewards.length > 0) {
+                    const mainReward = activityData.rewards[0];
+                    successChance = mainReward.chanceScaling ? 
+                        behavior.getScaledChance(mainReward, skills.getLevel(skillId)) :
+                        (mainReward.chance || 1.0);
+                }
+                
                 effectiveXp = activityData.xpPerAction * successChance;
             } else {
-                // For non-woodcutting activities, use base XP
+                // For other activities, use base XP
                 effectiveXp = activityData.xpPerAction;
             }
 
