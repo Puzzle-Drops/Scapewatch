@@ -93,12 +93,8 @@ class Player {
         // Give rewards
         if (activityData.rewards) {
             for (const reward of activityData.rewards) {
-                // Get scaled chance for woodcutting activities
-                const scaledChance = getScaledChance(
-                    this.currentActivity, 
-                    reward.chance, 
-                    skills.getLevel(activityData.skill)
-                );
+                // Get scaled chance for activities with scaling
+                const scaledChance = getScaledChance(reward, skills.getLevel(activityData.skill));
                 
                 if (Math.random() <= scaledChance) {
                     const added = inventory.addItem(reward.itemId, reward.quantity);
