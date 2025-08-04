@@ -72,6 +72,13 @@ body {
     position: absolute;
     top: 0;
     left: 0;
+    /* GPU acceleration hints */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: transform;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: pixelated;
 }
 
 /* UI Panel */
