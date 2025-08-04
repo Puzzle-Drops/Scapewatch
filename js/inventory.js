@@ -53,7 +53,14 @@ class Inventory {
             }
         }
 
-        return quantity - remaining; // Return amount actually added
+        const added = quantity - remaining;
+        
+        // Notify UI if items were added
+        if (added > 0 && window.ui) {
+            window.ui.forceInventoryUpdate();
+        }
+
+        return added; // Return amount actually added
     }
 
     removeItem(itemId, quantity = 1) {
@@ -72,7 +79,14 @@ class Inventory {
             }
         }
 
-        return quantity - remaining; // Return amount actually removed
+        const removed = quantity - remaining;
+        
+        // Notify UI if items were removed
+        if (removed > 0 && window.ui) {
+            window.ui.forceInventoryUpdate();
+        }
+
+        return removed; // Return amount actually removed
     }
 
     hasItem(itemId, quantity = 1) {
@@ -123,5 +137,10 @@ class Inventory {
 
     clear() {
         this.initializeSlots();
+        
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceInventoryUpdate();
+        }
     }
 }
