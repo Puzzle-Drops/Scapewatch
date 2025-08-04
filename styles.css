@@ -72,6 +72,12 @@ body {
     position: absolute;
     top: 0;
     left: 0;
+    transform: translateZ(0); /* Force GPU acceleration */
+    will-change: transform; /* Hint browser about animations */
+    image-rendering: crisp-edges; /* Prevent blurry pixels */
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
 }
 
 /* UI Panel */
@@ -80,6 +86,9 @@ body {
     background-color: #2a2a2a;
     padding: 20px;
     overflow-y: auto;
+    /* Use GPU for scrolling */
+    transform: translateZ(0);
+    -webkit-overflow-scrolling: touch;
 }
 
 .panel {
@@ -306,6 +315,9 @@ body {
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
+    /* Use GPU for modal scrolling */
+    transform: translateZ(0);
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-content h2 {
