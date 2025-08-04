@@ -1,6 +1,10 @@
 class UIManager {
     constructor() {
         this.bankOpen = false;
+        this.lastInventoryState = null;
+        this.lastBankState = null;
+        this.lastActivityState = null;
+        this.lastGoalState = null;
         this.initializeUI();
     }
 
@@ -8,15 +12,83 @@ class UIManager {
         this.updateSkillsList();
         this.updateInventory();
         this.updateBank();
-    }
-
-    update() {
         this.updateActivity();
         this.updateGoal();
+    }
+
+    // Called from game loop - only updates if data changed
+    update() {
+        // Activity updates frequently due to progress, but only if actually performing activity
+        if (this.hasActivityChanged()) {
+            this.updateActivity();
+        }
+
+        // Goal only updates when progress changes significantly
+        if (this.hasGoalChanged()) {
+            this.updateGoal();
+        }
+    }
+
+    // Force update specific UI elements when data changes
+    forceInventoryUpdate() {
         this.updateInventory();
+    }
+
+    forceBankUpdate() {
         if (this.bankOpen) {
             this.updateBank();
         }
+    }
+
+    forceActivityUpdate() {
+        this.updateActivity();
+    }
+
+    forceGoalUpdate() {
+        this.updateGoal();
+    }
+
+    hasActivityChanged() {
+        const currentState = {
+            activity: player.currentActivity,
+            moving: player.isMoving(),
+            targetNode: player.targetNode,
+            currentNode: player.currentNode,
+            progress: player.currentActivity ? Math.floor(player.activityProgress * 100) : 0
+        };
+
+        const changed = JSON.stringify(currentState) !== JSON.stringify(this.lastActivityState);
+        this.lastActivityState = currentState;
+        return changed;
+    }
+
+    hasGoalChanged() {
+        if (!window.ai || !window.ai.currentGoal) {
+            const hasGoal = this.lastGoalState !== null;
+            this.lastGoalState = null;
+            return hasGoal;
+        }
+
+        const goal = window.ai.currentGoal;
+        let currentState = {
+            type: goal.type,
+            target: goal.targetLevel || goal.targetCount || goal.questId
+        };
+
+        // Add current progress to state
+        switch (goal.type) {
+            case 'skill_level':
+                currentState.level = skills.getLevel(goal.skill);
+                currentState.xp = Math.floor(skills.getXp(goal.skill));
+                break;
+            case 'bank_items':
+                currentState.count = bank.getItemCount(goal.itemId);
+                break;
+        }
+
+        const changed = JSON.stringify(currentState) !== JSON.stringify(this.lastGoalState);
+        this.lastGoalState = currentState;
+        return changed;
     }
 
     updateActivity() {
@@ -352,6 +424,14 @@ class UIManager {
 
     updateInventory() {
         const inventoryGrid = document.getElementById('inventory-grid');
+        
+        // Store current state for comparison
+        const currentState = JSON.stringify(inventory.slots);
+        if (currentState === this.lastInventoryState) {
+            return; // No changes, skip update
+        }
+        this.lastInventoryState = currentState;
+        
         inventoryGrid.innerHTML = '';
 
         for (let i = 0; i < inventory.maxSlots; i++) {
@@ -396,6 +476,14 @@ class UIManager {
 
     updateBank() {
         const bankGrid = document.getElementById('bank-grid');
+        
+        // Store current state for comparison
+        const currentState = JSON.stringify(bank.items);
+        if (currentState === this.lastBankState) {
+            return; // No changes, skip update
+        }
+        this.lastBankState = currentState;
+        
         bankGrid.innerHTML = '';
 
         const bankItems = bank.getAllItems();
