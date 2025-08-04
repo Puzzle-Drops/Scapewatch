@@ -3,7 +3,11 @@ window.gameState = {
     running: false,
     paused: false,
     lastTime: 0,
-    deltaTime: 0
+    deltaTime: 0,
+    frameCount: 0,
+    fps: 0,
+    fpsUpdateTime: 0,
+    targetFPS: 30  // Limit to 30 FPS for performance
 };
 
 // Initialize the game
@@ -64,11 +68,15 @@ function startGame() {
     canvas.width = mapContainer.clientWidth;
     canvas.height = mapContainer.clientHeight;
 
-    // Handle window resize
+    // Handle window resize with debouncing
+    let resizeTimeout;
     window.addEventListener('resize', () => {
-        canvas.width = mapContainer.clientWidth;
-        canvas.height = mapContainer.clientHeight;
-        map.render();
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            canvas.width = mapContainer.clientWidth;
+            canvas.height = mapContainer.clientHeight;
+            map.render();
+        }, 250); // Wait 250ms after resize stops
     });
 
     // Set up controls
@@ -85,6 +93,21 @@ function startGame() {
         ui.toggleBank();
     });
 
+    // Add FPS display (optional - can be removed in production)
+    const fpsDisplay = document.createElement('div');
+    fpsDisplay.style.position = 'fixed';
+    fpsDisplay.style.top = '10px';
+    fpsDisplay.style.left = '10px';
+    fpsDisplay.style.color = '#fff';
+    fpsDisplay.style.fontSize = '12px';
+    fpsDisplay.style.fontFamily = 'monospace';
+    fpsDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    fpsDisplay.style.padding = '5px';
+    fpsDisplay.style.borderRadius = '3px';
+    fpsDisplay.style.zIndex = '1000';
+    fpsDisplay.id = 'fps-display';
+    document.body.appendChild(fpsDisplay);
+
     // Start game loop
     gameState.running = true;
     requestAnimationFrame(gameLoop);
@@ -95,17 +118,38 @@ function gameLoop(currentTime) {
 
     // Calculate delta time
     gameState.deltaTime = currentTime - gameState.lastTime;
-    gameState.lastTime = currentTime;
+    
+    // Frame rate limiting
+    const frameTime = 1000 / gameState.targetFPS;
+    
+    if (gameState.deltaTime >= frameTime) {
+        // Update FPS counter
+        gameState.frameCount++;
+        if (currentTime - gameState.fpsUpdateTime >= 1000) {
+            gameState.fps = gameState.frameCount;
+            gameState.frameCount = 0;
+            gameState.fpsUpdateTime = currentTime;
+            
+            // Update FPS display
+            const fpsDisplay = document.getElementById('fps-display');
+            if (fpsDisplay) {
+                fpsDisplay.textContent = `FPS: ${gameState.fps}`;
+            }
+        }
+        
+        // Update game systems
+        if (!gameState.paused) {
+            ai.update(gameState.deltaTime);
+            player.update(gameState.deltaTime);
+        }
 
-    // Update game systems
-    if (!gameState.paused) {
-        ai.update(gameState.deltaTime);
-        player.update(gameState.deltaTime);
+        // Render only when frame time has passed
+        map.render();
+        ui.update();
+        
+        // Update last time to maintain consistent frame rate
+        gameState.lastTime = currentTime - (gameState.deltaTime % frameTime);
     }
-
-    // Render
-    map.render();
-    ui.update();
 
     // Continue loop
     requestAnimationFrame(gameLoop);
