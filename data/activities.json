@@ -5,9 +5,9 @@
         "skill": "woodcutting",
         "requiredLevel": 1,
         "xpPerAction": 25,
-        "baseDuration": 3000,
+        "baseDuration": 2400,
         "rewards": [
-            {"itemId": "logs", "quantity": 1, "chance": 1.0}
+            {"itemId": "logs", "quantity": 1, "chance": 0.254}
         ]
     },
     "chop_oak": {
@@ -16,7 +16,7 @@
         "skill": "woodcutting",
         "requiredLevel": 15,
         "xpPerAction": 37.5,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "oak_logs", "quantity": 1, "chance": 0.168}
         ]
@@ -27,7 +27,7 @@
         "skill": "woodcutting",
         "requiredLevel": 30,
         "xpPerAction": 67.5,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "willow_logs", "quantity": 1, "chance": 0.3}
         ]
@@ -38,7 +38,7 @@
         "skill": "woodcutting",
         "requiredLevel": 35,
         "xpPerAction": 85,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "teak_logs", "quantity": 1, "chance": 0.313}
         ]
@@ -49,7 +49,7 @@
         "skill": "woodcutting",
         "requiredLevel": 45,
         "xpPerAction": 100,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "maple_logs", "quantity": 1, "chance": 0.214}
         ]
@@ -60,7 +60,7 @@
         "skill": "woodcutting",
         "requiredLevel": 50,
         "xpPerAction": 125,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "mahogany_logs", "quantity": 1, "chance": 0.234}
         ]
@@ -71,7 +71,7 @@
         "skill": "woodcutting",
         "requiredLevel": 60,
         "xpPerAction": 175,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "yew_logs", "quantity": 1, "chance": 0.129}
         ]
@@ -82,7 +82,7 @@
         "skill": "woodcutting",
         "requiredLevel": 75,
         "xpPerAction": 250,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "magic_logs", "quantity": 1, "chance": 0.074}
         ]
@@ -93,7 +93,7 @@
         "skill": "woodcutting",
         "requiredLevel": 90,
         "xpPerAction": 380,
-        "baseDuration": 4000,
+        "baseDuration": 2400,
         "rewards": [
             {"itemId": "redwood_logs", "quantity": 1, "chance": 0.133}
         ]
