@@ -60,14 +60,17 @@ class AIManager {
     update(deltaTime) {
         // Cooldown to prevent too frequent decisions
         this.decisionCooldown -= deltaTime;
-        if (this.decisionCooldown > 0) return;
-
+        
         // Always check if current goal is complete
         if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
             console.log('Goal complete during update:', this.currentGoal);
             this.currentGoal = null;
             this.selectNewGoal();
+            this.decisionCooldown = 0; // Reset cooldown to make immediate decision
         }
+
+        // Only make decisions if cooldown has expired
+        if (this.decisionCooldown > 0) return;
 
         // Check if we need to make a decision
         if (!player.isBusy() || inventory.isFull()) {
@@ -77,6 +80,13 @@ class AIManager {
     }
 
     makeDecision() {
+        console.log('AI making decision...', {
+            isBusy: player.isBusy(),
+            inventoryFull: inventory.isFull(),
+            currentGoal: this.currentGoal?.type,
+            currentNode: player.currentNode
+        });
+        
         // If inventory is full, go to bank
         if (inventory.isFull()) {
             this.goToBank();
@@ -95,6 +105,7 @@ class AIManager {
 
         // Always try to execute the current goal when making a decision
         // This ensures we don't get stuck after banking or reaching a location
+        console.log('Executing goal:', this.currentGoal);
         this.executeGoal(this.currentGoal);
     }
 
@@ -189,7 +200,7 @@ class AIManager {
                 if (activityData.rewards && activityData.rewards.length > 0) {
                     const mainReward = activityData.rewards[0];
                     successChance = mainReward.chanceScaling ? 
-                        behavior.getScaledChance(mainReward, skills.getLevel(skillId)) :
+                        skillBehaviors.getScaledChance(mainReward, skills.getLevel(skillId)) :
                         (mainReward.chance || 1.0);
                 }
                 
@@ -211,6 +222,8 @@ class AIManager {
     }
 
     gatherItems(itemId) {
+        console.log(`Gathering items: ${itemId}`);
+        
         // Check if we already have enough in bank
         if (bank.getItemCount(itemId) >= this.currentGoal.targetCount) {
             console.log(`Already have enough ${itemId} in bank`);
@@ -223,6 +236,7 @@ class AIManager {
         const totalCount = inventoryCount + bankCount;
         
         if (inventoryCount > 0 && totalCount < this.currentGoal.targetCount) {
+            console.log(`Banking ${inventoryCount} ${itemId} first`);
             // Bank what we have first
             this.goToBank();
             return;
@@ -236,19 +250,26 @@ class AIManager {
                 return data.rewards?.some(r => r.itemId === itemId);
             });
 
+        console.log(`Found ${itemActivities.length} activities for ${itemId}`);
+        
         if (itemActivities.length === 0) {
             console.log(`No activities found for item ${itemId}`);
             return;
         }
 
         const [activityId] = itemActivities[0];
+        console.log(`Selected activity: ${activityId}`);
         this.doActivity(activityId);
     }
 
     doActivity(activityId) {
         // Check if we're at a node with this activity
         const currentNode = nodes.getNode(player.currentNode);
+        console.log(`Trying to do activity ${activityId} at node ${player.currentNode}`);
+        console.log(`Current node activities:`, currentNode?.activities);
+        
         if (currentNode && currentNode.activities?.includes(activityId)) {
+            console.log(`Starting activity ${activityId}`);
             player.startActivity(activityId);
             return;
         }
@@ -260,6 +281,7 @@ class AIManager {
             return;
         }
 
+        console.log(`Moving to node ${targetNode.id} for activity ${activityId}`);
         // Move to the node
         player.moveTo(targetNode.id);
     }
