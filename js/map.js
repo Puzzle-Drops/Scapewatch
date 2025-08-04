@@ -1,24 +1,18 @@
 class MapRenderer {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
-        this.ctx = this.canvas.getContext('2d', { alpha: false }); // Optimization: disable alpha
+        this.ctx = this.canvas.getContext('2d');
         this.camera = {
-            x: 4395, // Start at player position
-            y: 1882,
-            zoom: 6.25
+            x: 0,
+            y: 0,
+            zoom: 6.25 // increased by 1/4 from 5
         };
         this.worldMap = loadingManager.getImage('worldMap');
-        this.showNodeText = false;
-        
-        // Cache for performance
-        this.visibleNodes = [];
-        this.lastCameraX = 0;
-        this.lastCameraY = 0;
-        this.viewportPadding = 100; // Extra padding for smooth scrolling
+        this.showNodeText = false; // Flag for showing node text
     }
 
     render() {
-        // Clear canvas with black (no alpha)
+        // Clear canvas
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -28,62 +22,24 @@ class MapRenderer {
         // Save context state
         this.ctx.save();
 
-        // Apply camera transform with integer values to avoid sub-pixel rendering
-        const centerX = Math.floor(this.canvas.width / 2);
-        const centerY = Math.floor(this.canvas.height / 2);
-        const cameraX = Math.floor(this.camera.x);
-        const cameraY = Math.floor(this.camera.y);
-        
-        this.ctx.translate(centerX, centerY);
+        // Apply camera transform
+        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
         this.ctx.scale(this.camera.zoom, this.camera.zoom);
-        this.ctx.translate(-cameraX, -cameraY);
+        this.ctx.translate(-this.camera.x, -this.camera.y);
 
-        // Calculate visible bounds for culling
-        const viewLeft = cameraX - (centerX + this.viewportPadding) / this.camera.zoom;
-        const viewRight = cameraX + (centerX + this.viewportPadding) / this.camera.zoom;
-        const viewTop = cameraY - (centerY + this.viewportPadding) / this.camera.zoom;
-        const viewBottom = cameraY + (centerY + this.viewportPadding) / this.camera.zoom;
-
-        // Draw only visible portion of world map
+        // Draw world map
         if (this.worldMap) {
-            // Calculate which part of the image is visible
-            const imgLeft = Math.max(0, viewLeft);
-            const imgTop = Math.max(0, viewTop);
-            const imgRight = Math.min(this.worldMap.width, viewRight);
-            const imgBottom = Math.min(this.worldMap.height, viewBottom);
-            
-            if (imgRight > imgLeft && imgBottom > imgTop) {
-                // Draw only the visible portion
-                this.ctx.drawImage(
-                    this.worldMap,
-                    imgLeft, imgTop, // Source position
-                    imgRight - imgLeft, imgBottom - imgTop, // Source dimensions
-                    imgLeft, imgTop, // Destination position
-                    imgRight - imgLeft, imgBottom - imgTop // Destination dimensions
-                );
-            }
+            this.ctx.drawImage(this.worldMap, 0, 0);
         }
 
-        // Update visible nodes cache only if camera moved significantly
-        if (Math.abs(this.camera.x - this.lastCameraX) > 10 || 
-            Math.abs(this.camera.y - this.lastCameraY) > 10) {
-            this.updateVisibleNodes(viewLeft, viewRight, viewTop, viewBottom);
-            this.lastCameraX = this.camera.x;
-            this.lastCameraY = this.camera.y;
-        }
-
-        // Draw only visible nodes
-        for (const node of this.visibleNodes) {
-            this.drawNode(node);
-        }
+        // Draw nodes
+        this.drawNodes();
 
         // Draw player
         this.drawPlayer();
 
         // Draw player path
-        if (player.targetPosition) {
-            this.drawPlayerPath();
-        }
+        this.drawPlayerPath();
 
         // Restore context state
         this.ctx.restore();
@@ -93,7 +49,7 @@ class MapRenderer {
     }
 
     updateCamera() {
-        // Smooth camera follow with integer positions
+        // Smooth camera follow
         const targetX = player.position.x;
         const targetY = player.position.y;
 
@@ -101,23 +57,26 @@ class MapRenderer {
         this.camera.y = lerp(this.camera.y, targetY, 0.1);
     }
 
-    updateVisibleNodes(left, right, top, bottom) {
-        this.visibleNodes = [];
+    drawNodes() {
         const allNodes = nodes.getAllNodes();
 
-        for (const node of Object.values(allNodes)) {
-            // Check if node is within visible bounds
-            if (node.position.x >= left && node.position.x <= right &&
-                node.position.y >= top && node.position.y <= bottom) {
-                this.visibleNodes.push(node);
+        for (const [id, node] of Object.entries(allNodes)) {
+            // Only draw nodes within view
+            const screenDist = distance(
+                node.position.x,
+                node.position.y,
+                this.camera.x,
+                this.camera.y
+            );
+
+            if (screenDist < 1500 / this.camera.zoom) {
+                this.drawNode(node);
             }
         }
     }
 
     drawNode(node) {
-        // Use integer coordinates
-        const x = Math.floor(node.position.x);
-        const y = Math.floor(node.position.y);
+        const { x, y } = node.position;
 
         // Draw icons based on node type
         if (node.type === 'bank') {
@@ -152,7 +111,7 @@ class MapRenderer {
             uniqueSkills.forEach((skill, index) => {
                 const skillIcon = loadingManager.getImage(`skill_${skill}`);
                 if (skillIcon) {
-                    const iconX = Math.floor(startX + index * (iconSize + spacing));
+                    const iconX = startX + index * (iconSize + spacing);
                     this.ctx.drawImage(skillIcon, iconX, y - 2, iconSize, iconSize);
                 }
             });
@@ -160,53 +119,48 @@ class MapRenderer {
 
         // Node name (only if flag is set)
         if (this.showNodeText) {
-            this.ctx.font = '2px Arial';
+            this.ctx.font = '2px Arial'; // reduced from 8px
             this.ctx.fillStyle = '#fff';
             this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 0.25;
+            this.ctx.lineWidth = 0.25; // reduced from 1
             this.ctx.textAlign = 'center';
             this.ctx.textBaseline = 'bottom';
-            this.ctx.strokeText(node.name, x, y - 5);
+            this.ctx.strokeText(node.name, x, y - 5); // adjusted for smaller icons
             this.ctx.fillText(node.name, x, y - 5);
         }
     }
 
     drawPlayer() {
-        // Use integer coordinates
-        const x = Math.floor(player.position.x);
-        const y = Math.floor(player.position.y);
+        const { x, y } = player.position;
 
-        // Player circle
+        // Player circle (reduced to 1/5 of original size)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fill();
         this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4;
+        this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
 
         // Activity indicator
         if (player.currentActivity) {
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));
+            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
             this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 0.4;
+            this.ctx.lineWidth = 0.4;  // reduced from 2
             this.ctx.stroke();
         }
     }
 
     drawPlayerPath() {
-        const px = Math.floor(player.position.x);
-        const py = Math.floor(player.position.y);
-        const tx = Math.floor(player.targetPosition.x);
-        const ty = Math.floor(player.targetPosition.y);
-        
+        if (!player.targetPosition) return;
+
         this.ctx.beginPath();
-        this.ctx.moveTo(tx, ty);
-        this.ctx.lineTo(px, py);
+        this.ctx.moveTo(player.targetPosition.x, player.targetPosition.y);
+        this.ctx.lineTo(player.position.x, player.position.y);
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 0.4;
-        this.ctx.setLineDash([1, 1]);
+        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.setLineDash([1, 1]); // reduced from [5, 5]
         this.ctx.stroke();
         this.ctx.setLineDash([]);
     }
@@ -224,12 +178,13 @@ class MapRenderer {
         this.ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
 
         // Scale factor for minimap
-        const scale = minimapSize / 1000;
+        const scale = minimapSize / 1000; // Assuming world is roughly 1000x1000
 
-        // Draw only visible nodes on minimap for performance
-        for (const node of this.visibleNodes) {
-            const mx = Math.floor(minimapX + node.position.x * scale);
-            const my = Math.floor(minimapY + node.position.y * scale);
+        // Draw nodes on minimap
+        const allNodes = nodes.getAllNodes();
+        for (const node of Object.values(allNodes)) {
+            const mx = minimapX + node.position.x * scale;
+            const my = minimapY + node.position.y * scale;
 
             this.ctx.beginPath();
             this.ctx.arc(mx, my, 2, 0, Math.PI * 2);
@@ -252,8 +207,8 @@ class MapRenderer {
         }
 
         // Draw player on minimap
-        const px = Math.floor(minimapX + player.position.x * scale);
-        const py = Math.floor(minimapY + player.position.y * scale);
+        const px = minimapX + player.position.x * scale;
+        const py = minimapY + player.position.y * scale;
 
         this.ctx.beginPath();
         this.ctx.arc(px, py, 3, 0, Math.PI * 2);
@@ -263,15 +218,14 @@ class MapRenderer {
 
     handleClick(x, y) {
         // Convert screen coordinates to world coordinates
-        const centerX = this.canvas.width / 2;
-        const centerY = this.canvas.height / 2;
-        const worldX = (x - centerX) / this.camera.zoom + this.camera.x;
-        const worldY = (y - centerY) / this.camera.zoom + this.camera.y;
+        const worldX = (x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
+        const worldY = (y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
 
         // Check if clicked on a node
         const clickedNode = nodes.getNodeAt(worldX, worldY);
         if (clickedNode) {
             console.log('Clicked node:', clickedNode.name);
+            // Could add manual node interaction here
         }
     }
 }
