@@ -127,7 +127,7 @@ class UIManager {
                 if (activityData.rewards && activityData.rewards.length > 0) {
                     const mainReward = activityData.rewards[0];
                     successChance = mainReward.chanceScaling ? 
-                        behavior.getScaledChance(mainReward, skills.getLevel(activityData.skill)) :
+                        skillBehaviors.getScaledChance(mainReward, skills.getLevel(activityData.skill)) :
                         (mainReward.chance || 1.0);
                 }
                 
