@@ -166,6 +166,11 @@ class Player {
         this.targetPosition = { ...node.position };
         this.targetNode = targetNodeId;
         this.stopActivity();
+        
+        // Notify UI about movement change
+        if (window.ui) {
+            window.ui.forceActivityUpdate();
+        }
     }
 
     onReachedTarget() {
@@ -178,6 +183,11 @@ class Player {
             // Reset AI decision cooldown when reaching a destination
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
+            }
+            
+            // Notify UI
+            if (window.ui) {
+                window.ui.forceActivityUpdate();
             }
         }
     }
@@ -199,6 +209,11 @@ class Player {
         this.activityStartTime = Date.now();
         
         console.log(`Started activity: ${activityData.name}`);
+        
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceActivityUpdate();
+        }
     }
 
     stopActivity() {
@@ -207,6 +222,11 @@ class Player {
         }
         this.currentActivity = null;
         this.activityProgress = 0;
+        
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceActivityUpdate();
+        }
     }
 
     getMovementSpeed() {
