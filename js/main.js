@@ -4,8 +4,6 @@ window.gameState = {
     paused: false,
     lastTime: 0,
     deltaTime: 0,
-    frameTime: 1000 / 60, // 60 FPS limit
-    accumulator: 0,
     fps: 0,
     frameCount: 0,
     fpsTime: 0
@@ -92,15 +90,17 @@ function startGame() {
 
     // Start game loop
     gameState.running = true;
+    gameState.lastTime = performance.now();
     requestAnimationFrame(gameLoop);
 }
 
 function gameLoop(currentTime) {
     if (!gameState.running) return;
 
-    // Calculate time since last frame
-    const frameTime = currentTime - gameState.lastTime;
+    // Calculate actual time since last frame
+    const deltaTime = Math.min(currentTime - gameState.lastTime, 100); // Cap at 100ms to prevent huge jumps
     gameState.lastTime = currentTime;
+    gameState.deltaTime = deltaTime;
     
     // Update FPS counter
     gameState.frameCount++;
@@ -110,30 +110,18 @@ function gameLoop(currentTime) {
         gameState.fpsTime = currentTime;
     }
     
-    // Accumulate time for fixed timestep
-    gameState.accumulator += frameTime;
-    
-    // Only update if enough time has passed (60 FPS limit)
-    if (gameState.accumulator >= gameState.frameTime) {
-        // Use the actual frame time for deltaTime (not the accumulator)
-        gameState.deltaTime = gameState.frameTime;
-        
-        // Update game systems
-        if (!gameState.paused) {
-            ai.update(gameState.deltaTime);
-            player.update(gameState.deltaTime);
-        }
-
-        // Update UI only for frequently changing elements
-        ui.update();
-
-        // Always render the map for smooth player movement and camera
-        map.render();
-        
-        // Subtract frame time from accumulator (don't reset to 0)
-        gameState.accumulator -= gameState.frameTime;
+    // Update game systems with actual delta time
+    if (!gameState.paused) {
+        ai.update(deltaTime);
+        player.update(deltaTime);
     }
 
+    // Update UI only for frequently changing elements
+    ui.update();
+
+    // Always render the map
+    map.render();
+    
     // Continue loop
     requestAnimationFrame(gameLoop);
 }
