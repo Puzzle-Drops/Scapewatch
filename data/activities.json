@@ -186,11 +186,33 @@
         "requiredLevel": 1,
         "xpPerAction": 17.5,
         "baseDuration": 2500,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 1, "duration": 4200},
+                {"level": 5, "duration": 3600},
+                {"level": 10, "duration": 3000},
+                {"level": 31, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
         "rewards": [
             {
                 "itemId": "copper_ore",
                 "quantity": 1,
-                "chance": 1.0
+                "chanceScaling": {
+                    "minChance": 0.254,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 30
+                }
             }
         ]
     },
@@ -201,11 +223,33 @@
         "requiredLevel": 1,
         "xpPerAction": 17.5,
         "baseDuration": 2500,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 1, "duration": 4200},
+                {"level": 5, "duration": 3600},
+                {"level": 10, "duration": 3000},
+                {"level": 31, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
         "rewards": [
             {
                 "itemId": "tin_ore",
                 "quantity": 1,
-                "chance": 1.0
+                "chanceScaling": {
+                    "minChance": 0.254,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 30
+                }
             }
         ]
     },
@@ -216,11 +260,266 @@
         "requiredLevel": 15,
         "xpPerAction": 35,
         "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 15, "duration": 4200},
+                {"level": 20, "duration": 3600},
+                {"level": 25, "duration": 3000},
+                {"level": 31, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
         "rewards": [
             {
                 "itemId": "iron_ore",
                 "quantity": 1,
-                "chance": 1.0
+                "chanceScaling": {
+                    "minChance": 0.168,
+                    "maxChance": 1.0,
+                    "minLevel": 15,
+                    "maxLevel": 60
+                }
+            }
+        ]
+    },
+    "mine_silver": {
+        "id": "mine_silver",
+        "name": "Mine Silver",
+        "skill": "mining",
+        "requiredLevel": 20,
+        "xpPerAction": 40,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 20, "duration": 4200},
+                {"level": 25, "duration": 3600},
+                {"level": 30, "duration": 3000},
+                {"level": 31, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "silver_ore",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.2,
+                    "maxChance": 0.85,
+                    "minLevel": 20,
+                    "maxLevel": 70
+                }
+            }
+        ]
+    },
+    "mine_coal": {
+        "id": "mine_coal",
+        "name": "Mine Coal",
+        "skill": "mining",
+        "requiredLevel": 30,
+        "xpPerAction": 50,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 30, "duration": 3000},
+                {"level": 31, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "coal",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.25,
+                    "maxChance": 0.6,
+                    "minLevel": 30,
+                    "maxLevel": 85
+                }
+            }
+        ]
+    },
+    "mine_gold": {
+        "id": "mine_gold",
+        "name": "Mine Gold",
+        "skill": "mining",
+        "requiredLevel": 40,
+        "xpPerAction": 65,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 40, "duration": 3000},
+                {"level": 45, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "gold_ore",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.18,
+                    "maxChance": 0.4,
+                    "minLevel": 40,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "mine_mithril": {
+        "id": "mine_mithril",
+        "name": "Mine Mithril",
+        "skill": "mining",
+        "requiredLevel": 55,
+        "xpPerAction": 80,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 55, "duration": 3000},
+                {"level": 60, "duration": 2400},
+                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "mithril_ore",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.14,
+                    "maxChance": 0.25,
+                    "minLevel": 55,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "mine_adamantite": {
+        "id": "mine_adamantite",
+        "name": "Mine Adamantite",
+        "skill": "mining",
+        "requiredLevel": 70,
+        "xpPerAction": 95,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 70, "duration": 2400},
+                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "adamantite_ore",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.09,
+                    "maxChance": 0.14,
+                    "minLevel": 70,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "mine_runite": {
+        "id": "mine_runite",
+        "name": "Mine Runite",
+        "skill": "mining",
+        "requiredLevel": 85,
+        "xpPerAction": 125,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 85, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "gemTable": [
+            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+            {"itemId": "uncut_emerald", "chance": 0.00048828125},
+            {"itemId": "uncut_ruby", "chance": 0.000244140625},
+            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        ],
+        "rewards": [
+            {
+                "itemId": "runite_ore",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.05,
+                    "maxChance": 0.07,
+                    "minLevel": 85,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "mine_amethyst": {
+        "id": "mine_amethyst",
+        "name": "Mine Amethyst",
+        "skill": "mining",
+        "requiredLevel": 92,
+        "xpPerAction": 240,
+        "baseDuration": 4000,
+        "durationScaling": {
+            "type": "mining",
+            "breakpoints": [
+                {"level": 92, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
+            ]
+        },
+        "rewards": [
+            {
+                "itemId": "amethyst",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.12,
+                    "maxChance": 0.14,
+                    "minLevel": 92,
+                    "maxLevel": 99
+                }
             }
         ]
     },
