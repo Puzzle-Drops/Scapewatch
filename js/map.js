@@ -93,6 +93,7 @@ class MapRenderer {
 
         // Draw UI elements (not affected by camera)
         this.drawMinimap();
+        this.drawFPS();
     }
 
     updateCamera() {
@@ -261,6 +262,20 @@ class MapRenderer {
         this.ctx.arc(px, py, 3, 0, Math.PI * 2);
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fill();
+    }
+
+    drawFPS() {
+        // Draw FPS counter in top-left corner
+        this.ctx.font = '16px Arial';
+        this.ctx.fillStyle = '#0f0';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'top';
+        
+        const fpsText = `FPS: ${gameState.fps}`;
+        this.ctx.strokeText(fpsText, 10, 10);
+        this.ctx.fillText(fpsText, 10, 10);
     }
 
     handleClick(x, y) {
