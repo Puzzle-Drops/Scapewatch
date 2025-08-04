@@ -7,7 +7,16 @@
         "xpPerAction": 25,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "logs", "quantity": 1, "chance": 0.254}
+            {
+                "itemId": "logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.254,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 30
+                }
+            }
         ]
     },
     "chop_oak": {
@@ -18,7 +27,16 @@
         "xpPerAction": 37.5,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "oak_logs", "quantity": 1, "chance": 0.168}
+            {
+                "itemId": "oak_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.168,
+                    "maxChance": 1.0,
+                    "minLevel": 15,
+                    "maxLevel": 60
+                }
+            }
         ]
     },
     "chop_willow": {
@@ -29,7 +47,16 @@
         "xpPerAction": 67.5,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "willow_logs", "quantity": 1, "chance": 0.3}
+            {
+                "itemId": "willow_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.3,
+                    "maxChance": 0.734,
+                    "minLevel": 30,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_teak": {
@@ -40,7 +67,16 @@
         "xpPerAction": 85,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "teak_logs", "quantity": 1, "chance": 0.313}
+            {
+                "itemId": "teak_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.313,
+                    "maxChance": 0.785,
+                    "minLevel": 35,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_maple": {
@@ -51,7 +87,16 @@
         "xpPerAction": 100,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "maple_logs", "quantity": 1, "chance": 0.214}
+            {
+                "itemId": "maple_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.214,
+                    "maxChance": 0.367,
+                    "minLevel": 45,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_mahogany": {
@@ -62,7 +107,16 @@
         "xpPerAction": 125,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "mahogany_logs", "quantity": 1, "chance": 0.234}
+            {
+                "itemId": "mahogany_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.234,
+                    "maxChance": 0.383,
+                    "minLevel": 50,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_yew": {
@@ -73,7 +127,16 @@
         "xpPerAction": 175,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "yew_logs", "quantity": 1, "chance": 0.129}
+            {
+                "itemId": "yew_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.129,
+                    "maxChance": 0.187,
+                    "minLevel": 60,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_magic": {
@@ -84,7 +147,16 @@
         "xpPerAction": 250,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "magic_logs", "quantity": 1, "chance": 0.074}
+            {
+                "itemId": "magic_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.074,
+                    "maxChance": 0.09,
+                    "minLevel": 75,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "chop_redwood": {
@@ -95,7 +167,16 @@
         "xpPerAction": 380,
         "baseDuration": 2400,
         "rewards": [
-            {"itemId": "redwood_logs", "quantity": 1, "chance": 0.133}
+            {
+                "itemId": "redwood_logs",
+                "quantity": 1,
+                "chanceScaling": {
+                    "minChance": 0.133,
+                    "maxChance": 0.141,
+                    "minLevel": 90,
+                    "maxLevel": 99
+                }
+            }
         ]
     },
     "mine_copper": {
@@ -106,7 +187,11 @@
         "xpPerAction": 17.5,
         "baseDuration": 2500,
         "rewards": [
-            {"itemId": "copper_ore", "quantity": 1, "chance": 1.0}
+            {
+                "itemId": "copper_ore",
+                "quantity": 1,
+                "chance": 1.0
+            }
         ]
     },
     "mine_tin": {
@@ -117,7 +202,11 @@
         "xpPerAction": 17.5,
         "baseDuration": 2500,
         "rewards": [
-            {"itemId": "tin_ore", "quantity": 1, "chance": 1.0}
+            {
+                "itemId": "tin_ore",
+                "quantity": 1,
+                "chance": 1.0
+            }
         ]
     },
     "mine_iron": {
@@ -128,7 +217,11 @@
         "xpPerAction": 35,
         "baseDuration": 4000,
         "rewards": [
-            {"itemId": "iron_ore", "quantity": 1, "chance": 1.0}
+            {
+                "itemId": "iron_ore",
+                "quantity": 1,
+                "chance": 1.0
+            }
         ]
     },
     "fish_shrimp": {
@@ -139,7 +232,11 @@
         "xpPerAction": 10,
         "baseDuration": 3500,
         "rewards": [
-            {"itemId": "raw_shrimp", "quantity": 1, "chance": 1.0}
+            {
+                "itemId": "raw_shrimp",
+                "quantity": 1,
+                "chance": 1.0
+            }
         ]
     },
     "fight_goblin": {
@@ -155,9 +252,21 @@
             {"skill": "hitpoints", "amount": 13}
         ],
         "rewards": [
-            {"itemId": "coins", "quantity": 5, "chance": 0.8},
-            {"itemId": "coins", "quantity": 15, "chance": 0.2},
-            {"itemId": "goblin_mail", "quantity": 1, "chance": 0.05}
+            {
+                "itemId": "coins",
+                "quantity": 5,
+                "chance": 0.8
+            },
+            {
+                "itemId": "coins",
+                "quantity": 15,
+                "chance": 0.2
+            },
+            {
+                "itemId": "goblin_mail",
+                "quantity": 1,
+                "chance": 0.05
+            }
         ]
     },
     "cook_shrimp": {
@@ -169,7 +278,11 @@
         "xpPerAction": 30,
         "baseDuration": 2000,
         "rewards": [
-            {"itemId": "shrimp", "quantity": 1, "chance": 0.95}
+            {
+                "itemId": "shrimp",
+                "quantity": 1,
+                "chance": 0.95
+            }
         ]
     },
     "smelt_bronze": {
@@ -184,7 +297,11 @@
         "xpPerAction": 6.25,
         "baseDuration": 3000,
         "rewards": [
-            {"itemId": "bronze_bar", "quantity": 1, "chance": 1.0}
+            {
+                "itemId": "bronze_bar",
+                "quantity": 1,
+                "chance": 1.0
+            }
         ]
     }
 }
