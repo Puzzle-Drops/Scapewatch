@@ -7,7 +7,7 @@ class Player {
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
-        this.movementSpeed = 50; // pixels per second base
+        this.movementSpeed = 5; // pixels per second base
         this.path = [];
         this.pathIndex = 0;
     }
