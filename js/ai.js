@@ -164,16 +164,43 @@ class AIManager {
         // Find best activity for training this skill
         const activities = loadingManager.getData('activities');
         const skillActivities = Object.entries(activities)
-            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id))
-            .sort((a, b) => b[1].xpPerAction - a[1].xpPerAction);
+            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id));
 
         if (skillActivities.length === 0) {
             console.log(`No available activities for ${skillId}`);
             return;
         }
 
-        const [bestActivityId] = skillActivities[0];
-        this.doActivity(bestActivityId);
+        // For woodcutting, calculate effective XP/action based on success rate
+        let bestActivity = null;
+        let bestEffectiveXp = 0;
+
+        for (const [activityId, activityData] of skillActivities) {
+            let effectiveXp;
+            
+            if (skillId === 'woodcutting' && activityData.rewards && activityData.rewards.length > 0) {
+                // Calculate effective XP based on success chance
+                const mainReward = activityData.rewards[0];
+                const successChance = getScaledChance(
+                    activityId,
+                    mainReward.chance,
+                    skills.getLevel('woodcutting')
+                );
+                effectiveXp = activityData.xpPerAction * successChance;
+            } else {
+                // For non-woodcutting activities, use base XP
+                effectiveXp = activityData.xpPerAction;
+            }
+
+            if (effectiveXp > bestEffectiveXp) {
+                bestEffectiveXp = effectiveXp;
+                bestActivity = activityId;
+            }
+        }
+
+        if (bestActivity) {
+            this.doActivity(bestActivity);
+        }
     }
 
     gatherItems(itemId) {
