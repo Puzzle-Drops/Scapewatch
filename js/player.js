@@ -51,10 +51,12 @@ class Player {
         const activityData = loadingManager.getData('activities')[this.currentActivity];
         if (!activityData) return;
 
-        const duration = getActionDuration(
+        // Get skill-specific behavior
+        const behavior = skillBehaviors.getBehavior(activityData.skill);
+        const duration = behavior.getDuration(
             activityData.baseDuration,
             skills.getLevel(activityData.skill),
-            activityData.requiredLevel
+            activityData
         );
 
         if (!duration) {
@@ -87,35 +89,29 @@ class Player {
             }
         }
 
-        // Flag to track if we got a resource (for XP granting)
-        let gotResource = false;
-
-        // Give rewards
-        if (activityData.rewards) {
-            for (const reward of activityData.rewards) {
-                // Get scaled chance for activities with scaling
-                const scaledChance = getScaledChance(reward, skills.getLevel(activityData.skill));
-                
-                if (Math.random() <= scaledChance) {
-                    const added = inventory.addItem(reward.itemId, reward.quantity);
-                    if (added < reward.quantity) {
-                        // Inventory full
-                        console.log('Inventory full!');
-                        this.stopActivity();
-                        // Reset AI decision cooldown to react immediately
-                        if (window.ai) {
-                            window.ai.decisionCooldown = 0;
-                        }
-                        return;
-                    }
-                    gotResource = true; // We successfully got a resource
+        // Get skill-specific behavior
+        const behavior = skillBehaviors.getBehavior(activityData.skill);
+        
+        // Process rewards using skill-specific logic
+        const earnedRewards = behavior.processRewards(activityData, skills.getLevel(activityData.skill));
+        
+        // Add rewards to inventory
+        for (const reward of earnedRewards) {
+            const added = inventory.addItem(reward.itemId, reward.quantity);
+            if (added < reward.quantity) {
+                // Inventory full
+                console.log('Inventory full!');
+                this.stopActivity();
+                // Reset AI decision cooldown to react immediately
+                if (window.ai) {
+                    window.ai.decisionCooldown = 0;
                 }
+                return;
             }
         }
 
-        // Grant XP only if we got a resource (for woodcutting) or if it's not woodcutting
-        const isWoodcutting = activityData.skill === 'woodcutting';
-        if (!isWoodcutting || gotResource) {
+        // Grant XP based on skill-specific rules
+        if (behavior.shouldGrantXP(earnedRewards, activityData)) {
             skills.addXp(activityData.skill, activityData.xpPerAction);
             
             // Grant additional XP (for combat)
