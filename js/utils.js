@@ -36,12 +36,42 @@ function getLevelFromXp(xp) {
     return level;
 }
 
-// Get action duration with level scaling
+// Get action duration with level scaling - MODIFIED to always return base duration
 function getActionDuration(baseDuration, skillLevel, requiredLevel) {
     if (skillLevel < requiredLevel) return null;
-    const levelsOver = skillLevel - requiredLevel;
-    const reduction = Math.min(0.5, levelsOver * 0.02); // 2% per level, max 50%
-    return baseDuration * (1 - reduction);
+    // No more scaling - always return base duration
+    return baseDuration;
+}
+
+// Get scaled reward chance based on level for woodcutting
+function getScaledChance(activityId, baseChance, skillLevel) {
+    // Define chance ranges for each woodcutting activity
+    const chanceRanges = {
+        'chop_tree': { min: 0.254, max: 1.0, minLevel: 1, maxLevel: 30 },
+        'chop_oak': { min: 0.168, max: 1.0, minLevel: 15, maxLevel: 60 },
+        'chop_willow': { min: 0.3, max: 0.734, minLevel: 30, maxLevel: 99 },
+        'chop_teak': { min: 0.313, max: 0.785, minLevel: 35, maxLevel: 99 },
+        'chop_maple': { min: 0.214, max: 0.367, minLevel: 45, maxLevel: 99 },
+        'chop_mahogany': { min: 0.234, max: 0.383, minLevel: 50, maxLevel: 99 },
+        'chop_yew': { min: 0.129, max: 0.187, minLevel: 60, maxLevel: 99 },
+        'chop_magic': { min: 0.074, max: 0.09, minLevel: 75, maxLevel: 99 },
+        'chop_redwood': { min: 0.133, max: 0.141, minLevel: 90, maxLevel: 99 }
+    };
+    
+    const range = chanceRanges[activityId];
+    if (!range) {
+        // Not a woodcutting activity, return base chance
+        return baseChance;
+    }
+    
+    // Clamp level to valid range
+    const clampedLevel = Math.max(range.minLevel, Math.min(skillLevel, range.maxLevel));
+    
+    // Calculate progress through the level range (0 to 1)
+    const levelProgress = (clampedLevel - range.minLevel) / (range.maxLevel - range.minLevel);
+    
+    // Linear interpolation between min and max chance
+    return lerp(range.min, range.max, levelProgress);
 }
 
 // Random float between min and max
