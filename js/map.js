@@ -10,7 +10,9 @@ class MapRenderer {
         this.worldMap = loadingManager.getImage('worldMap');
         this.showNodeText = false; // Flag for showing node text
         this.mapCache = null; // Cached map canvas
+        this.nodesCache = null; // Cached nodes canvas
         this.initMapCache();
+        this.initNodesCache();
     }
 
     initMapCache() {
@@ -28,10 +30,89 @@ class MapRenderer {
         console.log('Map cached to offscreen canvas');
     }
 
+    initNodesCache() {
+        // Create offscreen canvas for nodes cache
+        // Make it the same size as the world map
+        if (!this.worldMap) return;
+        
+        this.nodesCache = document.createElement('canvas');
+        this.nodesCache.width = this.worldMap.width;
+        this.nodesCache.height = this.worldMap.height;
+        
+        const cacheCtx = this.nodesCache.getContext('2d');
+        
+        // Draw all nodes once to the cache
+        const allNodes = nodes.getAllNodes();
+        
+        for (const [id, node] of Object.entries(allNodes)) {
+            this.drawNodeToContext(node, cacheCtx);
+        }
+        
+        console.log('Nodes cached to offscreen canvas');
+    }
+
+    drawNodeToContext(node, ctx) {
+        const { x, y } = node.position;
+
+        // Draw icons based on node type
+        if (node.type === 'bank') {
+            const bankIcon = loadingManager.getImage('skill_bank');
+            if (bankIcon) {
+                ctx.drawImage(bankIcon, x - 2, y - 2, 4, 4);
+            }
+        } else if (node.type === 'quest') {
+            const questIcon = loadingManager.getImage('skill_quests');
+            if (questIcon) {
+                ctx.drawImage(questIcon, x - 2, y - 2, 4, 4);
+            }
+        } else if (node.type === 'skill' && node.activities) {
+            // Get unique skills from activities
+            const skillSet = new Set();
+            const activities = loadingManager.getData('activities');
+            
+            for (const activityId of node.activities) {
+                const activity = activities[activityId];
+                if (activity && activity.skill) {
+                    skillSet.add(activity.skill);
+                }
+            }
+            
+            const uniqueSkills = Array.from(skillSet);
+            const iconSize = 4;
+            const spacing = 0.5;
+            const totalWidth = uniqueSkills.length * iconSize + (uniqueSkills.length - 1) * spacing;
+            const startX = x - totalWidth / 2;
+            
+            // Draw skill icons
+            uniqueSkills.forEach((skill, index) => {
+                const skillIcon = loadingManager.getImage(`skill_${skill}`);
+                if (skillIcon) {
+                    const iconX = startX + index * (iconSize + spacing);
+                    ctx.drawImage(skillIcon, iconX, y - 2, iconSize, iconSize);
+                }
+            });
+        }
+
+        // Node name (only if flag is set)
+        if (this.showNodeText) {
+            ctx.font = '2px Arial'; // reduced from 8px
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 0.25; // reduced from 1
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.strokeText(node.name, x, y - 5); // adjusted for smaller icons
+            ctx.fillText(node.name, x, y - 5);
+        }
+    }
+
     render() {
-        // Initialize map cache if not done yet (in case image loaded after constructor)
+        // Initialize caches if not done yet (in case images loaded after constructor)
         if (!this.mapCache && this.worldMap) {
             this.initMapCache();
+        }
+        if (!this.nodesCache && this.worldMap) {
+            this.initNodesCache();
         }
         
         // Clear canvas
@@ -79,8 +160,35 @@ class MapRenderer {
             }
         }
 
-        // Draw nodes
-        this.drawNodes();
+        // Draw nodes from cache (same visible portion calculation)
+        if (this.nodesCache) {
+            // Calculate visible bounds in world coordinates
+            const viewWidth = this.canvas.width / this.camera.zoom;
+            const viewHeight = this.canvas.height / this.camera.zoom;
+            
+            const viewLeft = this.camera.x - viewWidth / 2;
+            const viewRight = this.camera.x + viewWidth / 2;
+            const viewTop = this.camera.y - viewHeight / 2;
+            const viewBottom = this.camera.y + viewHeight / 2;
+            
+            // Clamp to map boundaries
+            const mapWidth = this.nodesCache.width;
+            const mapHeight = this.nodesCache.height;
+            
+            const sourceX = Math.max(0, viewLeft);
+            const sourceY = Math.max(0, viewTop);
+            const sourceWidth = Math.min(viewRight, mapWidth) - sourceX;
+            const sourceHeight = Math.min(viewBottom, mapHeight) - sourceY;
+            
+            // Only draw if there's something visible
+            if (sourceWidth > 0 && sourceHeight > 0) {
+                this.ctx.drawImage(
+                    this.nodesCache,
+                    sourceX, sourceY, sourceWidth, sourceHeight,  // Source rectangle
+                    sourceX, sourceY, sourceWidth, sourceHeight   // Destination rectangle
+                );
+            }
+        }
 
         // Draw player
         this.drawPlayer();
@@ -92,7 +200,6 @@ class MapRenderer {
         this.ctx.restore();
 
         // Draw UI elements (not affected by camera)
-        this.drawMinimap();
         this.drawFPS();
     }
 
@@ -103,79 +210,6 @@ class MapRenderer {
 
         this.camera.x = lerp(this.camera.x, targetX, 0.1);
         this.camera.y = lerp(this.camera.y, targetY, 0.1);
-    }
-
-    drawNodes() {
-        const allNodes = nodes.getAllNodes();
-
-        for (const [id, node] of Object.entries(allNodes)) {
-            // Only draw nodes within view
-            const screenDist = distance(
-                node.position.x,
-                node.position.y,
-                this.camera.x,
-                this.camera.y
-            );
-
-            if (screenDist < 1500 / this.camera.zoom) {
-                this.drawNode(node);
-            }
-        }
-    }
-
-    drawNode(node) {
-        const { x, y } = node.position;
-
-        // Draw icons based on node type
-        if (node.type === 'bank') {
-            const bankIcon = loadingManager.getImage('skill_bank');
-            if (bankIcon) {
-                this.ctx.drawImage(bankIcon, x - 2, y - 2, 4, 4);
-            }
-        } else if (node.type === 'quest') {
-            const questIcon = loadingManager.getImage('skill_quests');
-            if (questIcon) {
-                this.ctx.drawImage(questIcon, x - 2, y - 2, 4, 4);
-            }
-        } else if (node.type === 'skill' && node.activities) {
-            // Get unique skills from activities
-            const skillSet = new Set();
-            const activities = loadingManager.getData('activities');
-            
-            for (const activityId of node.activities) {
-                const activity = activities[activityId];
-                if (activity && activity.skill) {
-                    skillSet.add(activity.skill);
-                }
-            }
-            
-            const uniqueSkills = Array.from(skillSet);
-            const iconSize = 4;
-            const spacing = 0.5;
-            const totalWidth = uniqueSkills.length * iconSize + (uniqueSkills.length - 1) * spacing;
-            const startX = x - totalWidth / 2;
-            
-            // Draw skill icons
-            uniqueSkills.forEach((skill, index) => {
-                const skillIcon = loadingManager.getImage(`skill_${skill}`);
-                if (skillIcon) {
-                    const iconX = startX + index * (iconSize + spacing);
-                    this.ctx.drawImage(skillIcon, iconX, y - 2, iconSize, iconSize);
-                }
-            });
-        }
-
-        // Node name (only if flag is set)
-        if (this.showNodeText) {
-            this.ctx.font = '2px Arial'; // reduced from 8px
-            this.ctx.fillStyle = '#fff';
-            this.ctx.strokeStyle = '#000';
-            this.ctx.lineWidth = 0.25; // reduced from 1
-            this.ctx.textAlign = 'center';
-            this.ctx.textBaseline = 'bottom';
-            this.ctx.strokeText(node.name, x, y - 5); // adjusted for smaller icons
-            this.ctx.fillText(node.name, x, y - 5);
-        }
     }
 
     drawPlayer() {
@@ -213,57 +247,6 @@ class MapRenderer {
         this.ctx.setLineDash([]);
     }
 
-    drawMinimap() {
-        const minimapSize = 150;
-        const minimapX = this.canvas.width - minimapSize - 10;
-        const minimapY = 10;
-
-        // Minimap background
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        this.ctx.fillRect(minimapX, minimapY, minimapSize, minimapSize);
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(minimapX, minimapY, minimapSize, minimapSize);
-
-        // Scale factor for minimap
-        const scale = minimapSize / 1000; // Assuming world is roughly 1000x1000
-
-        // Draw nodes on minimap
-        const allNodes = nodes.getAllNodes();
-        for (const node of Object.values(allNodes)) {
-            const mx = minimapX + node.position.x * scale;
-            const my = minimapY + node.position.y * scale;
-
-            this.ctx.beginPath();
-            this.ctx.arc(mx, my, 2, 0, Math.PI * 2);
-
-            switch (node.type) {
-                case 'bank':
-                    this.ctx.fillStyle = '#f1c40f';
-                    break;
-                case 'skill':
-                    this.ctx.fillStyle = '#3498db';
-                    break;
-                case 'quest':
-                    this.ctx.fillStyle = '#e74c3c';
-                    break;
-                default:
-                    this.ctx.fillStyle = '#95a5a6';
-            }
-
-            this.ctx.fill();
-        }
-
-        // Draw player on minimap
-        const px = minimapX + player.position.x * scale;
-        const py = minimapY + player.position.y * scale;
-
-        this.ctx.beginPath();
-        this.ctx.arc(px, py, 3, 0, Math.PI * 2);
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-    }
-
     drawFPS() {
         // Draw FPS counter in top-left corner
         this.ctx.font = '16px Arial';
@@ -288,6 +271,19 @@ class MapRenderer {
         if (clickedNode) {
             console.log('Clicked node:', clickedNode.name);
             // Could add manual node interaction here
+        }
+    }
+
+    // Method to refresh nodes cache if needed (e.g., if showNodeText changes)
+    refreshNodesCache() {
+        if (!this.nodesCache) return;
+        
+        const cacheCtx = this.nodesCache.getContext('2d');
+        cacheCtx.clearRect(0, 0, this.nodesCache.width, this.nodesCache.height);
+        
+        const allNodes = nodes.getAllNodes();
+        for (const [id, node] of Object.entries(allNodes)) {
+            this.drawNodeToContext(node, cacheCtx);
         }
     }
 }
