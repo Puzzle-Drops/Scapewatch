@@ -429,6 +429,29 @@ class UIManager {
         skillsList.appendChild(levelDiv);
     }
 
+    // Helper function to get coin image based on quantity
+    getCoinImage(quantity) {
+        if (quantity >= 10000) return 'coins_10000';
+        if (quantity >= 1000) return 'coins_1000';
+        if (quantity >= 250) return 'coins_250';
+        if (quantity >= 100) return 'coins_100';
+        if (quantity >= 25) return 'coins_25';
+        if (quantity >= 5) return 'coins_5';
+        if (quantity >= 4) return 'coins_4';
+        if (quantity >= 3) return 'coins_3';
+        if (quantity >= 2) return 'coins_2';
+        return 'coins_1';
+    }
+
+    // Helper function to format coin count
+    formatCoinCount(quantity) {
+        if (quantity >= 10000000) {
+            const millions = Math.floor(quantity / 1000000);
+            return { text: `${millions}M`, isGreen: true };
+        }
+        return { text: formatNumber(quantity), isGreen: false };
+    }
+
     updateInventory() {
         const inventoryGrid = document.getElementById('inventory-grid');
         
@@ -451,7 +474,15 @@ class UIManager {
                 
                 // Create image element
                 const img = document.createElement('img');
-                img.src = `assets/items/${slot.itemId}.png`;
+                
+                // Special handling for coins
+                if (slot.itemId === 'coins') {
+                    const coinImage = this.getCoinImage(slot.quantity);
+                    img.src = `assets/items/${coinImage}.png`;
+                } else {
+                    img.src = `assets/items/${slot.itemId}.png`;
+                }
+                
                 img.style.width = '100%';
                 img.style.height = '100%';
                 img.style.objectFit = 'contain';
@@ -470,7 +501,18 @@ class UIManager {
                 if (slot.quantity > 1) {
                     const countDiv = document.createElement('div');
                     countDiv.className = 'item-count';
-                    countDiv.textContent = formatNumber(slot.quantity);
+                    
+                    // Special formatting for coins
+                    if (slot.itemId === 'coins') {
+                        const formatted = this.formatCoinCount(slot.quantity);
+                        countDiv.textContent = formatted.text;
+                        if (formatted.isGreen) {
+                            countDiv.style.color = '#2ecc71';
+                        }
+                    } else {
+                        countDiv.textContent = formatNumber(slot.quantity);
+                    }
+                    
                     slotDiv.appendChild(countDiv);
                 }
                 
@@ -502,7 +544,15 @@ class UIManager {
             
             // Create image element
             const img = document.createElement('img');
-            img.src = `assets/items/${itemId}.png`;
+            
+            // Special handling for coins
+            if (itemId === 'coins') {
+                const coinImage = this.getCoinImage(quantity);
+                img.src = `assets/items/${coinImage}.png`;
+            } else {
+                img.src = `assets/items/${itemId}.png`;
+            }
+            
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'contain';
@@ -520,7 +570,18 @@ class UIManager {
             
             const countDiv = document.createElement('div');
             countDiv.className = 'item-count';
-            countDiv.textContent = formatNumber(quantity);
+            
+            // Special formatting for coins
+            if (itemId === 'coins') {
+                const formatted = this.formatCoinCount(quantity);
+                countDiv.textContent = formatted.text;
+                if (formatted.isGreen) {
+                    countDiv.style.color = '#2ecc71';
+                }
+            } else {
+                countDiv.textContent = formatNumber(quantity);
+            }
+            
             slotDiv.appendChild(countDiv);
             
             slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
