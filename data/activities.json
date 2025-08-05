@@ -1,4 +1,268 @@
 {
+    "small_fishing_net": {
+        "id": "small_fishing_net",
+        "name": "Small Net Fishing",
+        "skill": "fishing",
+        "requiredLevel": 1,
+        "baseDuration": 3000,
+        "rewards": [
+            {
+                "itemId": "raw_shrimps",
+                "quantity": 1,
+                "xpPerAction": 10,
+                "chanceScaling": [
+                    {
+                        "minChance": 0.191,
+                        "maxChance": 0.301,
+                        "minLevel": 1,
+                        "maxLevel": 14
+                    },
+                    {
+                        "minChance": 0.156,
+                        "maxChance": 0.496,
+                        "minLevel": 15,
+                        "maxLevel": 99
+                    }
+                ]
+            },
+            {
+                "itemId": "raw_anchovies",
+                "quantity": 1,
+                "xpPerAction": 40,
+                "requiredLevel": 15,
+                "chanceScaling": {
+                    "minChance": 0.156,
+                    "maxChance": 0.504,
+                    "minLevel": 15,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "big_fishing_net": {
+        "id": "big_fishing_net",
+        "name": "Big Net Fishing",
+        "skill": "fishing",
+        "requiredLevel": 16,
+        "baseDuration": 3000,
+        "rewards": [
+            {
+                "itemId": "raw_mackerel",
+                "quantity": 1,
+                "xpPerAction": 20,
+                "requiredLevel": 16,
+                "chanceScaling": {
+                    "minChance": 0.099,
+                    "maxChance": 0.3,
+                    "minLevel": 16,
+                    "maxLevel": 99
+                }
+            },
+            {
+                "itemId": "raw_cod",
+                "quantity": 1,
+                "xpPerAction": 45,
+                "requiredLevel": 23,
+                "chanceScaling": {
+                    "minChance": 0.063,
+                    "maxChance": 0.219,
+                    "minLevel": 23,
+                    "maxLevel": 99
+                }
+            },
+            {
+                "itemId": "raw_bass",
+                "quantity": 1,
+                "xpPerAction": 100,
+                "requiredLevel": 46,
+                "chanceScaling": {
+                    "minChance": 0.082,
+                    "maxChance": 0.16,
+                    "minLevel": 46,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "lobster_pot": {
+        "id": "lobster_pot",
+        "name": "Lobster Pot Fishing",
+        "skill": "fishing",
+        "requiredLevel": 40,
+        "baseDuration": 3000,
+        "rewards": [
+            {
+                "itemId": "raw_lobster",
+                "quantity": 1,
+                "xpPerAction": 90,
+                "chanceScaling": {
+                    "minChance": 0.164,
+                    "maxChance": 0.375,
+                    "minLevel": 40,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "fishing_rod_bait": {
+        "id": "fishing_rod_bait",
+        "name": "Bait Fishing",
+        "skill": "fishing",
+        "requiredLevel": 5,
+        "baseDuration": 3000,
+        "consumeOnSuccess": [{"itemId": "fishing_bait", "quantity": 1}],
+        "rewards": [
+            {
+                "itemId": "raw_sardine",
+                "quantity": 1,
+                "xpPerAction": 20,
+                "requiredLevel": 5,
+                "chanceScaling": {
+                    "minChance": 0.156,
+                    "maxChance": 0.374,
+                    "minLevel": 5,
+                    "maxLevel": 99
+                }
+            },
+            {
+                "itemId": "raw_herring",
+                "quantity": 1,
+                "xpPerAction": 30,
+                "requiredLevel": 10,
+                "chanceScaling": {
+                    "minChance": 0.137,
+                    "maxChance": 0.504,
+                    "minLevel": 10,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "fishing_rod_bait_pike": {
+        "id": "fishing_rod_bait_pike",
+        "name": "Pike Fishing",
+        "skill": "fishing",
+        "requiredLevel": 25,
+        "baseDuration": 3000,
+        "durationBoost": {"chance": 0.2, "duration": 3600},
+        "consumeOnSuccess": [{"itemId": "fishing_bait", "quantity": 1}],
+        "rewards": [
+            {
+                "itemId": "raw_pike",
+                "quantity": 1,
+                "xpPerAction": 60,
+                "chanceScaling": {
+                    "minChance": 0.145,
+                    "maxChance": 0.379,
+                    "minLevel": 25,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "fly_fishing_rod": {
+        "id": "fly_fishing_rod",
+        "name": "Fly Fishing",
+        "skill": "fishing",
+        "requiredLevel": 20,
+        "baseDuration": 3000,
+        "consumeOnSuccess": [{"itemId": "feathers", "quantity": 1}],
+        "rewards": [
+            {
+                "itemId": "raw_trout",
+                "quantity": 1,
+                "xpPerAction": 50,
+                "requiredLevel": 20,
+                "chanceScaling": [
+                    {
+                        "minChance": 0.25,
+                        "maxChance": 0.309,
+                        "minLevel": 20,
+                        "maxLevel": 29
+                    },
+                    {
+                        "minChance": 0.263,
+                        "maxChance": 0.468,
+                        "minLevel": 30,
+                        "maxLevel": 99
+                    }
+                ]
+            },
+            {
+                "itemId": "raw_salmon",
+                "quantity": 1,
+                "xpPerAction": 70,
+                "requiredLevel": 30,
+                "chanceScaling": {
+                    "minChance": 0.16,
+                    "maxChance": 0.379,
+                    "minLevel": 30,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "harpoon": {
+        "id": "harpoon",
+        "name": "Harpoon Fishing",
+        "skill": "fishing",
+        "requiredLevel": 35,
+        "baseDuration": 3000,
+        "rewards": [
+            {
+                "itemId": "raw_tuna",
+                "quantity": 1,
+                "xpPerAction": 80,
+                "requiredLevel": 35,
+                "chanceScaling": [
+                    {
+                        "minChance": 0.109,
+                        "maxChance": 0.141,
+                        "minLevel": 35,
+                        "maxLevel": 49
+                    },
+                    {
+                        "minChance": 0.129,
+                        "maxChance": 0.254,
+                        "minLevel": 50,
+                        "maxLevel": 99
+                    }
+                ]
+            },
+            {
+                "itemId": "raw_swordfish",
+                "quantity": 1,
+                "xpPerAction": 100,
+                "requiredLevel": 50,
+                "chanceScaling": {
+                    "minChance": 0.106,
+                    "maxChance": 0.254,
+                    "minLevel": 50,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
+    "harpoon_shark": {
+        "id": "harpoon_shark",
+        "name": "Shark Fishing",
+        "skill": "fishing",
+        "requiredLevel": 76,
+        "baseDuration": 3000,
+        "rewards": [
+            {
+                "itemId": "raw_shark",
+                "quantity": 1,
+                "xpPerAction": 110,
+                "chanceScaling": {
+                    "minChance": 0.125,
+                    "maxChance": 0.215,
+                    "minLevel": 76,
+                    "maxLevel": 99
+                }
+            }
+        ]
+    },
     "chop_tree": {
         "id": "chop_tree",
         "name": "Chop Tree",
