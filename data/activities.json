@@ -532,7 +532,7 @@
         "baseDuration": 3500,
         "rewards": [
             {
-                "itemId": "raw_shrimp",
+                "itemId": "raw_shrimps",
                 "quantity": 1,
                 "chance": 1.0
             }
@@ -573,12 +573,12 @@
         "name": "Cook Shrimp",
         "skill": "cooking",
         "requiredLevel": 1,
-        "requiredItems": [{"itemId": "raw_shrimp", "quantity": 1}],
+        "requiredItems": [{"itemId": "raw_shrimps", "quantity": 1}],
         "xpPerAction": 30,
         "baseDuration": 2000,
         "rewards": [
             {
-                "itemId": "shrimp",
+                "itemId": "shrimps",
                 "quantity": 1,
                 "chance": 0.95
             }
