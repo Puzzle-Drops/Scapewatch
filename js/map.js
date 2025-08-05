@@ -226,10 +226,13 @@ class MapRenderer {
         this.ctx.fillText(fpsText, 10, 10);
     }
 
-    handleClick(x, y) {
-        // Convert screen coordinates to world coordinates
-        const worldX = (x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
-        const worldY = (y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
+    handleClick(screenX, screenY) {
+        // Convert screen coordinates to game coordinates using scaling system
+        const gameCoords = scalingSystem.screenToGame(screenX, screenY);
+        
+        // Then convert to world coordinates
+        const worldX = (gameCoords.x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
+        const worldY = (gameCoords.y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
 
         // Check if clicked on a node
         const clickedNode = nodes.getNodeAt(worldX, worldY);
