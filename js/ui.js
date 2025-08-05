@@ -5,15 +5,31 @@ class UIManager {
         this.lastBankState = null;
         this.lastActivityState = null;
         this.lastGoalState = null;
+        this.itemOrder = null; // Cache for item order
         this.initializeUI();
     }
 
     initializeUI() {
+        // Initialize item order from items.json
+        this.initializeItemOrder();
+        
         this.updateSkillsList();
         this.updateInventory();
         this.updateBank();
         this.updateActivity();
         this.updateGoal();
+    }
+
+    initializeItemOrder() {
+        // Create an array of item IDs in the order they appear in items.json
+        const itemsData = loadingManager.getData('items');
+        this.itemOrder = Object.keys(itemsData);
+        
+        // Create a map for O(1) lookup of item position
+        this.itemOrderMap = {};
+        this.itemOrder.forEach((itemId, index) => {
+            this.itemOrderMap[itemId] = index;
+        });
     }
 
     // Called from game loop - only updates if data changed
@@ -536,8 +552,15 @@ class UIManager {
         bankGrid.innerHTML = '';
 
         const bankItems = bank.getAllItems();
+        
+        // Sort bank items according to items.json order
+        const sortedItems = Object.entries(bankItems).sort((a, b) => {
+            const indexA = this.itemOrderMap[a[0]] ?? Number.MAX_VALUE;
+            const indexB = this.itemOrderMap[b[0]] ?? Number.MAX_VALUE;
+            return indexA - indexB;
+        });
 
-        for (const [itemId, quantity] of Object.entries(bankItems)) {
+        for (const [itemId, quantity] of sortedItems) {
             const itemData = loadingManager.getData('items')[itemId];
             const slotDiv = document.createElement('div');
             slotDiv.className = 'bank-slot';
