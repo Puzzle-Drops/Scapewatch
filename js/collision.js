@@ -50,61 +50,100 @@ class CollisionSystem {
         return alpha === 0;
     }
 
-    // Check if a line from start to end is clear
-    isLineOfSight(x1, y1, x2, y2) {
-        const dx = Math.abs(x2 - x1);
-        const dy = Math.abs(y2 - y1);
-        const sx = x1 < x2 ? 1 : -1;
-        const sy = y1 < y2 ? 1 : -1;
-        let err = dx - dy;
+    // Check if a circle can fit at a position
+    canCircleFit(centerX, centerY, radius) {
+        if (!this.initialized) return false;
         
-        let x = Math.round(x1);
-        let y = Math.round(y1);
+        // Check center point first
+        if (!this.isWalkable(centerX, centerY)) {
+            return false;
+        }
         
-        while (x !== Math.round(x2) || y !== Math.round(y2)) {
-            if (!this.isWalkable(x, y)) {
-                return false;
-            }
+        // If radius is very small, just check center
+        if (radius < 0.1) {
+            return true;
+        }
+        
+        // Check points around the circle
+        const steps = Math.max(8, Math.ceil(radius * 8)); // More steps for larger radius
+        for (let i = 0; i < steps; i++) {
+            const angle = (i / steps) * Math.PI * 2;
+            const checkX = Math.round(centerX + Math.cos(angle) * radius);
+            const checkY = Math.round(centerY + Math.sin(angle) * radius);
             
-            const e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
+            if (!this.isWalkable(checkX, checkY)) {
+                return false;
             }
         }
         
-        return this.isWalkable(Math.round(x2), Math.round(y2));
+        // Also check a few intermediate points for better accuracy
+        for (let r = radius / 2; r < radius; r += radius / 2) {
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2;
+                const checkX = Math.round(centerX + Math.cos(angle) * r);
+                const checkY = Math.round(centerY + Math.sin(angle) * r);
+                
+                if (!this.isWalkable(checkX, checkY)) {
+                    return false;
+                }
+            }
+        }
+        
+        return true;
     }
 
-    // Get all walkable neighbors of a position
-    getWalkableNeighbors(x, y) {
+    // Check if a line from start to end is clear for a circle
+    isLineOfSightForCircle(x1, y1, x2, y2, radius) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < 0.01) {
+            return this.canCircleFit(x1, y1, radius);
+        }
+        
+        // Check at regular intervals along the line
+        const steps = Math.max(2, Math.ceil(distance));
+        for (let i = 0; i <= steps; i++) {
+            const t = i / steps;
+            const checkX = x1 + dx * t;
+            const checkY = y1 + dy * t;
+            
+            if (!this.canCircleFit(checkX, checkY, radius)) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    // Get all walkable neighbors of a position for a circle
+    getWalkableNeighbors(x, y, radius) {
         const neighbors = [];
         
-        // 8-directional movement
+        // 8-directional movement with variable step size
+        const stepSize = Math.max(0.5, radius); // Step at least by radius
         const directions = [
-            { x: 0, y: -1 },  // North
-            { x: 1, y: -1 },  // Northeast
-            { x: 1, y: 0 },   // East
-            { x: 1, y: 1 },   // Southeast
-            { x: 0, y: 1 },   // South
-            { x: -1, y: 1 },  // Southwest
-            { x: -1, y: 0 },  // West
-            { x: -1, y: -1 }  // Northwest
+            { x: 0, y: -stepSize },    // North
+            { x: stepSize, y: -stepSize },   // Northeast
+            { x: stepSize, y: 0 },     // East
+            { x: stepSize, y: stepSize },    // Southeast
+            { x: 0, y: stepSize },     // South
+            { x: -stepSize, y: stepSize },   // Southwest
+            { x: -stepSize, y: 0 },    // West
+            { x: -stepSize, y: -stepSize }   // Northwest
         ];
         
         for (const dir of directions) {
             const nx = x + dir.x;
             const ny = y + dir.y;
             
-            if (this.isWalkable(nx, ny)) {
+            if (this.canCircleFit(nx, ny, radius)) {
                 // For diagonal movement, check that we can actually move diagonally
-                // (not blocked by walls on either side)
                 if (dir.x !== 0 && dir.y !== 0) {
-                    if (this.isWalkable(x + dir.x, y) && this.isWalkable(x, y + dir.y)) {
+                    // Check intermediate positions to ensure smooth diagonal movement
+                    if (this.canCircleFit(x + dir.x, y, radius) && 
+                        this.canCircleFit(x, y + dir.y, radius)) {
                         neighbors.push({ x: nx, y: ny });
                     }
                 } else {
