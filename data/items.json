@@ -91,7 +91,7 @@
         "name": "Raw Shark",
         "stackable": false,
         "category": "resource"
-    }
+    },
     "logs": {
         "id": "logs",
         "name": "Logs",
