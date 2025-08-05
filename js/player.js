@@ -1,31 +1,22 @@
 class Player {
     constructor() {
-        // Validate starting position
-        const startNode = loadingManager.getData('nodes')['lumbridge_bank'];
-        if (startNode) {
-            // Use node position if available
-            this.position = { x: startNode.position.x, y: startNode.position.y };
-        } else {
-            // Fallback position
-            this.position = { x: 4395, y: 1882 };
-        }
-        
+        this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
         this.targetPosition = null;
         this.currentNode = 'lumbridge_bank';
-        this.targetNode = null;
+        this.targetNode = null; // Store target node ID
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
+        this.movementTimer = 0; // Timer for discrete movement
+        this.movementInterval = 600; // 0.6 seconds in milliseconds
         this.path = [];
         this.pathIndex = 0;
-        this.speed = 3; // 3 pixels per second
-        this.radius = 0.5; // Half a tile hitbox
     }
 
     update(deltaTime) {
-        // Handle smooth movement along path
-        if (this.path.length > 0 && this.pathIndex < this.path.length) {
-            this.updateMovement(deltaTime);
+        // Handle movement along path
+        if (this.path.length > 0) {
+            this.updatePathMovement(deltaTime);
         }
 
         // Handle activity
@@ -34,40 +25,69 @@ class Player {
         }
     }
 
-    updateMovement(deltaTime) {
+    updatePathMovement(deltaTime) {
         if (this.pathIndex >= this.path.length) {
-            // Reached the end of the path
-            this.onReachedTarget();
+            // Reached end of path
             this.path = [];
             this.pathIndex = 0;
             this.targetPosition = null;
+            this.movementTimer = 0;
+            this.onReachedTarget();
             return;
         }
 
-        const targetPoint = this.path[this.pathIndex];
-        const dx = targetPoint.x - this.position.x;
-        const dy = targetPoint.y - this.position.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        // Update movement timer
+        this.movementTimer += deltaTime;
 
-        if (distance < 0.1) {
-            // Close enough to current waypoint, move to next
-            this.pathIndex++;
-            return;
-        }
+        // Check if it's time to move
+        if (this.movementTimer >= this.movementInterval) {
+            this.movementTimer -= this.movementInterval;
+            
+            const target = this.path[this.pathIndex];
+            const dx = target.x - this.position.x;
+            const dy = target.y - this.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Calculate movement for this frame
-        const moveDistance = this.speed * (deltaTime / 1000); // Convert ms to seconds
-        
-        if (distance <= moveDistance) {
-            // We'll reach the waypoint this frame
-            this.position.x = targetPoint.x;
-            this.position.y = targetPoint.y;
-            this.pathIndex++;
-        } else {
-            // Move towards the waypoint
-            const moveRatio = moveDistance / distance;
-            this.position.x += dx * moveRatio;
-            this.position.y += dy * moveRatio;
+            if (distance <= 1) {
+                // If we're 1 pixel or less away, just move there
+                this.position.x = target.x;
+                this.position.y = target.y;
+                this.pathIndex++;
+                
+                // Update target position for drawing
+                if (this.pathIndex < this.path.length) {
+                    this.targetPosition = this.path[this.path.length - 1];
+                }
+            } else {
+                // Move exactly 2 pixels toward the target
+                const moveDistance = Math.min(2, distance);
+                const ratio = moveDistance / distance;
+                
+                // Calculate new position
+                const newX = this.position.x + dx * ratio;
+                const newY = this.position.y + dy * ratio;
+                
+                // Round to nearest pixel to ensure discrete movement
+                this.position.x = Math.round(newX);
+                this.position.y = Math.round(newY);
+                
+                // Check if we've reached the current waypoint after rounding
+                const newDx = target.x - this.position.x;
+                const newDy = target.y - this.position.y;
+                const newDistance = Math.sqrt(newDx * newDx + newDy * newDy);
+                
+                if (newDistance < 0.5) {
+                    // Close enough after rounding
+                    this.position.x = target.x;
+                    this.position.y = target.y;
+                    this.pathIndex++;
+                    
+                    // Update target position for drawing
+                    if (this.pathIndex < this.path.length) {
+                        this.targetPosition = this.path[this.path.length - 1];
+                    }
+                }
+            }
         }
     }
 
@@ -187,24 +207,15 @@ class Player {
                 this.position.x,
                 this.position.y,
                 node.position.x,
-                node.position.y,
-                this.radius
+                node.position.y
             );
 
             if (path && path.length > 0) {
                 this.path = path;
                 this.pathIndex = 0;
-                
-                // Skip the first waypoint if we're very close to it
-                if (path.length > 0) {
-                    const dist = distance(this.position.x, this.position.y, path[0].x, path[0].y);
-                    if (dist < 0.1) {
-                        this.pathIndex = 1;
-                    }
-                }
-                
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
+                this.movementTimer = 0; // Reset movement timer
                 this.stopActivity();
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
@@ -215,13 +226,27 @@ class Player {
                 }
             } else {
                 console.error(`No path found to node ${targetNodeId}`);
+                // Still try to move there directly as fallback
+                this.path = [
+                    { x: this.position.x, y: this.position.y },
+                    { x: node.position.x, y: node.position.y }
+                ];
+                this.pathIndex = 0;
+                this.targetPosition = { ...node.position };
+                this.targetNode = targetNodeId;
+                this.movementTimer = 0; // Reset movement timer
+                this.stopActivity();
             }
         } else {
             // Fallback to direct movement if pathfinding not available
-            this.path = [{ x: node.position.x, y: node.position.y }];
+            this.path = [
+                { x: this.position.x, y: this.position.y },
+                { x: node.position.x, y: node.position.y }
+            ];
             this.pathIndex = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
+            this.movementTimer = 0; // Reset movement timer
             this.stopActivity();
         }
     }
@@ -282,12 +307,20 @@ class Player {
         }
     }
 
+    getMovementSpeed() {
+        // This method is no longer used with discrete movement
+        // Keeping it for compatibility but it doesn't affect movement
+        const agilityLevel = skills.getLevel('agility');
+        const speedBonus = 1 + (agilityLevel - 1) * 0.01; // 1% per level
+        return 3.333 * speedBonus; // Original speed value
+    }
+
     isAtNode(nodeId) {
         return this.currentNode === nodeId && !this.targetPosition;
     }
 
     isMoving() {
-        return this.path.length > 0 && this.pathIndex < this.path.length;
+        return this.path.length > 0 || this.targetPosition !== null;
     }
 
     isPerformingActivity() {
