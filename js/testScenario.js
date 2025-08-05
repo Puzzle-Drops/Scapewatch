@@ -92,13 +92,15 @@ class TestScenario {
         for (const [itemId, itemData] of Object.entries(allItems)) {
             bank.deposit(itemId, 1000);
         }
+
+        bank.deposit ('coins', 9999000);
         
         console.log(`Added 1000 of each item to bank (${Object.keys(allItems).length} items)`);
     }
 
     populateInventory() {
         // Add some common items to inventory for testing
-        inventory.addItem('coins', 10000);
+        inventory.addItem('coins', 5);
 
         inventory.addItem('raw_shrimps', 26);
         
