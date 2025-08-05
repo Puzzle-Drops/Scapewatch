@@ -9,6 +9,8 @@ class Player {
         this.activityStartTime = 0;
         this.movementTimer = 0; // Timer for discrete movement
         this.movementInterval = 600; // 0.6 seconds in milliseconds
+        this.movementStartPos = null; // Starting position for current movement
+        this.movementTargetPos = null; // Target position for current movement (2 pixels away)
         this.path = [];
         this.pathIndex = 0;
     }
@@ -32,24 +34,67 @@ class Player {
             this.pathIndex = 0;
             this.targetPosition = null;
             this.movementTimer = 0;
+            this.movementStartPos = null;
+            this.movementTargetPos = null;
             this.onReachedTarget();
             return;
+        }
+
+        const target = this.path[this.pathIndex];
+        
+        // Initialize movement positions if needed
+        if (!this.movementStartPos) {
+            this.movementStartPos = { x: this.position.x, y: this.position.y };
+            
+            // Calculate the target position (2 pixels toward the waypoint)
+            const dx = target.x - this.position.x;
+            const dy = target.y - this.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance <= 1) {
+                // If we're 1 pixel or less away, target is the waypoint
+                this.movementTargetPos = { x: target.x, y: target.y };
+            } else if (distance <= 2) {
+                // If we're 2 pixels or less away, move exactly to the waypoint
+                this.movementTargetPos = { x: target.x, y: target.y };
+            } else {
+                // Move exactly 2 pixels toward the target
+                const ratio = 2 / distance;
+                this.movementTargetPos = {
+                    x: Math.round(this.position.x + dx * ratio),
+                    y: Math.round(this.position.y + dy * ratio)
+                };
+            }
         }
 
         // Update movement timer
         this.movementTimer += deltaTime;
 
-        // Check if it's time to move
+        // Calculate interpolation progress (0 to 1)
+        const progress = Math.min(this.movementTimer / this.movementInterval, 1);
+
+        // Smoothly interpolate position
+        this.position.x = this.movementStartPos.x + (this.movementTargetPos.x - this.movementStartPos.x) * progress;
+        this.position.y = this.movementStartPos.y + (this.movementTargetPos.y - this.movementStartPos.y) * progress;
+
+        // Check if movement interval is complete
         if (this.movementTimer >= this.movementInterval) {
-            this.movementTimer -= this.movementInterval;
+            // Snap to exact target position
+            this.position.x = this.movementTargetPos.x;
+            this.position.y = this.movementTargetPos.y;
             
-            const target = this.path[this.pathIndex];
+            // Reset timer for next movement
+            this.movementTimer = 0;
+            this.movementStartPos = null;
+            this.movementTargetPos = null;
+            
+            // Check if we've reached the current waypoint
             const dx = target.x - this.position.x;
             const dy = target.y - this.position.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance <= 1) {
-                // If we're 1 pixel or less away, just move there
+            const distanceToWaypoint = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distanceToWaypoint < 0.5) {
+                // Reached waypoint, move to next one
                 this.position.x = target.x;
                 this.position.y = target.y;
                 this.pathIndex++;
@@ -57,35 +102,6 @@ class Player {
                 // Update target position for drawing
                 if (this.pathIndex < this.path.length) {
                     this.targetPosition = this.path[this.path.length - 1];
-                }
-            } else {
-                // Move exactly 2 pixels toward the target
-                const moveDistance = Math.min(2, distance);
-                const ratio = moveDistance / distance;
-                
-                // Calculate new position
-                const newX = this.position.x + dx * ratio;
-                const newY = this.position.y + dy * ratio;
-                
-                // Round to nearest pixel to ensure discrete movement
-                this.position.x = Math.round(newX);
-                this.position.y = Math.round(newY);
-                
-                // Check if we've reached the current waypoint after rounding
-                const newDx = target.x - this.position.x;
-                const newDy = target.y - this.position.y;
-                const newDistance = Math.sqrt(newDx * newDx + newDy * newDy);
-                
-                if (newDistance < 0.5) {
-                    // Close enough after rounding
-                    this.position.x = target.x;
-                    this.position.y = target.y;
-                    this.pathIndex++;
-                    
-                    // Update target position for drawing
-                    if (this.pathIndex < this.path.length) {
-                        this.targetPosition = this.path[this.path.length - 1];
-                    }
                 }
             }
         }
@@ -216,6 +232,8 @@ class Player {
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
                 this.movementTimer = 0; // Reset movement timer
+                this.movementStartPos = null; // Reset movement positions
+                this.movementTargetPos = null;
                 this.stopActivity();
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
@@ -235,6 +253,8 @@ class Player {
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
                 this.movementTimer = 0; // Reset movement timer
+                this.movementStartPos = null; // Reset movement positions
+                this.movementTargetPos = null;
                 this.stopActivity();
             }
         } else {
@@ -247,6 +267,8 @@ class Player {
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
             this.movementTimer = 0; // Reset movement timer
+            this.movementStartPos = null; // Reset movement positions
+            this.movementTargetPos = null;
             this.stopActivity();
         }
     }
