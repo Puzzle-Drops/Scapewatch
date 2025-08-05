@@ -3,6 +3,7 @@ class AIManager {
         this.currentGoal = null;
         this.goals = [];
         this.decisionCooldown = 0;
+        this.failedNodes = new Set(); // Track nodes we couldn't reach
         this.initializeGoals();
     }
 
@@ -187,6 +188,10 @@ class AIManager {
         let bestEffectiveXp = 0;
 
         for (const [activityId, activityData] of skillActivities) {
+            // Check if we can reach a node with this activity
+            const reachableNode = this.findReachableNodeWithActivity(activityId);
+            if (!reachableNode) continue;
+
             let effectiveXp;
             
             // Get skill-specific behavior
@@ -218,6 +223,8 @@ class AIManager {
 
         if (bestActivity) {
             this.doActivity(bestActivity);
+        } else {
+            console.log(`No reachable activities found for ${skillId}`);
         }
     }
 
@@ -257,9 +264,21 @@ class AIManager {
             return;
         }
 
-        const [activityId] = itemActivities[0];
-        console.log(`Selected activity: ${activityId}`);
-        this.doActivity(activityId);
+        // Find an activity we can reach
+        let selectedActivity = null;
+        for (const [activityId] of itemActivities) {
+            if (this.findReachableNodeWithActivity(activityId)) {
+                selectedActivity = activityId;
+                break;
+            }
+        }
+
+        if (selectedActivity) {
+            console.log(`Selected activity: ${selectedActivity}`);
+            this.doActivity(selectedActivity);
+        } else {
+            console.log(`No reachable activities found for item ${itemId}`);
+        }
     }
 
     doActivity(activityId) {
@@ -274,16 +293,53 @@ class AIManager {
             return;
         }
 
-        // Find nearest node with this activity
-        const targetNode = nodes.getNearestNodeWithActivity(player.position, activityId);
+        // Find nearest reachable node with this activity
+        const targetNode = this.findReachableNodeWithActivity(activityId);
         if (!targetNode) {
-            console.log(`No node found for activity ${activityId}`);
+            console.log(`No reachable node found for activity ${activityId}`);
             return;
         }
 
         console.log(`Moving to node ${targetNode.id} for activity ${activityId}`);
         // Move to the node
         player.moveTo(targetNode.id);
+    }
+
+    findReachableNodeWithActivity(activityId) {
+        // Get all nodes with this activity
+        const nodesWithActivity = Object.values(nodes.getAllNodes()).filter(
+            node => node.activities && node.activities.includes(activityId) && !this.failedNodes.has(node.id)
+        );
+
+        // Sort by distance
+        nodesWithActivity.sort((a, b) => {
+            const distA = distance(player.position.x, player.position.y, a.position.x, a.position.y);
+            const distB = distance(player.position.x, player.position.y, b.position.x, b.position.y);
+            return distA - distB;
+        });
+
+        // Find first reachable node
+        for (const node of nodesWithActivity) {
+            if (window.pathfinding) {
+                const path = pathfinding.findPath(
+                    player.position.x,
+                    player.position.y,
+                    node.position.x,
+                    node.position.y
+                );
+                if (path) {
+                    return node;
+                } else {
+                    console.warn(`Node ${node.id} is not reachable, marking as failed`);
+                    this.failedNodes.add(node.id);
+                }
+            } else {
+                // If pathfinding not available, assume all nodes are reachable
+                return node;
+            }
+        }
+
+        return null;
     }
 
     goToBank() {
@@ -314,10 +370,10 @@ class AIManager {
             return;
         }
 
-        // Find nearest bank
+        // Find nearest reachable bank
         const nearestBank = nodes.getNearestBank(player.position);
         if (!nearestBank) {
-            console.log('No bank found!');
+            console.log('No reachable bank found!');
             return;
         }
 
@@ -357,7 +413,7 @@ class AIManager {
             { itemId: 'oak_logs', count: 250, minLevel: 15, skill: 'woodcutting' },
             { itemId: 'willow_logs', count: 500, minLevel: 30, skill: 'woodcutting' },
             { itemId: 'iron_ore', count: 300, minLevel: 15, skill: 'mining' },
-            { itemId: 'raw_shrimp', count: 200, minLevel: 1, skill: 'fishing' }
+            { itemId: 'raw_shrimps', count: 200, minLevel: 1, skill: 'fishing' }
         ];
 
         for (const itemGoal of itemGoals) {
