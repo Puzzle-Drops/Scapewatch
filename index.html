@@ -30,46 +30,48 @@
         </div>
     </div>
 
-    
-    <div id="game-container" class="game-container" style="display: none;">
-        <div class="map-container">
-            <canvas id="game-canvas"></canvas>
-        </div>
-        
-        <div class="ui-panel">
-            <div class="current-activity panel">
-                <h3>Current Activity</h3>
-                <p id="activity-name">Idle</p>
-                <p id="activity-status">Waiting for instructions...</p>
+    <!-- New scaling wrapper -->
+    <div id="game-wrapper" class="game-wrapper" style="display: none;">
+        <div id="game-container" class="game-container">
+            <div class="map-container">
+                <canvas id="game-canvas"></canvas>
+            </div>
+            
+            <div class="ui-panel">
+                <div class="current-activity panel">
+                    <h3>Current Activity</h3>
+                    <p id="activity-name">Idle</p>
+                    <p id="activity-status">Waiting for instructions...</p>
+                </div>
+
+                <div class="current-goal panel">
+                    <h3>Current Goal</h3>
+                    <p id="goal-name">No active goal</p>
+                    <p id="goal-progress">-</p>
+                </div>
+
+                <div class="skills-panel panel">
+                    <h3>Skills</h3>
+                    <div id="skills-list" class="skills-list"></div>
+                </div>
+
+                <div class="inventory-panel panel">
+                    <h3>Inventory</h3>
+                    <div id="inventory-grid" class="inventory-grid"></div>
+                </div>
+
+                <div class="controls panel">
+                    <button id="bank-toggle">View Bank</button>
+                    <button id="pause-toggle">Pause AI</button>
+                </div>
             </div>
 
-            <div class="current-goal panel">
-    <h3>Current Goal</h3>
-    <p id="goal-name">No active goal</p>
-    <p id="goal-progress">-</p>
-</div>
-
-            <div class="skills-panel panel">
-                <h3>Skills</h3>
-                <div id="skills-list" class="skills-list"></div>
-            </div>
-
-            <div class="inventory-panel panel">
-                <h3>Inventory</h3>
-                <div id="inventory-grid" class="inventory-grid"></div>
-            </div>
-
-            <div class="controls panel">
-                <button id="bank-toggle">View Bank</button>
-                <button id="pause-toggle">Pause AI</button>
-            </div>
-        </div>
-
-        <div id="bank-modal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <h2>Bank</h2>
-                <div id="bank-grid" class="bank-grid"></div>
-                <button id="close-bank">Close</button>
+            <div id="bank-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <h2>Bank</h2>
+                    <div id="bank-grid" class="bank-grid"></div>
+                    <button id="close-bank">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -79,6 +81,7 @@
     </script>
     <script src="js/loadingManager.js" onload="console.log('✓ loadingManager.js')" onerror="console.error('✗ loadingManager.js failed')"></script>
     <script src="js/utils.js" onload="console.log('✓ utils.js')" onerror="console.error('✗ utils.js failed')"></script>
+    <script src="js/scalingSystem.js" onload="console.log('✓ scalingSystem.js')" onerror="console.error('✗ scalingSystem.js failed')"></script>
     <script src="js/skillBehaviors.js" onload="console.log('✓ skillBehaviors.js')" onerror="console.error('✗ skillBehaviors.js failed')"></script>
     <script src="js/skills.js" onload="console.log('✓ skills.js')" onerror="console.error('✗ skills.js failed')"></script>
     <script src="js/inventory.js" onload="console.log('✓ inventory.js')" onerror="console.error('✗ inventory.js failed')"></script>
