@@ -6,9 +6,9 @@
         "maxStack": 9999999999,
         "category": "currency"
     },
-    "feathers": {
-        "id": "feathers",
-        "name": "Feathers",
+    "feather": {
+        "id": "feather",
+        "name": "Feather",
         "stackable": true,
         "maxStack": 9999999999,
         "category": "resource"
@@ -18,6 +18,12 @@
         "name": "Fishing Bait",
         "stackable": true,
         "maxStack": 9999999999,
+        "category": "resource"
+    },
+    "raw_shrimps": {
+        "id": "raw_shrimps",
+        "name": "Raw Shrimps",
+        "stackable": false,
         "category": "resource"
     },
     "raw_sardine": {
@@ -71,6 +77,12 @@
     "raw_tuna": {
         "id": "raw_tuna",
         "name": "Raw Tuna",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_lobster": {
+        "id": "raw_lobster",
+        "name": "Raw Lobster",
         "stackable": false,
         "category": "resource"
     },
@@ -230,31 +242,12 @@
         "stackable": false,
         "category": "gem"
     },
-    "raw_shrimps": {
-        "id": "raw_shrimps",
-        "name": "Raw Shrimps",
-        "stackable": false,
-        "category": "resource"
-    },
     "shrimps": {
         "id": "shrimps",
         "name": "Shrimps",
         "stackable": false,
         "category": "food",
         "healAmount": 3
-    },
-    "raw_lobster": {
-        "id": "raw_lobster",
-        "name": "Raw Lobster",
-        "stackable": false,
-        "category": "resource"
-    },
-    "lobster": {
-        "id": "lobster",
-        "name": "Lobster",
-        "stackable": false,
-        "category": "food",
-        "healAmount": 12
     },
     "goblin_mail": {
         "id": "goblin_mail",
@@ -274,10 +267,5 @@
         "stackable": false,
         "category": "resource"
     },
-    "burnt_lobster": {
-        "id": "burnt_lobster",
-        "name": "Burnt Lobster",
-        "stackable": false,
-        "category": "junk"
-    }
+
 }
