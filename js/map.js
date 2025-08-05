@@ -216,19 +216,20 @@ class MapRenderer {
     drawPlayerPath() {
         if (!player.path || player.path.length < 2) return;
 
-        // Draw the full path
+        // Draw the path from destination back to player (reversed)
         this.ctx.beginPath();
-        this.ctx.moveTo(player.position.x, player.position.y);
         
-        // Draw from current position to next waypoint
-        if (player.pathIndex < player.path.length) {
-            this.ctx.lineTo(player.path[player.pathIndex].x, player.path[player.pathIndex].y);
-            
-            // Draw remaining waypoints
-            for (let i = player.pathIndex; i < player.path.length - 1; i++) {
-                this.ctx.lineTo(player.path[i + 1].x, player.path[i + 1].y);
-            }
+        // Start from the final destination
+        const destination = player.path[player.path.length - 1];
+        this.ctx.moveTo(destination.x, destination.y);
+        
+        // Draw backwards through the path
+        for (let i = player.path.length - 2; i >= player.pathIndex; i--) {
+            this.ctx.lineTo(player.path[i].x, player.path[i].y);
         }
+        
+        // End at player position
+        this.ctx.lineTo(player.position.x, player.position.y);
         
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
         this.ctx.lineWidth = 0.4;
@@ -236,7 +237,7 @@ class MapRenderer {
         this.ctx.stroke();
         this.ctx.setLineDash([]);
 
-        // Draw waypoint markers
+        // Draw waypoint markers (only for remaining waypoints)
         this.ctx.fillStyle = 'rgba(46, 204, 113, 0.8)';
         for (let i = player.pathIndex; i < player.path.length; i++) {
             const point = player.path[i];
