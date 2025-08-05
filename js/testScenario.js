@@ -1,6 +1,6 @@
 class TestScenario {
     constructor() {
-        this.enabled = false; // Set to false to disable test scenario
+        this.enabled = true; // Set to false to disable test scenario
     }
 
     run() {
@@ -12,7 +12,7 @@ class TestScenario {
         console.log('Running test scenario...');
 
         // Set player starting position
-        this.setPlayerPosition();
+        //this.setPlayerPosition();
 
         // Set skill levels (each on its own line for easy modification)
         this.setSkillLevels();
@@ -24,7 +24,7 @@ class TestScenario {
         this.populateInventory();
 
         // Set up test goals
-        this.setupTestGoals();
+        //this.setupTestGoals();
 
         console.log('Test scenario complete!');
     }
@@ -94,6 +94,8 @@ class TestScenario {
     populateInventory() {
         // Add some common items to inventory for testing
         inventory.addItem('coins', 10000);
+
+        inventory.addItem('raw_shrimps', 26);
         
         console.log('Added test items to inventory');
     }
