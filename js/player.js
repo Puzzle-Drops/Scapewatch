@@ -7,15 +7,15 @@ class Player {
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
-        this.movementSpeed = 5; // pixels per second base
+        this.movementSpeed = 3.333; // pixels per second (changed from 5)
         this.path = [];
         this.pathIndex = 0;
     }
 
     update(deltaTime) {
-        // Handle movement
-        if (this.targetPosition) {
-            this.updateMovement(deltaTime);
+        // Handle movement along path
+        if (this.path.length > 0) {
+            this.updatePathMovement(deltaTime);
         }
 
         // Handle activity
@@ -24,21 +24,36 @@ class Player {
         }
     }
 
-    updateMovement(deltaTime) {
+    updatePathMovement(deltaTime) {
+        if (this.pathIndex >= this.path.length) {
+            // Reached end of path
+            this.path = [];
+            this.pathIndex = 0;
+            this.targetPosition = null;
+            this.onReachedTarget();
+            return;
+        }
+
+        const target = this.path[this.pathIndex];
         const speed = this.getMovementSpeed();
         const moveDistance = (speed * deltaTime) / 1000;
 
-        const dx = this.targetPosition.x - this.position.x;
-        const dy = this.targetPosition.y - this.position.y;
+        const dx = target.x - this.position.x;
+        const dy = target.y - this.position.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance <= moveDistance) {
-            // Reached target
-            this.position = { ...this.targetPosition };
-            this.targetPosition = null;
-            this.onReachedTarget();
+            // Reached this waypoint
+            this.position.x = target.x;
+            this.position.y = target.y;
+            this.pathIndex++;
+            
+            // Update target position for drawing
+            if (this.pathIndex < this.path.length) {
+                this.targetPosition = this.path[this.path.length - 1];
+            }
         } else {
-            // Move towards target
+            // Move towards waypoint
             const ratio = moveDistance / distance;
             this.position.x += dx * ratio;
             this.position.y += dy * ratio;
@@ -155,13 +170,50 @@ class Player {
             return;
         }
 
-        this.targetPosition = { ...node.position };
-        this.targetNode = targetNodeId;
-        this.stopActivity();
-        
-        // Notify UI about movement change
-        if (window.ui) {
-            window.ui.forceActivityUpdate();
+        // Find path to target
+        if (window.pathfinding) {
+            const path = pathfinding.findPath(
+                this.position.x,
+                this.position.y,
+                node.position.x,
+                node.position.y
+            );
+
+            if (path && path.length > 0) {
+                this.path = path;
+                this.pathIndex = 0;
+                this.targetPosition = { ...node.position };
+                this.targetNode = targetNodeId;
+                this.stopActivity();
+                
+                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+                
+                // Notify UI about movement change
+                if (window.ui) {
+                    window.ui.forceActivityUpdate();
+                }
+            } else {
+                console.error(`No path found to node ${targetNodeId}`);
+                // Still try to move there directly as fallback
+                this.path = [
+                    { x: this.position.x, y: this.position.y },
+                    { x: node.position.x, y: node.position.y }
+                ];
+                this.pathIndex = 0;
+                this.targetPosition = { ...node.position };
+                this.targetNode = targetNodeId;
+                this.stopActivity();
+            }
+        } else {
+            // Fallback to direct movement if pathfinding not available
+            this.path = [
+                { x: this.position.x, y: this.position.y },
+                { x: node.position.x, y: node.position.y }
+            ];
+            this.pathIndex = 0;
+            this.targetPosition = { ...node.position };
+            this.targetNode = targetNodeId;
+            this.stopActivity();
         }
     }
 
@@ -233,7 +285,7 @@ class Player {
     }
 
     isMoving() {
-        return this.targetPosition !== null;
+        return this.path.length > 0 || this.targetPosition !== null;
     }
 
     isPerformingActivity() {
