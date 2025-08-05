@@ -11,6 +11,10 @@ window.gameState = {
 
 // Initialize the game
 async function init() {
+
+    // Initialize scaling system early so loading screen is scaled
+    scalingSystem.initialize();
+    
     // Add assets to load
     loadingManager.addImage('worldMap', 'assets/map.png');
     
@@ -51,7 +55,7 @@ function startGame() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('game-wrapper').style.display = 'block';
     
-    // Initialize scaling system
+    // Update scaling system for the game container
     scalingSystem.initialize();
 
     // Initialize game systems (order matters!)
