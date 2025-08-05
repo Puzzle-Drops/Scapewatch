@@ -9,24 +9,25 @@ class AIManager {
 
     initializeGoals() {
         // Set up initial goals
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'raw_shrimps',
+            targetCount: 28,
+            priority: 1
+        });
+
         this.addGoal({
             type: 'bank_items',
             itemId: 'logs',
             targetCount: 10,
-            priority: 1
+            priority: 2
         });
         
         this.addGoal({
             type: 'bank_items',
             itemId: 'tin_ore',
             targetCount: 20,
-            priority: 2
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'raw_shrimps',
-            targetCount: 28,
             priority: 3
         });
 
