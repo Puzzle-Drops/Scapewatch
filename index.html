@@ -81,6 +81,8 @@
         </div>
     </div>
 
+    <!-- Load devConsole first to capture all console output -->
+    <script src="js/devConsole.js"></script>
     <script>
         console.log('Loading scripts...');
     </script>
@@ -99,7 +101,6 @@
     <script src="js/ui.js" onload="console.log('✓ ui.js')" onerror="console.error('✗ ui.js failed')"></script>
     <script src="js/ai.js" onload="console.log('✓ ai.js')" onerror="console.error('✗ ai.js failed')"></script>
     <script src="js/testScenario.js" onload="console.log('✓ testScenario.js')" onerror="console.error('✗ testScenario.js failed')"></script>
-    <script src="js/devConsole.js" onload="console.log('✓ devConsole.js')" onerror="console.error('✗ devConsole.js failed')"></script>
     <script src="js/main.js" onload="console.log('✓ main.js')" onerror="console.error('✗ main.js failed')"></script>
 </body>
 </html>
