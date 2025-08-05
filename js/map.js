@@ -19,6 +19,14 @@ class MapRenderer {
         this.showCollisionDebug = false; // Flag for showing collision areas
         this.mapCache = null; // Cached map canvas
         this.initMapCache();
+        
+        // Add click listener
+        this.canvas.addEventListener('click', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            this.handleClick(x, y);
+        });
     }
 
     initMapCache() {
@@ -123,11 +131,9 @@ class MapRenderer {
 
         for (const [id, node] of Object.entries(allNodes)) {
             // Only draw nodes within view
-            const screenDist = distance(
-                node.position.x,
-                node.position.y,
-                this.camera.x,
-                this.camera.y
+            const screenDist = Math.sqrt(
+                Math.pow(node.position.x - this.camera.x, 2) + 
+                Math.pow(node.position.y - this.camera.y, 2)
             );
 
             if (screenDist < 1500 / this.camera.zoom) {
@@ -194,56 +200,63 @@ class MapRenderer {
     drawPlayer() {
         const { x, y } = player.position;
 
-        // Player circle (reduced to 1/5 of original size)
+        // Player circle with actual hitbox radius (0.5 pixels)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+        this.ctx.arc(x, y, player.radius, 0, Math.PI * 2);
         this.ctx.fillStyle = '#2ecc71';
         this.ctx.fill();
         this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.lineWidth = 0.1;
         this.ctx.stroke();
 
         // Activity indicator
         if (player.currentActivity) {
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+            this.ctx.arc(x, y, player.radius + 0.5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));
             this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 0.4;  // reduced from 2
+            this.ctx.lineWidth = 0.2;
             this.ctx.stroke();
+        }
+
+        // Debug: Show exact position
+        if (this.showCollisionDebug) {
+            this.ctx.fillStyle = '#ff0';
+            this.ctx.font = '0.5px Arial';
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'bottom';
+            this.ctx.fillText(`${x.toFixed(2)}, ${y.toFixed(2)}`, x + 1, y);
         }
     }
 
     drawPlayerPath() {
-        if (!player.path || player.path.length < 2) return;
+        if (!player.path || player.path.length < 1) return;
 
-        // Draw the path from destination back to player (so it looks like we're eating it)
+        // Draw smooth path from player to destination
         this.ctx.beginPath();
         
-        // Start from the final destination
-        const destination = player.path[player.path.length - 1];
-        this.ctx.moveTo(destination.x, destination.y);
+        // Start from player position
+        this.ctx.moveTo(player.position.x, player.position.y);
         
-        // Draw backwards through the path
-        for (let i = player.path.length - 2; i >= player.pathIndex; i--) {
+        // Draw through remaining waypoints
+        for (let i = player.pathIndex; i < player.path.length; i++) {
             this.ctx.lineTo(player.path[i].x, player.path[i].y);
         }
         
-        // End at player position
-        this.ctx.lineTo(player.position.x, player.position.y);
-        
         this.ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-        this.ctx.lineWidth = 0.4;
-        this.ctx.setLineDash([1, 1]);
+        this.ctx.lineWidth = 0.3;
+        this.ctx.setLineDash([0.5, 0.5]);
         this.ctx.stroke();
         this.ctx.setLineDash([]);
 
-        // Draw waypoint markers (only for remaining waypoints)
-        this.ctx.fillStyle = 'rgba(46, 204, 113, 0.8)';
-        for (let i = player.pathIndex; i < player.path.length; i++) {
-            const point = player.path[i];
-            this.ctx.beginPath();
-            this.ctx.arc(point.x, point.y, 0.3, 0, Math.PI * 2);
-            this.ctx.fill();
+        // Draw waypoint markers for debugging
+        if (this.showCollisionDebug) {
+            this.ctx.fillStyle = 'rgba(46, 204, 113, 0.8)';
+            for (let i = player.pathIndex; i < player.path.length; i++) {
+                const point = player.path[i];
+                this.ctx.beginPath();
+                this.ctx.arc(point.x, point.y, 0.2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
         }
     }
 
@@ -271,7 +284,8 @@ class MapRenderer {
         this.ctx.textBaseline = 'top';
         
         const debugInfo = [
-            `Pos: ${Math.round(player.position.x)}, ${Math.round(player.position.y)}`,
+            `Pos: ${player.position.x.toFixed(2)}, ${player.position.y.toFixed(2)}`,
+            `Speed: ${player.speed} px/s`,
             `Collision: ${this.showCollisionDebug ? 'ON' : 'OFF'} (Press C)`,
             `Node Text: ${this.showNodeText ? 'ON' : 'OFF'} (Press N)`
         ];
@@ -296,6 +310,9 @@ class MapRenderer {
         if (clickedNode) {
             console.log('Clicked node:', clickedNode.name);
             // Could add manual node interaction here
+        } else {
+            // Show click position for debugging
+            console.log(`Clicked at world position: ${worldX.toFixed(2)}, ${worldY.toFixed(2)}`);
         }
     }
 
