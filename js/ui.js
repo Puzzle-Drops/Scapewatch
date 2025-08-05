@@ -142,7 +142,8 @@ class UIManager {
             const targetNode = nodes.getNode(player.targetNode);
             const targetName = targetNode ? targetNode.name : 'Unknown';
             activityName.textContent = 'Moving';
-            activityStatus.textContent = `To: ${targetName}`;
+            const remainingWaypoints = player.path.length - player.pathIndex;
+            activityStatus.textContent = `To: ${targetName} (${remainingWaypoints} waypoints)`;
         } else {
             // Player is idle
             const currentNode = nodes.getNode(player.currentNode);
