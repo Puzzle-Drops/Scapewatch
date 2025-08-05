@@ -166,7 +166,7 @@
         "skill": "fishing",
         "requiredLevel": 20,
         "baseDuration": 3000,
-        "consumeOnSuccess": [{"itemId": "feathers", "quantity": 1}],
+        "consumeOnSuccess": [{"itemId": "feather", "quantity": 1}],
         "rewards": [
             {
                 "itemId": "raw_trout",
