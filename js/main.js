@@ -58,6 +58,7 @@ function startGame() {
     // Scaling system is already initialized, just update for game container
     scalingSystem.setupInitialScaling();
 
+    
     // Initialize game systems (order matters!)
     // skillBehaviors is already instantiated in skillBehaviors.js
     window.skills = new SkillsManager();
