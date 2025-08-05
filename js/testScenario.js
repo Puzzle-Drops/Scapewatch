@@ -67,6 +67,11 @@ class TestScenario {
         this.setSkillLevel('fletching', 50);
         this.setSkillLevel('construction', 50);
         this.setSkillLevel('firemaking', 50);
+
+        // Force UI update after setting all levels
+        if (window.ui) {
+            window.ui.updateSkillsList();
+        }
     }
 
     setSkillLevel(skillId, level) {
