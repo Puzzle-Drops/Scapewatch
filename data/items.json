@@ -137,13 +137,13 @@
         "stackable": false,
         "category": "gem"
     },
-    "raw_shrimp": {
+    "raw_shrimps": {
         "id": "raw_shrimp",
         "name": "Raw Shrimp",
         "stackable": false,
         "category": "resource"
     },
-    "shrimp": {
+    "shrimps": {
         "id": "shrimp",
         "name": "Shrimp",
         "stackable": false,
