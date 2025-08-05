@@ -17,6 +17,7 @@ async function init() {
     
     // Add assets to load
     loadingManager.addImage('worldMap', 'assets/map.png');
+    loadingManager.addImage('collisionMap', 'assets/collision-map.png');
     
     // Add skill icons
     const skillIcons = [
@@ -50,14 +51,20 @@ async function init() {
     }
 }
 
-function startGame() {
+async function startGame() {
     // Hide loading screen and show game container
     document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'flex';  // <-- This is the fix!
+    document.getElementById('game-container').style.display = 'flex';
     
     // Scaling system is already initialized, just update for game container
     scalingSystem.setupInitialScaling();
 
+    // Initialize collision system first
+    window.collision = new CollisionSystem();
+    await collision.initialize();
+    
+    // Initialize pathfinding with collision system
+    window.pathfinding = new Pathfinding(collision);
     
     // Initialize game systems (order matters!)
     // skillBehaviors is already instantiated in skillBehaviors.js
