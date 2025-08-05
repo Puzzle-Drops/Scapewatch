@@ -1,6 +1,11 @@
 class SkillBehaviors {
     constructor() {
         this.behaviors = {
+            fishing: {
+                getDuration: this.fishingDuration.bind(this),
+                processRewards: this.fishingRewards.bind(this),
+                shouldGrantXP: this.fishingShouldGrantXP.bind(this)
+            },
             woodcutting: {
                 getDuration: this.woodcuttingDuration.bind(this),
                 processRewards: this.woodcuttingRewards.bind(this),
@@ -54,6 +59,86 @@ class SkillBehaviors {
     defaultShouldGrantXP(earnedRewards, activityData) {
         // Most skills grant XP regardless of rewards
         return true;
+    }
+
+    // Fishing specific behaviors
+    fishingDuration(baseDuration, skillLevel, activityData) {
+        // Handle pike fishing special duration (1/5 chance for 3600ms instead of 3000ms)
+        if (activityData.durationBoost) {
+            if (Math.random() < activityData.durationBoost.chance) {
+                return activityData.durationBoost.duration;
+            }
+        }
+        return baseDuration;
+    }
+
+    fishingRewards(activityData, skillLevel) {
+        // Fishing uses one-roll weighted distribution
+        // First, calculate all possible chances
+        const possibleCatches = [];
+        let totalChance = 0;
+
+        if (activityData.rewards) {
+            for (const reward of activityData.rewards) {
+                // Check if player meets level requirement for this fish
+                if (reward.requiredLevel && skillLevel < reward.requiredLevel) {
+                    continue;
+                }
+
+                let chance = 0;
+                
+                // Handle multi-range scaling (like raw trout has two ranges)
+                if (Array.isArray(reward.chanceScaling)) {
+                    // Find applicable range
+                    for (const range of reward.chanceScaling) {
+                        if (skillLevel >= range.minLevel && skillLevel <= range.maxLevel) {
+                            chance = this.getScaledChanceFromRange(range, skillLevel);
+                            break;
+                        }
+                    }
+                } else if (reward.chanceScaling) {
+                    chance = this.getScaledChance(reward, skillLevel);
+                } else {
+                    chance = reward.chance || 1.0;
+                }
+
+                if (chance > 0) {
+                    possibleCatches.push({
+                        itemId: reward.itemId,
+                        quantity: reward.quantity,
+                        chance: chance,
+                        xpPerAction: reward.xpPerAction
+                    });
+                    totalChance += chance;
+                }
+            }
+        }
+
+        // Make ONE roll
+        const roll = Math.random();
+        
+        // Determine what was caught based on the roll
+        let cumulativeChance = 0;
+        for (const catchOption of possibleCatches) {
+            cumulativeChance += catchOption.chance;
+            if (roll < cumulativeChance) {
+                // Store the XP value for this catch so we can grant it later
+                this.lastCatchXp = catchOption.xpPerAction;
+                return [{
+                    itemId: catchOption.itemId,
+                    quantity: catchOption.quantity
+                }];
+            }
+        }
+
+        // No catch
+        this.lastCatchXp = 0;
+        return [];
+    }
+
+    fishingShouldGrantXP(earnedRewards, activityData) {
+        // Fishing only grants XP if you catch something
+        return earnedRewards.length > 0;
     }
 
     // Woodcutting specific behaviors
@@ -184,6 +269,19 @@ class SkillBehaviors {
         // Linear interpolation between min and max chance
         return lerp(scaling.minChance, scaling.maxChance, levelProgress);
     }
+
+    // Helper method for multi-range scaling
+    getScaledChanceFromRange(range, skillLevel) {
+        // Clamp level to valid range
+        const clampedLevel = Math.max(range.minLevel, Math.min(skillLevel, range.maxLevel));
+        
+        // Calculate progress through the level range (0 to 1)
+        const levelProgress = (clampedLevel - range.minLevel) / (range.maxLevel - range.minLevel);
+        
+        // Linear interpolation between min and max chance
+        return lerp(range.minChance, range.maxChance, levelProgress);
+    }
+    
 }
 
 // Create global instance
