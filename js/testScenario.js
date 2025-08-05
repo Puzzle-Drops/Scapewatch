@@ -24,7 +24,7 @@ class TestScenario {
         this.populateInventory();
 
         // Set up test goals
-        //this.setupTestGoals();
+        this.setupTestGoals();
 
         console.log('Test scenario complete!');
     }
@@ -108,7 +108,7 @@ class TestScenario {
         // Add some test goals
         ai.addGoal({
             type: 'skill_level',
-            skill: 'woodcutting',
+            skill: 'fishing',
             targetLevel: 60,
             priority: 1
         });
@@ -122,7 +122,7 @@ class TestScenario {
         
         ai.addGoal({
             type: 'skill_level',
-            skill: 'mining',
+            skill: 'woodcutting',
             targetLevel: 60,
             priority: 3
         });
