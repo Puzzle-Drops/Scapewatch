@@ -198,48 +198,29 @@ class AIManager {
             return;
         }
 
-        // Calculate effective XP/action based on skill-specific mechanics
-        let bestActivity = null;
-        let bestEffectiveXp = 0;
-
+        // Filter to only reachable activities
+        const reachableActivities = [];
         for (const [activityId, activityData] of skillActivities) {
-            // Check if we can reach a node with this activity
             const reachableNode = this.findReachableNodeWithActivity(activityId);
-            if (!reachableNode) continue;
-
-            let effectiveXp;
-            
-            // Get skill-specific behavior
-            const behavior = skillBehaviors.getBehavior(skillId);
-            
-            // For skills that only grant XP on success (woodcutting, mining)
-            if (skillId === 'woodcutting' || skillId === 'mining') {
-                // Estimate success rate based on rewards
-                let successChance = 1.0;
-                
-                if (activityData.rewards && activityData.rewards.length > 0) {
-                    const mainReward = activityData.rewards[0];
-                    successChance = mainReward.chanceScaling ? 
-                        skillBehaviors.getScaledChance(mainReward, skills.getLevel(skillId)) :
-                        (mainReward.chance || 1.0);
-                }
-                
-                effectiveXp = activityData.xpPerAction * successChance;
-            } else {
-                // For other activities, use base XP
-                effectiveXp = activityData.xpPerAction;
-            }
-
-            if (effectiveXp > bestEffectiveXp) {
-                bestEffectiveXp = effectiveXp;
-                bestActivity = activityId;
+            if (reachableNode) {
+                reachableActivities.push([activityId, activityData]);
             }
         }
-
-        if (bestActivity) {
-            this.doActivity(bestActivity);
-        } else {
+        
+        if (reachableActivities.length === 0) {
             console.log(`No reachable activities found for ${skillId}`);
+            return;
+        }
+        
+        // Let skillBehaviors choose the best activity (with randomness)
+        const chosenActivity = skillBehaviors.chooseBestActivity(
+            skillId, 
+            reachableActivities, 
+            skills.getLevel(skillId)
+        );
+        
+        if (chosenActivity) {
+            this.doActivity(chosenActivity);
         }
     }
 
@@ -425,10 +406,44 @@ class AIManager {
 
         // Add some item banking goals based on what we can gather
         const itemGoals = [
-            { itemId: 'oak_logs', count: 250, minLevel: 15, skill: 'woodcutting' },
-            { itemId: 'willow_logs', count: 500, minLevel: 30, skill: 'woodcutting' },
-            { itemId: 'iron_ore', count: 300, minLevel: 15, skill: 'mining' },
-            { itemId: 'raw_shrimps', count: 200, minLevel: 1, skill: 'fishing' }
+            // Woodcutting items
+            { itemId: 'logs', count: 50, minLevel: 1, skill: 'woodcutting' },
+            { itemId: 'oak_logs', count: 100, minLevel: 15, skill: 'woodcutting' },
+            { itemId: 'willow_logs', count: 200, minLevel: 30, skill: 'woodcutting' },
+            { itemId: 'teak_logs', count: 300, minLevel: 35, skill: 'woodcutting' },
+            { itemId: 'maple_logs', count: 300, minLevel: 45, skill: 'woodcutting' },
+            { itemId: 'mahogany_logs', count: 300, minLevel: 50, skill: 'woodcutting' },
+            { itemId: 'yew_logs', count: 300, minLevel: 60, skill: 'woodcutting' },
+            { itemId: 'magic_logs', count: 300, minLevel: 75, skill: 'woodcutting' },
+            { itemId: 'redwood_logs', count: 300, minLevel: 90, skill: 'woodcutting' },
+            
+            // Mining items
+            { itemId: 'copper_ore', count: 50, minLevel: 1, skill: 'mining' },
+            { itemId: 'tin_ore', count: 50, minLevel: 1, skill: 'mining' },
+            { itemId: 'iron_ore', count: 100, minLevel: 15, skill: 'mining' },
+            { itemId: 'silver_ore', count: 200, minLevel: 20, skill: 'mining' },
+            { itemId: 'coal', count: 300, minLevel: 30, skill: 'mining' },
+            { itemId: 'gold_ore', count: 300, minLevel: 40, skill: 'mining' },
+            { itemId: 'mithril_ore', count: 300, minLevel: 55, skill: 'mining' },
+            { itemId: 'adamantite_ore', count: 300, minLevel: 70, skill: 'mining' },
+            { itemId: 'runite_ore', count: 300, minLevel: 85, skill: 'mining' },
+            { itemId: 'amethyst', count: 300, minLevel: 92, skill: 'mining' },
+            
+            // Fishing items
+            { itemId: 'raw_shrimps', count: 50, minLevel: 1, skill: 'fishing' },
+            { itemId: 'raw_sardine', count: 100, minLevel: 5, skill: 'fishing' },
+            { itemId: 'raw_herring', count: 100, minLevel: 10, skill: 'fishing' },
+            { itemId: 'raw_anchovies', count: 100, minLevel: 15, skill: 'fishing' },
+            { itemId: 'raw_mackerel', count: 100, minLevel: 16, skill: 'fishing' },
+            { itemId: 'raw_trout', count: 200, minLevel: 20, skill: 'fishing' },
+            { itemId: 'raw_cod', count: 200, minLevel: 23, skill: 'fishing' },
+            { itemId: 'raw_pike', count: 200, minLevel: 25, skill: 'fishing' },
+            { itemId: 'raw_salmon', count: 250, minLevel: 30, skill: 'fishing' },
+            { itemId: 'raw_tuna', count: 250, minLevel: 35, skill: 'fishing' },
+            { itemId: 'raw_lobster', count: 300, minLevel: 40, skill: 'fishing' },
+            { itemId: 'raw_bass', count: 300, minLevel: 46, skill: 'fishing' },
+            { itemId: 'raw_swordfish', count: 300, minLevel: 50, skill: 'fishing' },
+            { itemId: 'raw_shark', count: 300, minLevel: 76, skill: 'fishing' }
         ];
 
         for (const itemGoal of itemGoals) {
