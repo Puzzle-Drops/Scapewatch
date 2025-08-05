@@ -120,7 +120,7 @@ function gameLoop(currentTime) {
     // Update game systems with actual delta time
     if (!gameState.paused) {
         ai.update(deltaTime);
-        player.update(deltaTime);
+        player.update(deltaTime); // Player moves at 3 pixels per second
     }
 
     // Update UI only for frequently changing elements
