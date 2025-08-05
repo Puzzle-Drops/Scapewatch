@@ -33,6 +33,28 @@ class Bank {
         return quantity;
     }
 
+    // Withdraw up to a maximum amount (useful for non-stackable items)
+    withdrawUpTo(itemId, maxQuantity) {
+        if (!this.items[itemId]) {
+            return 0;
+        }
+
+        const available = this.items[itemId];
+        const toWithdraw = Math.min(available, maxQuantity);
+
+        this.items[itemId] -= toWithdraw;
+        if (this.items[itemId] <= 0) {
+            delete this.items[itemId];
+        }
+
+        // Notify UI
+        if (window.ui) {
+            window.ui.forceBankUpdate();
+        }
+
+        return toWithdraw;
+    }
+
     getItemCount(itemId) {
         return this.items[itemId] || 0;
     }
