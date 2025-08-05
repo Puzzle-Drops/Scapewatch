@@ -88,12 +88,12 @@ class TestScenario {
     populateBank() {
         const allItems = loadingManager.getData('items');
         
+        bank.deposit ('coins', 9999000);
+        
         // Add 1000 of each item to bank
         for (const [itemId, itemData] of Object.entries(allItems)) {
             bank.deposit(itemId, 1000);
         }
-
-        bank.deposit ('coins', 9999000);
         
         console.log(`Added 1000 of each item to bank (${Object.keys(allItems).length} items)`);
     }
