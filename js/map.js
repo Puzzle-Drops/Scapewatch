@@ -12,7 +12,7 @@ class MapRenderer {
         this.camera = {
             x: 4395, // Start at player position
             y: 1882, // Start at player position
-            zoom: 6.25 // increased by 1/4 from 5
+            zoom: 10 // increased by 1/4 from 5
         };
         this.worldMap = loadingManager.getImage('worldMap');
         this.showNodeText = false; // Flag for showing node text
@@ -114,8 +114,8 @@ class MapRenderer {
         const targetX = player.position.x;
         const targetY = player.position.y;
 
-        this.camera.x = lerp(this.camera.x, targetX, 0.1);
-        this.camera.y = lerp(this.camera.y, targetY, 0.1);
+        this.camera.x = lerp(this.camera.x, targetX, 0.3);
+        this.camera.y = lerp(this.camera.y, targetY, 0.3);
     }
 
     drawNodes() {
