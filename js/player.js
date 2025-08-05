@@ -157,12 +157,10 @@ class Player {
 
         // Grant XP based on skill-specific rules
         if (behavior.shouldGrantXP(earnedRewards, activityData)) {
-            // For fishing, use the specific XP value from the caught fish
-            let xpToGrant = activityData.xpPerAction;
-            if (activityData.skill === 'fishing' && behavior.lastCatchXp) {
-                xpToGrant = behavior.lastCatchXp;
+            const xpToGrant = behavior.getXpToGrant(earnedRewards, activityData);
+            if (xpToGrant > 0) {
+                skills.addXp(activityData.skill, xpToGrant);
             }
-            skills.addXp(activityData.skill, xpToGrant);
             
             // Grant additional XP (for combat)
             if (activityData.additionalXp) {
