@@ -94,10 +94,6 @@ class TestScenario {
     populateInventory() {
         // Add some common items to inventory for testing
         inventory.addItem('coins', 10000);
-        inventory.addItem('raw_shrimps', 10);
-        inventory.addItem('logs', 5);
-        inventory.addItem('copper_ore', 10);
-        inventory.addItem('tin_ore', 10);
         
         console.log('Added test items to inventory');
     }
