@@ -7,18 +7,18 @@ class Player {
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
-        this.movementTimer = 0; // Timer for discrete movement
+        this.movementTimer = 0; // Timer for smooth interpolation
         this.movementInterval = 600; // 0.6 seconds in milliseconds
-        this.movementStartPos = null; // Starting position for current movement
-        this.movementTargetPos = null; // Target position for current movement
-        this.targetPathIndex = 0; // Target index in path after current movement
+        this.movementStartPos = null; // Starting position for interpolation
+        this.movementEndPos = null; // End position for interpolation
         this.path = [];
         this.pathIndex = 0;
+        this.tilesMovedThisInterval = 0; // Track tiles moved in current interval
     }
 
     update(deltaTime) {
         // Handle movement along path
-        if (this.path.length > 0) {
+        if (this.path.length > 0 && this.pathIndex < this.path.length) {
             this.updatePathMovement(deltaTime);
         }
 
@@ -29,50 +29,9 @@ class Player {
     }
 
     updatePathMovement(deltaTime) {
-        if (this.pathIndex >= this.path.length) {
-            // Reached end of path
-            this.path = [];
-            this.pathIndex = 0;
-            this.targetPosition = null;
-            this.movementTimer = 0;
-            this.movementStartPos = null;
-            this.movementTargetPos = null;
-            this.onReachedTarget();
-            return;
-        }
-
-        // Initialize movement positions if needed
+        // Initialize movement if not started
         if (!this.movementStartPos) {
-            this.movementStartPos = { x: this.position.x, y: this.position.y };
-            
-            // We want to move along the path, 2 pixels at a time
-            // But we need to make sure we're moving to actual path points
-            let targetX = this.position.x;
-            let targetY = this.position.y;
-            let pixelsMoved = 0;
-            let tempIndex = this.pathIndex;
-            
-            // Move up to 2 pixels along the path
-            while (pixelsMoved < 2 && tempIndex < this.path.length) {
-                const nextPoint = this.path[tempIndex];
-                const dx = Math.abs(nextPoint.x - targetX);
-                const dy = Math.abs(nextPoint.y - targetY);
-                const distance = Math.max(dx, dy); // Chebyshev distance (tile distance)
-                
-                if (pixelsMoved + distance <= 2) {
-                    // We can move to this point
-                    targetX = nextPoint.x;
-                    targetY = nextPoint.y;
-                    pixelsMoved += distance;
-                    tempIndex++;
-                } else {
-                    // This would exceed 2 pixels, stop here
-                    break;
-                }
-            }
-            
-            this.movementTargetPos = { x: targetX, y: targetY };
-            this.targetPathIndex = tempIndex;
+            this.setupNextMovement();
         }
 
         // Update movement timer
@@ -82,28 +41,89 @@ class Player {
         const progress = Math.min(this.movementTimer / this.movementInterval, 1);
 
         // Smoothly interpolate position
-        this.position.x = this.movementStartPos.x + (this.movementTargetPos.x - this.movementStartPos.x) * progress;
-        this.position.y = this.movementStartPos.y + (this.movementTargetPos.y - this.movementStartPos.y) * progress;
+        if (this.movementEndPos) {
+            this.position.x = this.movementStartPos.x + (this.movementEndPos.x - this.movementStartPos.x) * progress;
+            this.position.y = this.movementStartPos.y + (this.movementEndPos.y - this.movementStartPos.y) * progress;
+        }
 
         // Check if movement interval is complete
         if (this.movementTimer >= this.movementInterval) {
-            // Snap to exact target position
-            this.position.x = this.movementTargetPos.x;
-            this.position.y = this.movementTargetPos.y;
-            
-            // Update path index
-            this.pathIndex = this.targetPathIndex;
+            // Complete the current movement
+            if (this.movementEndPos) {
+                this.position.x = this.movementEndPos.x;
+                this.position.y = this.movementEndPos.y;
+            }
             
             // Reset for next movement
             this.movementTimer = 0;
             this.movementStartPos = null;
-            this.movementTargetPos = null;
-            this.targetPathIndex = 0;
+            this.movementEndPos = null;
+            this.tilesMovedThisInterval = 0;
             
-            // Update target position for drawing
-            if (this.pathIndex < this.path.length) {
-                this.targetPosition = this.path[this.path.length - 1];
+            // Check if we've reached the end of the path
+            if (this.pathIndex >= this.path.length) {
+                this.onReachedTarget();
+                this.path = [];
+                this.pathIndex = 0;
+                this.targetPosition = null;
             }
+        }
+    }
+
+    setupNextMovement() {
+        if (this.pathIndex >= this.path.length) return;
+
+        // Set starting position
+        this.movementStartPos = { x: this.position.x, y: this.position.y };
+        
+        // Calculate how far we can move (up to 2 tiles)
+        let tilesLeft = 2;
+        let endX = this.position.x;
+        let endY = this.position.y;
+        let finalPathIndex = this.pathIndex;
+        
+        // Move along the path up to 2 tiles
+        while (tilesLeft > 0 && finalPathIndex < this.path.length) {
+            const nextPoint = this.path[finalPathIndex];
+            
+            // Calculate tile distance to next point (using Chebyshev distance for grid movement)
+            const dx = Math.abs(nextPoint.x - endX);
+            const dy = Math.abs(nextPoint.y - endY);
+            const tilesToNext = Math.max(dx, dy); // Chebyshev distance
+            
+            if (tilesToNext === 0) {
+                // Already at this point, skip to next
+                finalPathIndex++;
+                continue;
+            }
+            
+            if (tilesToNext <= tilesLeft) {
+                // We can reach this point
+                endX = nextPoint.x;
+                endY = nextPoint.y;
+                tilesLeft -= tilesToNext;
+                finalPathIndex++;
+            } else {
+                // This point is too far, move partially towards it
+                // Calculate the direction
+                const dirX = Math.sign(nextPoint.x - endX);
+                const dirY = Math.sign(nextPoint.y - endY);
+                
+                // Move the remaining tiles in that direction
+                endX += dirX * tilesLeft;
+                endY += dirY * tilesLeft;
+                tilesLeft = 0;
+                // Don't increment finalPathIndex since we didn't reach this waypoint
+            }
+        }
+        
+        // Set the end position and update path index
+        this.movementEndPos = { x: endX, y: endY };
+        this.pathIndex = finalPathIndex;
+        
+        // Update target position for visualization
+        if (this.path.length > 0) {
+            this.targetPosition = this.path[this.path.length - 1];
         }
     }
 
@@ -231,11 +251,10 @@ class Player {
                 this.pathIndex = 0;
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
-                this.movementTimer = 0; // Reset movement timer
-                this.movementStartPos = null; // Reset movement positions
-                this.movementTargetPos = null;
-                this.targetPathIndex = 0;
-                this.tilesMovingThisInterval = 0;
+                this.movementTimer = 0;
+                this.movementStartPos = null;
+                this.movementEndPos = null;
+                this.tilesMovedThisInterval = 0;
                 this.stopActivity();
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
@@ -254,10 +273,10 @@ class Player {
                 this.pathIndex = 0;
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
-                this.movementTimer = 0; // Reset movement timer
-                this.movementStartPos = null; // Reset movement positions
-                this.movementTargetPos = null;
-                this.targetPathIndex = 0;
+                this.movementTimer = 0;
+                this.movementStartPos = null;
+                this.movementEndPos = null;
+                this.tilesMovedThisInterval = 0;
                 this.stopActivity();
             }
         } else {
@@ -269,10 +288,10 @@ class Player {
             this.pathIndex = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
-            this.movementTimer = 0; // Reset movement timer
-            this.movementStartPos = null; // Reset movement positions
-            this.movementTargetPos = null;
-            this.targetPathIndex = 0;
+            this.movementTimer = 0;
+            this.movementStartPos = null;
+            this.movementEndPos = null;
+            this.tilesMovedThisInterval = 0;
             this.stopActivity();
         }
     }
@@ -346,7 +365,7 @@ class Player {
     }
 
     isMoving() {
-        return this.path.length > 0 || this.targetPosition !== null;
+        return this.path.length > 0 && this.pathIndex < this.path.length;
     }
 
     isPerformingActivity() {
