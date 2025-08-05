@@ -4,7 +4,7 @@
         "name": "Test Trees",
         "type": "skill",
         "position": {
-            "x": 4445,
+            "x": 4325,
             "y": 1832
         },
         "activities": [
@@ -24,7 +24,7 @@
         "name": "Test Mine",
         "type": "skill",
         "position": {
-            "x": 4445,
+            "x": 4325,
             "y": 1852
         },
         "activities": [
@@ -45,7 +45,7 @@
         "name": "Test Fish",
         "type": "skill",
         "position": {
-            "x": 4445,
+            "x": 4325,
             "y": 1872
         },
         "activities": [
