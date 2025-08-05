@@ -122,37 +122,12 @@ class UIManager {
             }
             activityName.textContent = displayName;
 
-            // Get skill-specific behavior
+            // Get skill-specific behavior and calculate XP rate
             const behavior = skillBehaviors.getBehavior(activityData.skill);
-            
-            // Calculate actions per hour based on skill-specific duration
-            const duration = behavior.getDuration(
-                activityData.baseDuration,
-                skills.getLevel(activityData.skill),
-                activityData
+            const xpPerHour = Math.floor(
+                behavior.getEffectiveXpRate(activityData, skills.getLevel(activityData.skill))
             );
-            const actionsPerHour = Math.floor(3600000 / duration);
             
-            // Calculate XP/hr based on skill-specific mechanics
-            let xpPerHour;
-            
-            // For skills that only grant XP on success (woodcutting, mining)
-            if (activityData.skill === 'woodcutting' || activityData.skill === 'mining') {
-                let successChance = 1.0;
-                
-                if (activityData.rewards && activityData.rewards.length > 0) {
-                    const mainReward = activityData.rewards[0];
-                    successChance = mainReward.chanceScaling ? 
-                        skillBehaviors.getScaledChance(mainReward, skills.getLevel(activityData.skill)) :
-                        (mainReward.chance || 1.0);
-                }
-                
-                xpPerHour = Math.floor(actionsPerHour * activityData.xpPerAction * successChance);
-            } else {
-                // For other activities, use the standard calculation
-                xpPerHour = actionsPerHour * activityData.xpPerAction;
-            }
-
             activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
         } else if (player.isMoving()) {
             const targetNode = nodes.getNode(player.targetNode);
