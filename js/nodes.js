@@ -19,9 +19,10 @@ class NodeManager {
         let invalidNodes = [];
         
         for (const [id, node] of Object.entries(this.nodes)) {
-            if (!collision.isWalkable(node.position.x, node.position.y)) {
+            // Check if a player can fit at this node position
+            if (!collision.canCircleFit(node.position.x, node.position.y, 0.5)) {
                 invalidNodes.push(id);
-                console.warn(`Node ${id} (${node.name}) is in a non-walkable position!`);
+                console.warn(`Node ${id} (${node.name}) is in a non-walkable position for player!`);
             }
         }
         
@@ -48,11 +49,20 @@ class NodeManager {
         for (const bank of banks) {
             // Check if we can actually path to this bank
             if (window.pathfinding) {
-                const path = pathfinding.findPath(position.x, position.y, bank.position.x, bank.position.y);
+                const path = pathfinding.findPath(
+                    position.x, 
+                    position.y, 
+                    bank.position.x, 
+                    bank.position.y,
+                    0.5 // Player radius
+                );
                 if (!path) continue; // Skip inaccessible banks
             }
             
-            const dist = distance(position.x, position.y, bank.position.x, bank.position.y);
+            const dist = Math.sqrt(
+                Math.pow(position.x - bank.position.x, 2) + 
+                Math.pow(position.y - bank.position.y, 2)
+            );
             if (dist < minDistance) {
                 minDistance = dist;
                 nearest = bank;
@@ -73,11 +83,20 @@ class NodeManager {
         for (const node of nodesWithActivity) {
             // Check if we can actually path to this node
             if (window.pathfinding) {
-                const path = pathfinding.findPath(position.x, position.y, node.position.x, node.position.y);
+                const path = pathfinding.findPath(
+                    position.x, 
+                    position.y, 
+                    node.position.x, 
+                    node.position.y,
+                    0.5 // Player radius
+                );
                 if (!path) continue; // Skip inaccessible nodes
             }
             
-            const dist = distance(position.x, position.y, node.position.x, node.position.y);
+            const dist = Math.sqrt(
+                Math.pow(position.x - node.position.x, 2) + 
+                Math.pow(position.y - node.position.y, 2)
+            );
             if (dist < minDistance) {
                 minDistance = dist;
                 nearest = node;
@@ -104,7 +123,10 @@ class NodeManager {
 
     getNodeAt(x, y, radius = 2) {  // Adjusted to match icon size (half of 4x4 icon)
         for (const [id, node] of Object.entries(this.nodes)) {
-            const dist = distance(x, y, node.position.x, node.position.y);
+            const dist = Math.sqrt(
+                Math.pow(x - node.position.x, 2) + 
+                Math.pow(y - node.position.y, 2)
+            );
             if (dist <= radius) {
                 return node;
             }
@@ -118,8 +140,8 @@ class NodeManager {
             return { x, y }; // Return original position if collision not ready
         }
 
-        // Check if current position is already walkable
-        if (collision.isWalkable(x, y)) {
+        // Check if current position is already walkable for a player
+        if (collision.canCircleFit(x, y, 0.5)) {
             return { x, y };
         }
 
@@ -129,10 +151,10 @@ class NodeManager {
             const steps = radius * 8; // More steps for larger radius
             for (let i = 0; i < steps; i++) {
                 const angle = (i / steps) * Math.PI * 2;
-                const checkX = Math.round(x + Math.cos(angle) * radius);
-                const checkY = Math.round(y + Math.sin(angle) * radius);
+                const checkX = x + Math.cos(angle) * radius;
+                const checkY = y + Math.sin(angle) * radius;
                 
-                if (collision.isWalkable(checkX, checkY)) {
+                if (collision.canCircleFit(checkX, checkY, 0.5)) {
                     return { x: checkX, y: checkY };
                 }
             }
