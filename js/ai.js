@@ -15,33 +15,47 @@ class AIManager {
             targetCount: 10,
             priority: 1
         });
+        
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'tin_ore',
+            targetCount: 20,
+            priority: 2
+        });
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'raw_shrimps',
+            targetCount: 28,
+            priority: 3
+        });
+
+        this.addGoal({
+            type: 'bank_items',
+            itemId: 'copper_ore',
+            targetCount: 20,
+            priority: 4
+        });
 
         this.addGoal({
             type: 'skill_level',
             skill: 'woodcutting',
             targetLevel: 15,
-            priority: 2
+            priority: 5
         });
 
         this.addGoal({
             type: 'bank_items',
             itemId: 'oak_logs',
             targetCount: 50,
-            priority: 3
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'tin_ore',
-            targetCount: 50,
-            priority: 4
+            priority: 6
         });
 
         this.addGoal({
             type: 'skill_level',
             skill: 'mining',
             targetLevel: 15,
-            priority: 5
+            priority: 7
         });
     }
 
