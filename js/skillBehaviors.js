@@ -5,25 +5,29 @@ class SkillBehaviors {
                 getDuration: this.woodcuttingDuration.bind(this),
                 processRewards: this.woodcuttingRewards.bind(this),
                 shouldGrantXP: this.woodcuttingShouldGrantXP.bind(this),
-                getEffectiveXpRate: this.woodcuttingXpRate.bind(this)
+                getEffectiveXpRate: this.woodcuttingXpRate.bind(this),
+                getXpToGrant: this.woodcuttingXpToGrant.bind(this)
             },
             mining: {
                 getDuration: this.miningDuration.bind(this),
                 processRewards: this.miningRewards.bind(this),
                 shouldGrantXP: this.miningShouldGrantXP.bind(this),
-                getEffectiveXpRate: this.miningXpRate.bind(this)
+                getEffectiveXpRate: this.miningXpRate.bind(this),
+                getXpToGrant: this.miningXpToGrant.bind(this)
             },
             fishing: {
                 getDuration: this.fishingDuration.bind(this),
                 processRewards: this.fishingRewards.bind(this),
                 shouldGrantXP: this.fishingShouldGrantXP.bind(this),
-                getEffectiveXpRate: this.fishingXpRate.bind(this)
+                getEffectiveXpRate: this.fishingXpRate.bind(this),
+                getXpToGrant: this.fishingXpToGrant.bind(this)
             },
             default: {
                 getDuration: this.defaultDuration.bind(this),
                 processRewards: this.defaultRewards.bind(this),
                 shouldGrantXP: this.defaultShouldGrantXP.bind(this),
-                getEffectiveXpRate: this.defaultXpRate.bind(this)
+                getEffectiveXpRate: this.defaultXpRate.bind(this),
+                getXpToGrant: this.defaultXpToGrant.bind(this)
             }
         };
     }
@@ -33,7 +37,8 @@ class SkillBehaviors {
         return this.behaviors[skillName] || this.behaviors.default;
     }
 
-    // Default behaviors (for skills without special mechanics)
+    // ==================== DEFAULT BEHAVIORS ====================
+    
     defaultDuration(baseDuration, skillLevel, activityData) {
         // Simple duration - no scaling
         return baseDuration;
@@ -65,7 +70,21 @@ class SkillBehaviors {
         return true;
     }
 
-    // Woodcutting specific behaviors
+    defaultXpRate(activityData, skillLevel) {
+        // For other skills: simple calculation
+        const xpPerAction = activityData.xpPerAction || 0;
+        const duration = activityData.baseDuration || 1000;
+        const actionsPerHour = 3600000 / duration;
+        return actionsPerHour * xpPerAction;
+    }
+
+    defaultXpToGrant(earnedRewards, activityData) {
+        // Default skills always grant their base XP
+        return activityData.xpPerAction || 0;
+    }
+
+    // ==================== WOODCUTTING BEHAVIORS ====================
+    
     woodcuttingDuration(baseDuration, skillLevel, activityData) {
         // Woodcutting doesn't scale duration with level
         return baseDuration;
@@ -97,7 +116,33 @@ class SkillBehaviors {
         return earnedRewards.length > 0;
     }
 
-    // Mining specific behaviors
+    woodcuttingXpRate(activityData, skillLevel) {
+        // For woodcutting: XP * success chance / duration
+        if (!activityData.rewards || activityData.rewards.length === 0) return 0;
+        
+        const mainReward = activityData.rewards[0];
+        const successChance = mainReward.chanceScaling ? 
+            this.getScaledChance(mainReward, skillLevel) :
+            (mainReward.chance || 1.0);
+        
+        const duration = this.woodcuttingDuration(activityData.baseDuration, skillLevel, activityData);
+        const xpPerAction = activityData.xpPerAction || 0;
+        
+        // Calculate XP per hour
+        const actionsPerHour = 3600000 / duration;
+        return actionsPerHour * xpPerAction * successChance;
+    }
+
+    woodcuttingXpToGrant(earnedRewards, activityData) {
+        // Woodcutting grants XP only if logs were obtained
+        if (earnedRewards.length > 0) {
+            return activityData.xpPerAction || 0;
+        }
+        return 0;
+    }
+
+    // ==================== MINING BEHAVIORS ====================
+    
     miningDuration(baseDuration, skillLevel, activityData) {
         // Check if activity has duration scaling data
         if (!activityData.durationScaling || !activityData.durationScaling.breakpoints) {
@@ -176,7 +221,58 @@ class SkillBehaviors {
         return earnedRewards.some(reward => !gems.includes(reward.itemId));
     }
 
-    // Fishing specific behaviors
+    miningXpRate(activityData, skillLevel) {
+        // For mining: XP * ore chance / average duration
+        if (!activityData.rewards || activityData.rewards.length === 0) return 0;
+        
+        const mainReward = activityData.rewards[0];
+        const successChance = mainReward.chanceScaling ? 
+            this.getScaledChance(mainReward, skillLevel) :
+            (mainReward.chance || 1.0);
+        
+        // Get average duration (accounting for boost chances)
+        let avgDuration = activityData.baseDuration;
+        if (activityData.durationScaling && activityData.durationScaling.breakpoints) {
+            const breakpoints = activityData.durationScaling.breakpoints;
+            let applicableBreakpoint = null;
+            
+            for (const breakpoint of breakpoints) {
+                if (skillLevel >= breakpoint.level) {
+                    applicableBreakpoint = breakpoint;
+                } else {
+                    break;
+                }
+            }
+            
+            if (applicableBreakpoint) {
+                if (applicableBreakpoint.boostChance && applicableBreakpoint.boostDuration) {
+                    // Calculate weighted average duration
+                    avgDuration = (applicableBreakpoint.duration * (1 - applicableBreakpoint.boostChance)) +
+                                  (applicableBreakpoint.boostDuration * applicableBreakpoint.boostChance);
+                } else {
+                    avgDuration = applicableBreakpoint.duration;
+                }
+            }
+        }
+        
+        const xpPerAction = activityData.xpPerAction || 0;
+        const actionsPerHour = 3600000 / avgDuration;
+        return actionsPerHour * xpPerAction * successChance;
+    }
+
+    miningXpToGrant(earnedRewards, activityData) {
+        // Mining grants XP only for ores, not gems
+        const gems = ['uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond'];
+        const gotOre = earnedRewards.some(reward => !gems.includes(reward.itemId));
+        
+        if (gotOre) {
+            return activityData.xpPerAction || 0;
+        }
+        return 0;
+    }
+
+    // ==================== FISHING BEHAVIORS ====================
+    
     fishingDuration(baseDuration, skillLevel, activityData) {
         // Handle pike fishing special duration (1/5 chance for 3600ms instead of 3000ms)
         if (activityData.durationBoost) {
@@ -256,94 +352,6 @@ class SkillBehaviors {
         return earnedRewards.length > 0;
     }
 
-    // Helper method for multi-range scaling
-    getScaledChanceFromRange(range, skillLevel) {
-        // Clamp level to valid range
-        const clampedLevel = Math.max(range.minLevel, Math.min(skillLevel, range.maxLevel));
-        
-        // Calculate progress through the level range (0 to 1)
-        const levelProgress = (clampedLevel - range.minLevel) / (range.maxLevel - range.minLevel);
-        
-        // Linear interpolation between min and max chance
-        return lerp(range.minChance, range.maxChance, levelProgress);
-    }
-
-    // Utility function for chance scaling (moved from utils.js)
-    getScaledChance(reward, skillLevel) {
-        if (!reward.chanceScaling) {
-            return reward.chance || 1.0;
-        }
-        
-        const scaling = reward.chanceScaling;
-        
-        // Clamp level to valid range
-        const clampedLevel = Math.max(scaling.minLevel, Math.min(skillLevel, scaling.maxLevel));
-        
-        // Calculate progress through the level range (0 to 1)
-        const levelProgress = (clampedLevel - scaling.minLevel) / (scaling.maxLevel - scaling.minLevel);
-        
-        // Linear interpolation between min and max chance
-        return lerp(scaling.minChance, scaling.maxChance, levelProgress);
-    }
-
-    // XP Rate calculation methods for AI decision-making
-    
-    woodcuttingXpRate(activityData, skillLevel) {
-        // For woodcutting: XP * success chance / duration
-        if (!activityData.rewards || activityData.rewards.length === 0) return 0;
-        
-        const mainReward = activityData.rewards[0];
-        const successChance = mainReward.chanceScaling ? 
-            this.getScaledChance(mainReward, skillLevel) :
-            (mainReward.chance || 1.0);
-        
-        const duration = this.woodcuttingDuration(activityData.baseDuration, skillLevel, activityData);
-        const xpPerAction = activityData.xpPerAction || 0;
-        
-        // Calculate XP per hour
-        const actionsPerHour = 3600000 / duration;
-        return actionsPerHour * xpPerAction * successChance;
-    }
-    
-    miningXpRate(activityData, skillLevel) {
-        // For mining: XP * ore chance / average duration
-        if (!activityData.rewards || activityData.rewards.length === 0) return 0;
-        
-        const mainReward = activityData.rewards[0];
-        const successChance = mainReward.chanceScaling ? 
-            this.getScaledChance(mainReward, skillLevel) :
-            (mainReward.chance || 1.0);
-        
-        // Get average duration (accounting for boost chances)
-        let avgDuration = activityData.baseDuration;
-        if (activityData.durationScaling && activityData.durationScaling.breakpoints) {
-            const breakpoints = activityData.durationScaling.breakpoints;
-            let applicableBreakpoint = null;
-            
-            for (const breakpoint of breakpoints) {
-                if (skillLevel >= breakpoint.level) {
-                    applicableBreakpoint = breakpoint;
-                } else {
-                    break;
-                }
-            }
-            
-            if (applicableBreakpoint) {
-                if (applicableBreakpoint.boostChance && applicableBreakpoint.boostDuration) {
-                    // Calculate weighted average duration
-                    avgDuration = (applicableBreakpoint.duration * (1 - applicableBreakpoint.boostChance)) +
-                                  (applicableBreakpoint.boostDuration * applicableBreakpoint.boostChance);
-                } else {
-                    avgDuration = applicableBreakpoint.duration;
-                }
-            }
-        }
-        
-        const xpPerAction = activityData.xpPerAction || 0;
-        const actionsPerHour = 3600000 / avgDuration;
-        return actionsPerHour * xpPerAction * successChance;
-    }
-    
     fishingXpRate(activityData, skillLevel) {
         // For fishing: sum of (fish XP * fish chance) / duration
         if (!activityData.rewards || activityData.rewards.length === 0) return 0;
@@ -387,14 +395,46 @@ class SkillBehaviors {
         const actionsPerHour = 3600000 / avgDuration;
         return actionsPerHour * expectedXpPerAction;
     }
-    
-    defaultXpRate(activityData, skillLevel) {
-        // For other skills: simple calculation
-        const xpPerAction = activityData.xpPerAction || 0;
-        const duration = activityData.baseDuration || 1000;
-        const actionsPerHour = 3600000 / duration;
-        return actionsPerHour * xpPerAction;
+
+    fishingXpToGrant(earnedRewards, activityData) {
+        // Fishing uses the stored XP from the specific fish caught
+        // This was set when we rolled for the catch in fishingRewards()
+        return this.lastCatchXp || 0;
     }
+
+    // ==================== UTILITY METHODS ====================
+    
+    // Helper method for multi-range scaling
+    getScaledChanceFromRange(range, skillLevel) {
+        // Clamp level to valid range
+        const clampedLevel = Math.max(range.minLevel, Math.min(skillLevel, range.maxLevel));
+        
+        // Calculate progress through the level range (0 to 1)
+        const levelProgress = (clampedLevel - range.minLevel) / (range.maxLevel - range.minLevel);
+        
+        // Linear interpolation between min and max chance
+        return lerp(range.minChance, range.maxChance, levelProgress);
+    }
+
+    // Utility function for chance scaling
+    getScaledChance(reward, skillLevel) {
+        if (!reward.chanceScaling) {
+            return reward.chance || 1.0;
+        }
+        
+        const scaling = reward.chanceScaling;
+        
+        // Clamp level to valid range
+        const clampedLevel = Math.max(scaling.minLevel, Math.min(skillLevel, scaling.maxLevel));
+        
+        // Calculate progress through the level range (0 to 1)
+        const levelProgress = (clampedLevel - scaling.minLevel) / (scaling.maxLevel - scaling.minLevel);
+        
+        // Linear interpolation between min and max chance
+        return lerp(scaling.minChance, scaling.maxChance, levelProgress);
+    }
+
+    // ==================== AI DECISION MAKING ====================
 
     // AI decision-making method - adds randomness between best XP and highest level
     chooseBestActivity(skillId, availableActivities, currentLevel) {
