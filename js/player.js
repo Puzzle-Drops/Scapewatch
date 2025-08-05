@@ -31,6 +31,15 @@ class Player {
     updatePathMovement(deltaTime) {
         // Initialize movement if not started
         if (!this.movementStartPos) {
+            // Check if we have more path to follow
+            if (this.pathIndex >= this.path.length) {
+                // We've completed the path
+                this.onReachedTarget();
+                this.path = [];
+                this.pathIndex = 0;
+                this.targetPosition = null;
+                return;
+            }
             this.setupNextMovement();
         }
 
@@ -59,14 +68,6 @@ class Player {
             this.movementStartPos = null;
             this.movementEndPos = null;
             this.tilesMovedThisInterval = 0;
-            
-            // Check if we've reached the end of the path
-            if (this.pathIndex >= this.path.length) {
-                this.onReachedTarget();
-                this.path = [];
-                this.pathIndex = 0;
-                this.targetPosition = null;
-            }
         }
     }
 
@@ -75,6 +76,22 @@ class Player {
 
         // Set starting position
         this.movementStartPos = { x: this.position.x, y: this.position.y };
+        
+        // Skip any waypoints that we're already at
+        while (this.pathIndex < this.path.length) {
+            const nextPoint = this.path[this.pathIndex];
+            if (nextPoint.x === this.position.x && nextPoint.y === this.position.y) {
+                this.pathIndex++;
+            } else {
+                break;
+            }
+        }
+        
+        // Check if we've reached the end after skipping
+        if (this.pathIndex >= this.path.length) {
+            this.movementEndPos = null;
+            return;
+        }
         
         // Calculate how far we can move (up to 2 tiles)
         let tilesLeft = 2;
@@ -249,6 +266,12 @@ class Player {
             if (path && path.length > 0) {
                 this.path = path;
                 this.pathIndex = 0;
+                
+                // Skip the first waypoint if it's our current position
+                if (path.length > 0 && path[0].x === Math.round(this.position.x) && path[0].y === Math.round(this.position.y)) {
+                    this.pathIndex = 1;
+                }
+                
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
                 this.movementTimer = 0;
@@ -257,7 +280,7 @@ class Player {
                 this.tilesMovedThisInterval = 0;
                 this.stopActivity();
                 
-                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints, starting at index ${this.pathIndex}`);
                 
                 // Notify UI about movement change
                 if (window.ui) {
@@ -265,27 +288,23 @@ class Player {
                 }
             } else {
                 console.error(`No path found to node ${targetNodeId}`);
-                // Still try to move there directly as fallback
-                this.path = [
-                    { x: this.position.x, y: this.position.y },
-                    { x: node.position.x, y: node.position.y }
-                ];
-                this.pathIndex = 0;
-                this.targetPosition = { ...node.position };
-                this.targetNode = targetNodeId;
-                this.movementTimer = 0;
-                this.movementStartPos = null;
-                this.movementEndPos = null;
-                this.tilesMovedThisInterval = 0;
-                this.stopActivity();
             }
         } else {
             // Fallback to direct movement if pathfinding not available
+            const startX = Math.round(this.position.x);
+            const startY = Math.round(this.position.y);
+            
             this.path = [
-                { x: this.position.x, y: this.position.y },
+                { x: startX, y: startY },
                 { x: node.position.x, y: node.position.y }
             ];
             this.pathIndex = 0;
+            
+            // Skip first point if we're already there
+            if (startX === this.position.x && startY === this.position.y) {
+                this.pathIndex = 1;
+            }
+            
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
             this.movementTimer = 0;
