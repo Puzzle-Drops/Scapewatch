@@ -1,12 +1,19 @@
 class MapRenderer {
     constructor() {
-        this.canvas = document.getElementById('game-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.camera = {
-            x: 4395, // Start at player position
-            y: 1882, // Start at player position
-            zoom: 6.25 // increased by 1/4 from 5
-        };
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    
+    // Disable image smoothing for pixel-perfect rendering
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    
+    this.camera = {
+        x: 4395, // Start at player position
+        y: 1882, // Start at player position
+        zoom: 6.25 // increased by 1/4 from 5
+    };
         this.worldMap = loadingManager.getImage('worldMap');
         this.showNodeText = false; // Flag for showing node text
         this.mapCache = null; // Cached map canvas
