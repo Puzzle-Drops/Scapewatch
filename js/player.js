@@ -113,7 +113,7 @@ class Player {
     completeActivity() {
         const activityData = loadingManager.getData('activities')[this.currentActivity];
         
-        // Check for required items
+        // Check for required items (old system compatibility)
         if (activityData.requiredItems) {
             for (const req of activityData.requiredItems) {
                 if (!inventory.hasItem(req.itemId, req.quantity)) {
@@ -183,6 +183,7 @@ class Player {
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
                 window.ai.currentGoal = null;
+                window.ai.plannedActivity = null;
             }
             return;
         }
@@ -285,6 +286,12 @@ class Player {
             return;
         }
 
+        // Check for required items (consumeOnSuccess acts as required items for fishing)
+        if (!this.hasRequiredItems(activityId)) {
+            console.log(`Cannot perform activity ${activityId} - missing required items`);
+            return;
+        }
+
         this.currentActivity = activityId;
         this.activityProgress = 0;
         this.activityStartTime = Date.now();
@@ -331,5 +338,67 @@ class Player {
 
     isBusy() {
         return this.isMoving() || this.isPerformingActivity();
+    }
+
+    // Check if player has required items for an activity
+    hasRequiredItems(activityId) {
+        const activityData = loadingManager.getData('activities')[activityId];
+        if (!activityData) return false;
+
+        // Check consumeOnSuccess items (used as required items for fishing)
+        if (activityData.consumeOnSuccess) {
+            for (const required of activityData.consumeOnSuccess) {
+                if (!inventory.hasItem(required.itemId, required.quantity)) {
+                    console.log(`Missing required item: ${required.itemId} x${required.quantity}`);
+                    return false;
+                }
+            }
+        }
+
+        // Check requiredItems if they exist (for compatibility)
+        if (activityData.requiredItems) {
+            for (const required of activityData.requiredItems) {
+                if (!inventory.hasItem(required.itemId, required.quantity)) {
+                    console.log(`Missing required item: ${required.itemId} x${required.quantity}`);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // Get list of required items for an activity
+    getRequiredItems(activityId) {
+        const activityData = loadingManager.getData('activities')[activityId];
+        if (!activityData) return [];
+
+        const required = [];
+
+        // Add consumeOnSuccess items (used as required items for fishing)
+        if (activityData.consumeOnSuccess) {
+            for (const item of activityData.consumeOnSuccess) {
+                required.push({
+                    itemId: item.itemId,
+                    quantity: item.quantity
+                });
+            }
+        }
+
+        // Add requiredItems if they exist (for compatibility)
+        if (activityData.requiredItems) {
+            for (const item of activityData.requiredItems) {
+                // Check if not already in list
+                const existing = required.find(r => r.itemId === item.itemId);
+                if (!existing) {
+                    required.push({
+                        itemId: item.itemId,
+                        quantity: item.quantity
+                    });
+                }
+            }
+        }
+
+        return required;
     }
 }
