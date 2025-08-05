@@ -18,13 +18,16 @@ class TestScenario {
         //this.setSkillLevels();
 
         // Add items to bank
-        this.populateBank();
+        //this.populateBank();
 
         // Add some items to inventory for testing
         //this.populateInventory();
 
         // Set up test goals
         //this.setupTestGoals();
+
+bank.deposit ('fishing_bait', 1000);
+bank.deposit ('feather', 1000);
 
         console.log('Test scenario complete!');
     }
