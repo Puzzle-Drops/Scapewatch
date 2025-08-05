@@ -148,9 +148,21 @@ class Player {
             }
         }
 
+        // Consume items on success (for fishing bait/feathers)
+        if (activityData.consumeOnSuccess && earnedRewards.length > 0) {
+            for (const consumable of activityData.consumeOnSuccess) {
+                inventory.removeItem(consumable.itemId, consumable.quantity);
+            }
+        }
+
         // Grant XP based on skill-specific rules
         if (behavior.shouldGrantXP(earnedRewards, activityData)) {
-            skills.addXp(activityData.skill, activityData.xpPerAction);
+            // For fishing, use the specific XP value from the caught fish
+            let xpToGrant = activityData.xpPerAction;
+            if (activityData.skill === 'fishing' && behavior.lastCatchXp) {
+                xpToGrant = behavior.lastCatchXp;
+            }
+            skills.addXp(activityData.skill, xpToGrant);
             
             // Grant additional XP (for combat)
             if (activityData.additionalXp) {
