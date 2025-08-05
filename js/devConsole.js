@@ -5,6 +5,11 @@ class DevConsole {
         this.historyIndex = -1;
         this.commandHistory = [];
         this.maxHistory = 100;
+        this.consoleOutput = [];
+        this.maxConsoleOutput = 500;
+        
+        // Capture console methods before anything else loads
+        this.captureConsole();
         
         this.commands = {
             // Help
@@ -12,6 +17,23 @@ class DevConsole {
                 description: 'Show available commands',
                 usage: 'help [command]',
                 fn: (args) => this.cmdHelp(args)
+            },
+            
+            // Console management
+            clear: {
+                description: 'Clear command output',
+                usage: 'clear',
+                fn: () => this.cmdClearCommands()
+            },
+            clearconsole: {
+                description: 'Clear console output',
+                usage: 'clearconsole',
+                fn: () => this.cmdClearConsole()
+            },
+            clearall: {
+                description: 'Clear both command and console output',
+                usage: 'clearall',
+                fn: () => this.cmdClearAll()
             },
             
             // Player commands
@@ -54,10 +76,10 @@ class DevConsole {
                 usage: 'give <itemId> [quantity]',
                 fn: (args) => this.cmdGive(args)
             },
-            clear: {
+            clearinv: {
                 description: 'Clear inventory',
-                usage: 'clear',
-                fn: () => this.cmdClear()
+                usage: 'clearinv',
+                fn: () => this.cmdClearInv()
             },
             
             // Bank commands
@@ -129,8 +151,157 @@ class DevConsole {
             }
         };
         
+        // Initialize after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initialize());
+        } else {
+            this.initialize();
+        }
+    }
+
+    captureConsole() {
+        // Store original console methods
+        this.originalConsole = {
+            log: console.log.bind(console),
+            error: console.error.bind(console),
+            warn: console.warn.bind(console),
+            info: console.info.bind(console),
+            debug: console.debug.bind(console)
+        };
+
+        // Capture window errors
+        window.addEventListener('error', (e) => {
+            this.addConsoleOutput({
+                type: 'error',
+                message: e.message,
+                file: e.filename,
+                line: e.lineno,
+                col: e.colno,
+                timestamp: Date.now()
+            });
+        });
+
+        // Capture unhandled promise rejections
+        window.addEventListener('unhandledrejection', (e) => {
+            this.addConsoleOutput({
+                type: 'error',
+                message: `Unhandled Promise Rejection: ${e.reason}`,
+                timestamp: Date.now()
+            });
+        });
+
+        // Override console methods
+        console.log = (...args) => {
+            this.originalConsole.log(...args);
+            this.addConsoleOutput({
+                type: 'log',
+                message: this.formatConsoleArgs(args),
+                timestamp: Date.now()
+            });
+        };
+
+        console.error = (...args) => {
+            this.originalConsole.error(...args);
+            this.addConsoleOutput({
+                type: 'error',
+                message: this.formatConsoleArgs(args),
+                timestamp: Date.now()
+            });
+        };
+
+        console.warn = (...args) => {
+            this.originalConsole.warn(...args);
+            this.addConsoleOutput({
+                type: 'warn',
+                message: this.formatConsoleArgs(args),
+                timestamp: Date.now()
+            });
+        };
+
+        console.info = (...args) => {
+            this.originalConsole.info(...args);
+            this.addConsoleOutput({
+                type: 'info',
+                message: this.formatConsoleArgs(args),
+                timestamp: Date.now()
+            });
+        };
+
+        console.debug = (...args) => {
+            this.originalConsole.debug(...args);
+            this.addConsoleOutput({
+                type: 'debug',
+                message: this.formatConsoleArgs(args),
+                timestamp: Date.now()
+            });
+        };
+    }
+
+    formatConsoleArgs(args) {
+        return args.map(arg => {
+            if (typeof arg === 'object') {
+                try {
+                    return JSON.stringify(arg, null, 2);
+                } catch (e) {
+                    return String(arg);
+                }
+            }
+            return String(arg);
+        }).join(' ');
+    }
+
+    addConsoleOutput(output) {
+        this.consoleOutput.push(output);
+        
+        // Limit console output size
+        while (this.consoleOutput.length > this.maxConsoleOutput) {
+            this.consoleOutput.shift();
+        }
+        
+        // Update UI if console is visible
+        if (this.visible && this.consoleOutputDiv) {
+            this.appendConsoleOutput(output);
+        }
+    }
+
+    appendConsoleOutput(output) {
+        const entry = document.createElement('div');
+        entry.className = `console-output-entry console-output-${output.type}`;
+        
+        // Format timestamp
+        const time = new Date(output.timestamp);
+        const timeStr = `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}:${time.getSeconds().toString().padStart(2, '0')}`;
+        
+        // Build entry content
+        let content = `[${timeStr}] `;
+        
+        if (output.file && output.line) {
+            const filename = output.file.split('/').pop();
+            content += `${filename}:${output.line} - `;
+        }
+        
+        content += output.message;
+        
+        entry.textContent = content;
+        this.consoleOutputDiv.appendChild(entry);
+        
+        // Auto-scroll to bottom
+        this.consoleOutputDiv.scrollTop = this.consoleOutputDiv.scrollHeight;
+        
+        // Limit displayed entries
+        while (this.consoleOutputDiv.children.length > this.maxConsoleOutput) {
+            this.consoleOutputDiv.removeChild(this.consoleOutputDiv.firstChild);
+        }
+    }
+
+    initialize() {
         this.createUI();
         this.setupEventListeners();
+        
+        // Display any console output that was captured before UI was ready
+        if (this.consoleOutput.length > 0) {
+            this.consoleOutput.forEach(output => this.appendConsoleOutput(output));
+        }
     }
 
     createUI() {
@@ -140,7 +311,20 @@ class DevConsole {
         consoleDiv.className = 'dev-console';
         consoleDiv.style.display = 'none';
         
-        // Create output area
+        // Create split container
+        const splitContainer = document.createElement('div');
+        splitContainer.className = 'dev-console-split';
+        
+        // LEFT SIDE - Commands
+        const leftSide = document.createElement('div');
+        leftSide.className = 'dev-console-left';
+        
+        // Create header for left side
+        const leftHeader = document.createElement('div');
+        leftHeader.className = 'dev-console-header';
+        leftHeader.innerHTML = '<span>Commands</span><span style="color: #666; font-size: 12px; margin-left: 10px;">Press ` to toggle</span>';
+        
+        // Create output area for commands
         const outputDiv = document.createElement('div');
         outputDiv.id = 'dev-console-output';
         outputDiv.className = 'dev-console-output';
@@ -164,16 +348,45 @@ class DevConsole {
         inputContainer.appendChild(prompt);
         inputContainer.appendChild(input);
         
-        consoleDiv.appendChild(outputDiv);
-        consoleDiv.appendChild(inputContainer);
+        leftSide.appendChild(leftHeader);
+        leftSide.appendChild(outputDiv);
+        leftSide.appendChild(inputContainer);
+        
+        // RIGHT SIDE - Console Output
+        const rightSide = document.createElement('div');
+        rightSide.className = 'dev-console-right';
+        
+        // Create header for right side
+        const rightHeader = document.createElement('div');
+        rightHeader.className = 'dev-console-header';
+        rightHeader.innerHTML = '<span>Console Output</span><span style="color: #666; font-size: 12px; margin-left: 10px;">Logs & Errors</span>';
+        
+        // Create console output area
+        const consoleOutputDiv = document.createElement('div');
+        consoleOutputDiv.id = 'console-output';
+        consoleOutputDiv.className = 'console-output';
+        
+        rightSide.appendChild(rightHeader);
+        rightSide.appendChild(consoleOutputDiv);
+        
+        // Assemble the console
+        splitContainer.appendChild(leftSide);
+        splitContainer.appendChild(rightSide);
+        consoleDiv.appendChild(splitContainer);
         
         // Add to scaled container
         const scaledContainer = document.getElementById('scaled-container');
-        scaledContainer.appendChild(consoleDiv);
+        if (scaledContainer) {
+            scaledContainer.appendChild(consoleDiv);
+        } else {
+            // Fallback to body if scaled container doesn't exist yet
+            document.body.appendChild(consoleDiv);
+        }
         
         this.consoleDiv = consoleDiv;
         this.outputDiv = outputDiv;
         this.inputField = input;
+        this.consoleOutputDiv = consoleOutputDiv;
     }
 
     setupEventListeners() {
@@ -207,7 +420,9 @@ class DevConsole {
         
         if (this.visible) {
             this.inputField.focus();
-            this.log('Developer Console - Type "help" for commands', 'info');
+            if (this.outputDiv.children.length === 0) {
+                this.log('Developer Console - Type "help" for commands', 'info');
+            }
         }
     }
 
@@ -286,7 +501,30 @@ class DevConsole {
         }
     }
 
+    cmdClearCommands() {
+        this.outputDiv.innerHTML = '';
+        this.log('Command output cleared', 'success');
+    }
+
+    cmdClearConsole() {
+        this.consoleOutputDiv.innerHTML = '';
+        this.consoleOutput = [];
+        this.log('Console output cleared', 'success');
+    }
+
+    cmdClearAll() {
+        this.outputDiv.innerHTML = '';
+        this.consoleOutputDiv.innerHTML = '';
+        this.consoleOutput = [];
+        this.log('All output cleared', 'success');
+    }
+
     cmdTeleport(args) {
+        if (!window.player) {
+            this.log('Player not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length === 2) {
             // Teleport to coordinates
             const x = parseInt(args[0]);
@@ -328,16 +566,29 @@ class DevConsole {
     }
 
     cmdPosition() {
+        if (!window.player) {
+            this.log('Player not initialized yet', 'error');
+            return;
+        }
         this.log(`Position: ${Math.round(player.position.x)}, ${Math.round(player.position.y)}`, 'info');
         this.log(`Current node: ${player.currentNode}`, 'info');
     }
 
     cmdResetPlayer() {
+        if (!window.testScenario) {
+            this.log('Test scenario not available', 'error');
+            return;
+        }
         testScenario.resetPlayer();
         this.log('Player reset to starting position', 'success');
     }
 
     cmdSetLevel(args) {
+        if (!window.skills) {
+            this.log('Skills not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length !== 2) {
             this.log('Usage: setlevel <skill> <level>', 'error');
             return;
@@ -356,12 +607,29 @@ class DevConsole {
             return;
         }
         
-        testScenario.setSkillLevel(skillId, level);
-        ui.updateSkillsList();
+        if (window.testScenario) {
+            testScenario.setSkillLevel(skillId, level);
+        } else {
+            // Direct method if testScenario not available
+            const targetXp = window.getXpForLevel(level);
+            const skill = skills.skills[skillId];
+            if (skill) {
+                skill.xp = targetXp;
+                skill.level = level;
+                skill.xpForNextLevel = window.getXpForLevel(level + 1);
+            }
+        }
+        
+        if (window.ui) ui.updateSkillsList();
         this.log(`Set ${skillId} to level ${level}`, 'success');
     }
 
     cmdAddXp(args) {
+        if (!window.skills) {
+            this.log('Skills not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length !== 2) {
             this.log('Usage: addxp <skill> <amount>', 'error');
             return;
@@ -381,17 +649,26 @@ class DevConsole {
         }
         
         skills.addXp(skillId, amount);
-        ui.updateSkillsList();
-        this.log(`Added ${formatNumber(amount)} XP to ${skillId}`, 'success');
+        if (window.ui) ui.updateSkillsList();
+        this.log(`Added ${window.formatNumber(amount)} XP to ${skillId}`, 'success');
     }
 
     cmdMaxSkills() {
+        if (!window.testScenario) {
+            this.log('Test scenario not available', 'error');
+            return;
+        }
         testScenario.maxAllSkills();
-        ui.updateSkillsList();
+        if (window.ui) ui.updateSkillsList();
         this.log('All skills set to 99', 'success');
     }
 
     cmdGive(args) {
+        if (!window.inventory) {
+            this.log('Inventory not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length < 1) {
             this.log('Usage: give <itemId> [quantity]', 'error');
             return;
@@ -400,8 +677,13 @@ class DevConsole {
         const itemId = args[0];
         const quantity = args.length > 1 ? parseInt(args[1]) : 1;
         
+        if (!window.loadingManager) {
+            this.log('Loading manager not ready', 'error');
+            return;
+        }
+        
         const items = loadingManager.getData('items');
-        if (!items[itemId]) {
+        if (!items || !items[itemId]) {
             this.log(`Unknown item: ${itemId}`, 'error');
             return;
         }
@@ -415,12 +697,21 @@ class DevConsole {
         this.log(`Added ${added} ${items[itemId].name} to inventory`, 'success');
     }
 
-    cmdClear() {
+    cmdClearInv() {
+        if (!window.inventory) {
+            this.log('Inventory not initialized yet', 'error');
+            return;
+        }
         inventory.clear();
         this.log('Inventory cleared', 'success');
     }
 
     cmdBank(args) {
+        if (!window.bank) {
+            this.log('Bank not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length < 1) {
             this.log('Usage: bank <itemId> [quantity]', 'error');
             return;
@@ -429,8 +720,13 @@ class DevConsole {
         const itemId = args[0];
         const quantity = args.length > 1 ? parseInt(args[1]) : 1;
         
+        if (!window.loadingManager) {
+            this.log('Loading manager not ready', 'error');
+            return;
+        }
+        
         const items = loadingManager.getData('items');
-        if (!items[itemId]) {
+        if (!items || !items[itemId]) {
             this.log(`Unknown item: ${itemId}`, 'error');
             return;
         }
@@ -445,6 +741,11 @@ class DevConsole {
     }
 
     cmdGiveAll(args) {
+        if (!window.testScenario) {
+            this.log('Test scenario not available', 'error');
+            return;
+        }
+        
         const quantity = args.length > 0 ? parseInt(args[0]) : 100;
         
         if (isNaN(quantity) || quantity < 1) {
@@ -457,13 +758,22 @@ class DevConsole {
     }
 
     cmdClearGoals() {
+        if (!window.ai) {
+            this.log('AI not initialized yet', 'error');
+            return;
+        }
         ai.goals = [];
         ai.currentGoal = null;
-        ui.updateGoal();
+        if (window.ui) ui.updateGoal();
         this.log('All goals cleared', 'success');
     }
 
     cmdAddGoal(args) {
+        if (!window.ai) {
+            this.log('AI not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length < 3) {
             this.log('Usage: addgoal <type> <target> <value>', 'error');
             this.log('Examples:', 'info');
@@ -479,7 +789,7 @@ class DevConsole {
             const skillId = args[1].toLowerCase();
             const level = parseInt(args[2]);
             
-            if (!skills.skills[skillId]) {
+            if (!window.skills || !skills.skills[skillId]) {
                 this.log(`Unknown skill: ${skillId}`, 'error');
                 return;
             }
@@ -496,8 +806,13 @@ class DevConsole {
             const itemId = args[1];
             const count = parseInt(args[2]);
             
+            if (!window.loadingManager) {
+                this.log('Loading manager not ready', 'error');
+                return;
+            }
+            
             const items = loadingManager.getData('items');
-            if (!items[itemId]) {
+            if (!items || !items[itemId]) {
                 this.log(`Unknown item: ${itemId}`, 'error');
                 return;
             }
@@ -516,21 +831,38 @@ class DevConsole {
     }
 
     cmdPauseAI() {
+        if (!window.gameState) {
+            this.log('Game not initialized yet', 'error');
+            return;
+        }
         gameState.paused = !gameState.paused;
-        document.getElementById('pause-toggle').textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
+        const pauseBtn = document.getElementById('pause-toggle');
+        if (pauseBtn) {
+            pauseBtn.textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
+        }
         this.log(`AI ${gameState.paused ? 'paused' : 'resumed'}`, 'success');
     }
 
     cmdStartActivity(args) {
+        if (!window.player) {
+            this.log('Player not initialized yet', 'error');
+            return;
+        }
+        
         if (args.length !== 1) {
             this.log('Usage: startactivity <activityId>', 'error');
             return;
         }
         
         const activityId = args[0];
-        const activities = loadingManager.getData('activities');
         
-        if (!activities[activityId]) {
+        if (!window.loadingManager) {
+            this.log('Loading manager not ready', 'error');
+            return;
+        }
+        
+        const activities = loadingManager.getData('activities');
+        if (!activities || !activities[activityId]) {
             this.log(`Unknown activity: ${activityId}`, 'error');
             return;
         }
@@ -540,11 +872,20 @@ class DevConsole {
     }
 
     cmdStopActivity() {
+        if (!window.player) {
+            this.log('Player not initialized yet', 'error');
+            return;
+        }
         player.stopActivity();
         this.log('Activity stopped', 'success');
     }
 
     cmdNodes(args) {
+        if (!window.nodes) {
+            this.log('Nodes not initialized yet', 'error');
+            return;
+        }
+        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
         const allNodes = nodes.getAllNodes();
         
@@ -572,8 +913,18 @@ class DevConsole {
     }
 
     cmdItems(args) {
+        if (!window.loadingManager) {
+            this.log('Loading manager not ready', 'error');
+            return;
+        }
+        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
         const allItems = loadingManager.getData('items');
+        
+        if (!allItems) {
+            this.log('Items data not loaded', 'error');
+            return;
+        }
         
         let matches = Object.entries(allItems);
         if (search) {
@@ -599,8 +950,18 @@ class DevConsole {
     }
 
     cmdActivities(args) {
+        if (!window.loadingManager) {
+            this.log('Loading manager not ready', 'error');
+            return;
+        }
+        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
         const allActivities = loadingManager.getData('activities');
+        
+        if (!allActivities) {
+            this.log('Activities data not loaded', 'error');
+            return;
+        }
         
         let matches = Object.entries(allActivities);
         if (search) {
@@ -627,15 +988,23 @@ class DevConsole {
     }
 
     cmdCollision() {
+        if (!window.map) {
+            this.log('Map not initialized yet', 'error');
+            return;
+        }
         map.toggleCollisionDebug();
         this.log(`Collision debug ${map.showCollisionDebug ? 'enabled' : 'disabled'}`, 'success');
     }
 
     cmdNodeText() {
+        if (!window.map) {
+            this.log('Map not initialized yet', 'error');
+            return;
+        }
         map.toggleNodeText();
         this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
     }
 }
 
-// Create global instance
+// Create global instance immediately
 window.devConsole = new DevConsole();
