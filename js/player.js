@@ -46,23 +46,32 @@ class Player {
         if (!this.movementStartPos) {
             this.movementStartPos = { x: this.position.x, y: this.position.y };
             
-            // Calculate the target position (2 pixels toward the waypoint)
+            // Calculate the target position (2 tiles toward the waypoint)
             const dx = target.x - this.position.x;
             const dy = target.y - this.position.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance <= 1) {
-                // If we're 1 pixel or less away, target is the waypoint
-                this.movementTargetPos = { x: target.x, y: target.y };
-            } else if (distance <= 2) {
-                // If we're 2 pixels or less away, move exactly to the waypoint
+            // Use Chebyshev distance (max of absolute differences) for tile-based movement
+            const distance = Math.max(Math.abs(dx), Math.abs(dy));
+            
+            if (distance <= 2) {
+                // If we're 2 tiles or less away, move directly to the waypoint
                 this.movementTargetPos = { x: target.x, y: target.y };
             } else {
-                // Move exactly 2 pixels toward the target
-                const ratio = 2 / distance;
+                // Move exactly 2 tiles toward the target
+                // For diagonal movement, we can move 2 pixels in both x and y
+                let moveX = 0;
+                let moveY = 0;
+                
+                if (dx !== 0) {
+                    moveX = dx > 0 ? Math.min(2, dx) : Math.max(-2, dx);
+                }
+                if (dy !== 0) {
+                    moveY = dy > 0 ? Math.min(2, dy) : Math.max(-2, dy);
+                }
+                
                 this.movementTargetPos = {
-                    x: Math.round(this.position.x + dx * ratio),
-                    y: Math.round(this.position.y + dy * ratio)
+                    x: this.position.x + moveX,
+                    y: this.position.y + moveY
                 };
             }
         }
@@ -91,12 +100,10 @@ class Player {
             // Check if we've reached the current waypoint
             const dx = target.x - this.position.x;
             const dy = target.y - this.position.y;
-            const distanceToWaypoint = Math.sqrt(dx * dx + dy * dy);
+            const distanceToWaypoint = Math.max(Math.abs(dx), Math.abs(dy));
             
-            if (distanceToWaypoint < 0.5) {
+            if (distanceToWaypoint === 0) {
                 // Reached waypoint, move to next one
-                this.position.x = target.x;
-                this.position.y = target.y;
                 this.pathIndex++;
                 
                 // Update target position for drawing
