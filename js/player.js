@@ -1,25 +1,31 @@
 class Player {
     constructor() {
-        this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
+        // Validate starting position
+        const startNode = loadingManager.getData('nodes')['lumbridge_bank'];
+        if (startNode) {
+            // Use node position if available
+            this.position = { x: startNode.position.x, y: startNode.position.y };
+        } else {
+            // Fallback position
+            this.position = { x: 4395, y: 1882 };
+        }
+        
         this.targetPosition = null;
         this.currentNode = 'lumbridge_bank';
-        this.targetNode = null; // Store target node ID
+        this.targetNode = null;
         this.currentActivity = null;
         this.activityProgress = 0;
         this.activityStartTime = 0;
-        this.movementTimer = 0; // Timer for smooth interpolation
-        this.movementInterval = 600; // 0.6 seconds in milliseconds
-        this.movementStartPos = null; // Starting position for interpolation
-        this.movementEndPos = null; // End position for interpolation
         this.path = [];
         this.pathIndex = 0;
-        this.tilesMovedThisInterval = 0; // Track tiles moved in current interval
+        this.speed = 3; // 3 pixels per second
+        this.radius = 0.5; // Half a tile hitbox
     }
 
     update(deltaTime) {
-        // Handle movement along path
+        // Handle smooth movement along path
         if (this.path.length > 0 && this.pathIndex < this.path.length) {
-            this.updatePathMovement(deltaTime);
+            this.updateMovement(deltaTime);
         }
 
         // Handle activity
@@ -28,119 +34,40 @@ class Player {
         }
     }
 
-    updatePathMovement(deltaTime) {
-        // Initialize movement if not started
-        if (!this.movementStartPos) {
-            // Check if we have more path to follow
-            if (this.pathIndex >= this.path.length) {
-                // We've completed the path
-                this.onReachedTarget();
-                this.path = [];
-                this.pathIndex = 0;
-                this.targetPosition = null;
-                return;
-            }
-            this.setupNextMovement();
-        }
-
-        // Update movement timer
-        this.movementTimer += deltaTime;
-
-        // Calculate interpolation progress (0 to 1)
-        const progress = Math.min(this.movementTimer / this.movementInterval, 1);
-
-        // Smoothly interpolate position
-        if (this.movementEndPos) {
-            this.position.x = this.movementStartPos.x + (this.movementEndPos.x - this.movementStartPos.x) * progress;
-            this.position.y = this.movementStartPos.y + (this.movementEndPos.y - this.movementStartPos.y) * progress;
-        }
-
-        // Check if movement interval is complete
-        if (this.movementTimer >= this.movementInterval) {
-            // Complete the current movement
-            if (this.movementEndPos) {
-                this.position.x = this.movementEndPos.x;
-                this.position.y = this.movementEndPos.y;
-            }
-            
-            // Reset for next movement
-            this.movementTimer = 0;
-            this.movementStartPos = null;
-            this.movementEndPos = null;
-            this.tilesMovedThisInterval = 0;
-        }
-    }
-
-    setupNextMovement() {
-        if (this.pathIndex >= this.path.length) return;
-
-        // Set starting position
-        this.movementStartPos = { x: this.position.x, y: this.position.y };
-        
-        // Skip any waypoints that we're already at
-        while (this.pathIndex < this.path.length) {
-            const nextPoint = this.path[this.pathIndex];
-            if (nextPoint.x === this.position.x && nextPoint.y === this.position.y) {
-                this.pathIndex++;
-            } else {
-                break;
-            }
-        }
-        
-        // Check if we've reached the end after skipping
+    updateMovement(deltaTime) {
         if (this.pathIndex >= this.path.length) {
-            this.movementEndPos = null;
+            // Reached the end of the path
+            this.onReachedTarget();
+            this.path = [];
+            this.pathIndex = 0;
+            this.targetPosition = null;
             return;
         }
-        
-        // Calculate how far we can move (up to 2 tiles)
-        let tilesLeft = 2;
-        let endX = this.position.x;
-        let endY = this.position.y;
-        let finalPathIndex = this.pathIndex;
-        
-        // Move along the path up to 2 tiles
-        while (tilesLeft > 0 && finalPathIndex < this.path.length) {
-            const nextPoint = this.path[finalPathIndex];
-            
-            // Calculate tile distance to next point (using Chebyshev distance for grid movement)
-            const dx = Math.abs(nextPoint.x - endX);
-            const dy = Math.abs(nextPoint.y - endY);
-            const tilesToNext = Math.max(dx, dy); // Chebyshev distance
-            
-            if (tilesToNext === 0) {
-                // Already at this point, skip to next
-                finalPathIndex++;
-                continue;
-            }
-            
-            if (tilesToNext <= tilesLeft) {
-                // We can reach this point
-                endX = nextPoint.x;
-                endY = nextPoint.y;
-                tilesLeft -= tilesToNext;
-                finalPathIndex++;
-            } else {
-                // This point is too far, move partially towards it
-                // Calculate the direction
-                const dirX = Math.sign(nextPoint.x - endX);
-                const dirY = Math.sign(nextPoint.y - endY);
-                
-                // Move the remaining tiles in that direction
-                endX += dirX * tilesLeft;
-                endY += dirY * tilesLeft;
-                tilesLeft = 0;
-                // Don't increment finalPathIndex since we didn't reach this waypoint
-            }
+
+        const targetPoint = this.path[this.pathIndex];
+        const dx = targetPoint.x - this.position.x;
+        const dy = targetPoint.y - this.position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance < 0.1) {
+            // Close enough to current waypoint, move to next
+            this.pathIndex++;
+            return;
         }
+
+        // Calculate movement for this frame
+        const moveDistance = this.speed * (deltaTime / 1000); // Convert ms to seconds
         
-        // Set the end position and update path index
-        this.movementEndPos = { x: endX, y: endY };
-        this.pathIndex = finalPathIndex;
-        
-        // Update target position for visualization
-        if (this.path.length > 0) {
-            this.targetPosition = this.path[this.path.length - 1];
+        if (distance <= moveDistance) {
+            // We'll reach the waypoint this frame
+            this.position.x = targetPoint.x;
+            this.position.y = targetPoint.y;
+            this.pathIndex++;
+        } else {
+            // Move towards the waypoint
+            const moveRatio = moveDistance / distance;
+            this.position.x += dx * moveRatio;
+            this.position.y += dy * moveRatio;
         }
     }
 
@@ -260,27 +187,27 @@ class Player {
                 this.position.x,
                 this.position.y,
                 node.position.x,
-                node.position.y
+                node.position.y,
+                this.radius
             );
 
             if (path && path.length > 0) {
                 this.path = path;
                 this.pathIndex = 0;
                 
-                // Skip the first waypoint if it's our current position
-                if (path.length > 0 && path[0].x === Math.round(this.position.x) && path[0].y === Math.round(this.position.y)) {
-                    this.pathIndex = 1;
+                // Skip the first waypoint if we're very close to it
+                if (path.length > 0) {
+                    const dist = distance(this.position.x, this.position.y, path[0].x, path[0].y);
+                    if (dist < 0.1) {
+                        this.pathIndex = 1;
+                    }
                 }
                 
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
-                this.movementTimer = 0;
-                this.movementStartPos = null;
-                this.movementEndPos = null;
-                this.tilesMovedThisInterval = 0;
                 this.stopActivity();
                 
-                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints, starting at index ${this.pathIndex}`);
+                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
                 
                 // Notify UI about movement change
                 if (window.ui) {
@@ -291,26 +218,10 @@ class Player {
             }
         } else {
             // Fallback to direct movement if pathfinding not available
-            const startX = Math.round(this.position.x);
-            const startY = Math.round(this.position.y);
-            
-            this.path = [
-                { x: startX, y: startY },
-                { x: node.position.x, y: node.position.y }
-            ];
+            this.path = [{ x: node.position.x, y: node.position.y }];
             this.pathIndex = 0;
-            
-            // Skip first point if we're already there
-            if (startX === this.position.x && startY === this.position.y) {
-                this.pathIndex = 1;
-            }
-            
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
-            this.movementTimer = 0;
-            this.movementStartPos = null;
-            this.movementEndPos = null;
-            this.tilesMovedThisInterval = 0;
             this.stopActivity();
         }
     }
@@ -369,14 +280,6 @@ class Player {
         if (window.ui) {
             window.ui.forceActivityUpdate();
         }
-    }
-
-    getMovementSpeed() {
-        // This method is no longer used with discrete movement
-        // Keeping it for compatibility but it doesn't affect movement
-        const agilityLevel = skills.getLevel('agility');
-        const speedBonus = 1 + (agilityLevel - 1) * 0.01; // 1% per level
-        return 3.333 * speedBonus; // Original speed value
     }
 
     isAtNode(nodeId) {
