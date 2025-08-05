@@ -366,3 +366,71 @@ body {
 #close-bank:hover {
     background-color: #c0392b;
 }
+
+/* Developer Console */
+.dev-console {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 400px;
+    background-color: rgba(0, 0, 0, 0.95);
+    border-top: 2px solid #f39c12;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+.dev-console-output {
+    height: calc(100% - 40px);
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.dev-console-entry {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.dev-console-normal {
+    color: #fff;
+}
+
+.dev-console-info {
+    color: #3498db;
+}
+
+.dev-console-success {
+    color: #2ecc71;
+}
+
+.dev-console-error {
+    color: #e74c3c;
+}
+
+.dev-console-command {
+    color: #f39c12;
+}
+
+.dev-console-input-container {
+    height: 40px;
+    border-top: 1px solid #333;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.dev-console-prompt {
+    color: #f39c12;
+    margin-right: 10px;
+}
+
+.dev-console-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+}
