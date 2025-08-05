@@ -138,14 +138,14 @@
         "category": "gem"
     },
     "raw_shrimps": {
-        "id": "raw_shrimp",
-        "name": "Raw Shrimp",
+        "id": "raw_shrimps",
+        "name": "Raw Shrimps",
         "stackable": false,
         "category": "resource"
     },
     "shrimps": {
-        "id": "shrimp",
-        "name": "Shrimp",
+        "id": "shrimps",
+        "name": "Shrimps",
         "stackable": false,
         "category": "food",
         "healAmount": 3
