@@ -56,7 +56,7 @@ function startGame() {
     document.getElementById('game-wrapper').style.display = 'block';
     
     // Update scaling system for the game container
-    scalingSystem.initialize();
+    //scalingSystem.initialize();
 
     // Initialize game systems (order matters!)
     // skillBehaviors is already instantiated in skillBehaviors.js
