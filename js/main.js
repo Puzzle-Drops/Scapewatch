@@ -51,12 +51,12 @@ async function init() {
 }
 
 function startGame() {
-    // Hide loading screen and show game wrapper
+    // Hide loading screen and show game container
     document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('game-wrapper').style.display = 'block';
+    document.getElementById('game-container').style.display = 'flex';  // <-- This is the fix!
     
-    // Update scaling system for the game container
-    //scalingSystem.initialize();
+    // Scaling system is already initialized, just update for game container
+    scalingSystem.setupInitialScaling();
 
     // Initialize game systems (order matters!)
     // skillBehaviors is already instantiated in skillBehaviors.js
