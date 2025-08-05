@@ -77,6 +77,11 @@ async function startGame() {
     window.ui = new UIManager();
     window.ai = new AIManager();
 
+    // Run test scenario if enabled
+    if (window.testScenario) {
+        testScenario.run();
+    }
+
     // Canvas sizing is now handled by scalingSystem
     // Just trigger initial render
     map.render();
