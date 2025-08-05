@@ -1,4 +1,64 @@
 {
+    "test_trees": {
+        "id": "test_trees",
+        "name": "Test Trees",
+        "type": "skill",
+        "position": {
+            "x": 4445,
+            "y": 1832
+        },
+        "activities": [
+            "chop_tree",
+            "chop_oak",
+            "chop_willow",
+            "chop_teak",
+            "chop_maple",
+            "chop_mahogany",
+            "chop_yew",
+            "chop_magic",
+            "chop_redwood"
+        ]
+    },
+    "test_mine": {
+        "id": "test_mine",
+        "name": "Test Mine",
+        "type": "skill",
+        "position": {
+            "x": 4445,
+            "y": 1852
+        },
+        "activities": [
+            "mine_copper",
+            "mine_tin",
+            "mine_iron",
+            "mine_silver",
+            "mine_coal",
+            "mine_gold",
+            "mine_mithril",
+            "mine_adamantite",
+            "mine_runite",
+            "mine_amethyst"
+        ]
+    },
+    "test_fish": {
+        "id": "test_fish",
+        "name": "Test Fish",
+        "type": "skill",
+        "position": {
+            "x": 4445,
+            "y": 1872
+        },
+        "activities": [
+            "small_fishing_net",
+            "big_fishing_net",
+            "lobster_pot",
+            "fishing_rod_bait",
+            "fishing_rod_bait_pike",
+            "fly_fishing_rod",
+            "harpoon",
+            "harpoon_shark"
+        ]
+    },
     "lumbridge_bank": {
         "id": "lumbridge_bank",
         "name": "Lumbridge Bank",
@@ -68,7 +128,7 @@
             "y": 2015
         },
         "activities": [
-            "fish_shrimp"
+            "small_fishing_net"
         ]
     },
     "draynor_bank": {
