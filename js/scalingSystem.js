@@ -9,6 +9,7 @@ class ScalingSystem {
         
         // Get DOM elements
         this.gameWrapper = null;
+        this.scaledContainer = null;
         this.gameContainer = null;
         this.mapContainer = null;
         
@@ -19,6 +20,7 @@ class ScalingSystem {
     initialize() {
         // Get references to DOM elements
         this.gameWrapper = document.getElementById('game-wrapper');
+        this.scaledContainer = document.getElementById('scaled-container');
         this.gameContainer = document.getElementById('game-container');
         this.mapContainer = document.querySelector('.map-container');
         
@@ -33,7 +35,11 @@ class ScalingSystem {
     }
 
     setupInitialScaling() {
-        // Set the game container to our fixed resolution
+        // Set the scaled container to our fixed resolution
+        this.scaledContainer.style.width = `${this.baseWidth}px`;
+        this.scaledContainer.style.height = `${this.baseHeight}px`;
+        
+        // Make sure the game container uses the full resolution
         this.gameContainer.style.width = `${this.baseWidth}px`;
         this.gameContainer.style.height = `${this.baseHeight}px`;
         
@@ -61,12 +67,12 @@ class ScalingSystem {
         this.offsetX = (windowWidth - scaledWidth) / 2;
         this.offsetY = (windowHeight - scaledHeight) / 2;
         
-        // Apply the transformation
-        this.gameContainer.style.transform = `scale(${this.scale})`;
-        this.gameContainer.style.transformOrigin = 'top left';
-        this.gameContainer.style.position = 'absolute';
-        this.gameContainer.style.left = `${this.offsetX}px`;
-        this.gameContainer.style.top = `${this.offsetY}px`;
+        // Apply the transformation to the scaled container
+        this.scaledContainer.style.transform = `scale(${this.scale})`;
+        this.scaledContainer.style.transformOrigin = 'top left';
+        this.scaledContainer.style.position = 'absolute';
+        this.scaledContainer.style.left = `${this.offsetX}px`;
+        this.scaledContainer.style.top = `${this.offsetY}px`;
         
         // Update canvas size if it exists
         const canvas = document.getElementById('game-canvas');
