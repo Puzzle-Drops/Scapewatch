@@ -3,31 +3,40 @@ class Pathfinding {
         this.collision = collisionSystem;
     }
 
-    // A* pathfinding algorithm
-    findPath(startX, startY, endX, endY) {
+    // A* pathfinding algorithm with circular hitbox support
+    findPath(startX, startY, endX, endY, radius = 0.5) {
         if (!this.collision.initialized) {
             console.error('Collision system not initialized');
             return null;
         }
 
-        // Round positions to pixels
-        const start = { x: Math.round(startX), y: Math.round(startY) };
-        const end = { x: Math.round(endX), y: Math.round(endY) };
-
-        // Check if start and end are walkable
-        if (!this.collision.isWalkable(start.x, start.y)) {
-            console.error('Start position is not walkable');
+        // Check if start and end are walkable for the circle
+        if (!this.collision.canCircleFit(startX, startY, radius)) {
+            console.error('Start position is not walkable for radius', radius);
             return null;
         }
-        if (!this.collision.isWalkable(end.x, end.y)) {
-            console.error('End position is not walkable');
+        if (!this.collision.canCircleFit(endX, endY, radius)) {
+            console.error('End position is not walkable for radius', radius);
             return null;
         }
 
         // Check if we have line of sight - if so, just go straight
-        if (this.collision.isLineOfSight(start.x, start.y, end.x, end.y)) {
-            return this.createStraightPath(start, end);
+        if (this.collision.isLineOfSightForCircle(startX, startY, endX, endY, radius)) {
+            return [{ x: endX, y: endY }];
         }
+
+        // Use finer grid for smoother paths
+        const gridSize = Math.max(0.5, radius);
+        
+        // Snap positions to grid
+        const start = {
+            x: Math.round(startX / gridSize) * gridSize,
+            y: Math.round(startY / gridSize) * gridSize
+        };
+        const end = {
+            x: Math.round(endX / gridSize) * gridSize,
+            y: Math.round(endY / gridSize) * gridSize
+        };
 
         // A* implementation
         const openSet = new PriorityQueue();
@@ -41,19 +50,31 @@ class Pathfinding {
         fScore.set(startKey, this.heuristic(start, end));
         openSet.enqueue(start, fScore.get(startKey));
 
-        while (!openSet.isEmpty()) {
+        let nodesExplored = 0;
+        const maxNodes = 10000; // Prevent infinite loops
+
+        while (!openSet.isEmpty() && nodesExplored < maxNodes) {
+            nodesExplored++;
             const current = openSet.dequeue();
             const currentKey = `${current.x},${current.y}`;
 
-            // Check if we reached the goal
-            if (current.x === end.x && current.y === end.y) {
-                return this.reconstructPath(cameFrom, current);
+            // Check if we're close enough to the goal
+            const distToEnd = Math.sqrt(
+                Math.pow(current.x - end.x, 2) + 
+                Math.pow(current.y - end.y, 2)
+            );
+            
+            if (distToEnd < gridSize) {
+                // Close enough, construct path to exact end position
+                const path = this.reconstructPath(cameFrom, current);
+                path[path.length - 1] = { x: endX, y: endY }; // Use exact end position
+                return this.smoothPath(path, radius);
             }
 
             closedSet.add(currentKey);
 
             // Check all neighbors
-            const neighbors = this.collision.getWalkableNeighbors(current.x, current.y);
+            const neighbors = this.getNeighbors(current.x, current.y, gridSize, radius);
             
             for (const neighbor of neighbors) {
                 const neighborKey = `${neighbor.x},${neighbor.y}`;
@@ -63,8 +84,9 @@ class Pathfinding {
                 }
 
                 // Calculate tentative g score
-                const isDiagonal = Math.abs(neighbor.x - current.x) === 1 && Math.abs(neighbor.y - current.y) === 1;
-                const moveCost = isDiagonal ? Math.sqrt(2) : 1;
+                const dx = neighbor.x - current.x;
+                const dy = neighbor.y - current.y;
+                const moveCost = Math.sqrt(dx * dx + dy * dy);
                 const tentativeGScore = gScore.get(currentKey) + moveCost;
 
                 if (!gScore.has(neighborKey) || tentativeGScore < gScore.get(neighborKey)) {
@@ -72,7 +94,7 @@ class Pathfinding {
                     cameFrom.set(neighborKey, current);
                     gScore.set(neighborKey, tentativeGScore);
                     
-                    // Add a small tie-breaker to prefer paths that go more directly toward the goal
+                    // Add tie-breaker for straighter paths
                     const h = this.heuristic(neighbor, end);
                     const dx1 = neighbor.x - end.x;
                     const dy1 = neighbor.y - end.y;
@@ -91,39 +113,48 @@ class Pathfinding {
         }
 
         // No path found
-        console.log('No path found');
+        console.log('No path found after exploring', nodesExplored, 'nodes');
         return null;
     }
 
-    heuristic(a, b) {
-        // Use Chebyshev distance for tile-based movement
-        return Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
-    }
-
-    createStraightPath(start, end) {
-        const path = [];
-        let x = start.x;
-        let y = start.y;
+    getNeighbors(x, y, gridSize, radius) {
+        const neighbors = [];
         
-        const dx = Math.sign(end.x - start.x);
-        const dy = Math.sign(end.y - start.y);
+        // 8-directional movement
+        const directions = [
+            { dx: 0, dy: -gridSize },         // North
+            { dx: gridSize, dy: -gridSize },  // Northeast
+            { dx: gridSize, dy: 0 },          // East
+            { dx: gridSize, dy: gridSize },   // Southeast
+            { dx: 0, dy: gridSize },          // South
+            { dx: -gridSize, dy: gridSize },  // Southwest
+            { dx: -gridSize, dy: 0 },         // West
+            { dx: -gridSize, dy: -gridSize }  // Northwest
+        ];
         
-        while (x !== end.x || y !== end.y) {
-            path.push({ x, y });
+        for (const dir of directions) {
+            const nx = x + dir.dx;
+            const ny = y + dir.dy;
             
-            // Move diagonally when possible
-            if (x !== end.x && y !== end.y) {
-                x += dx;
-                y += dy;
-            } else if (x !== end.x) {
-                x += dx;
-            } else {
-                y += dy;
+            if (this.collision.canCircleFit(nx, ny, radius)) {
+                // For diagonal movement, ensure the path is clear
+                if (dir.dx !== 0 && dir.dy !== 0) {
+                    if (this.collision.canCircleFit(x + dir.dx, y, radius) && 
+                        this.collision.canCircleFit(x, y + dir.dy, radius)) {
+                        neighbors.push({ x: nx, y: ny });
+                    }
+                } else {
+                    neighbors.push({ x: nx, y: ny });
+                }
             }
         }
         
-        path.push(end);
-        return path;
+        return neighbors;
+    }
+
+    heuristic(a, b) {
+        // Euclidean distance for smooth movement
+        return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
     }
 
     reconstructPath(cameFrom, current) {
@@ -136,24 +167,26 @@ class Pathfinding {
             currentKey = `${current.x},${current.y}`;
         }
 
-        // Smooth the path more aggressively
-        return this.smoothPath(path);
+        return path;
     }
 
-    smoothPath(path) {
+    smoothPath(path, radius) {
         if (path.length < 3) return path;
 
         const smoothed = [path[0]];
         let current = 0;
 
+        // Aggressive smoothing - try to connect distant points
         while (current < path.length - 1) {
             let farthest = current + 1;
             
-            // Find the farthest point we can see
-            for (let i = current + 2; i < path.length; i++) {
-                if (this.canWalkStraight(path[current], path[i])) {
+            // Try to connect to the farthest visible point
+            for (let i = path.length - 1; i > current + 1; i--) {
+                if (this.collision.isLineOfSightForCircle(
+                    path[current].x, path[current].y,
+                    path[i].x, path[i].y, radius
+                )) {
                     farthest = i;
-                } else {
                     break;
                 }
             }
@@ -162,48 +195,26 @@ class Pathfinding {
             current = farthest;
         }
 
-        return smoothed;
-    }
-
-    canWalkStraight(from, to) {
-        // Check if we can walk in a straight line (allowing diagonal movement)
-        let x = from.x;
-        let y = from.y;
-        
-        const dx = Math.sign(to.x - from.x);
-        const dy = Math.sign(to.y - from.y);
-        
-        while (x !== to.x || y !== to.y) {
-            // Move diagonally when possible
-            let nextX = x;
-            let nextY = y;
+        // Final smoothing pass to remove redundant waypoints
+        const finalSmoothed = [smoothed[0]];
+        for (let i = 1; i < smoothed.length - 1; i++) {
+            const prev = finalSmoothed[finalSmoothed.length - 1];
+            const next = smoothed[i + 1];
             
-            if (x !== to.x && y !== to.y) {
-                nextX += dx;
-                nextY += dy;
-            } else if (x !== to.x) {
-                nextX += dx;
-            } else {
-                nextY += dy;
+            // Skip this waypoint if we can go directly from prev to next
+            if (!this.collision.isLineOfSightForCircle(
+                prev.x, prev.y, next.x, next.y, radius
+            )) {
+                finalSmoothed.push(smoothed[i]);
             }
-            
-            // Check if the next position is walkable
-            if (!this.collision.isWalkable(nextX, nextY)) {
-                return false;
-            }
-            
-            // For diagonal movement, also check that we can move through the corners
-            if (nextX !== x && nextY !== y) {
-                if (!this.collision.isWalkable(x, nextY) || !this.collision.isWalkable(nextX, y)) {
-                    return false;
-                }
-            }
-            
-            x = nextX;
-            y = nextY;
         }
         
-        return true;
+        // Always add the last point
+        if (smoothed.length > 1) {
+            finalSmoothed.push(smoothed[smoothed.length - 1]);
+        }
+
+        return finalSmoothed;
     }
 }
 
@@ -228,7 +239,8 @@ class PriorityQueue {
 
     contains(element) {
         return this.elements.some(item => 
-            item.element.x === element.x && item.element.y === element.y
+            Math.abs(item.element.x - element.x) < 0.01 && 
+            Math.abs(item.element.y - element.y) < 0.01
         );
     }
 }
