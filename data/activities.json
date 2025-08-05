@@ -787,21 +787,6 @@
             }
         ]
     },
-    "fish_shrimp": {
-        "id": "fish_shrimp",
-        "name": "Fish Shrimp",
-        "skill": "fishing",
-        "requiredLevel": 1,
-        "xpPerAction": 10,
-        "baseDuration": 3500,
-        "rewards": [
-            {
-                "itemId": "raw_shrimps",
-                "quantity": 1,
-                "chance": 1.0
-            }
-        ]
-    },
     "fight_goblin": {
         "id": "fight_goblin",
         "name": "Fight Goblin",
@@ -829,41 +814,6 @@
                 "itemId": "goblin_mail",
                 "quantity": 1,
                 "chance": 0.05
-            }
-        ]
-    },
-    "cook_shrimp": {
-        "id": "cook_shrimp",
-        "name": "Cook Shrimp",
-        "skill": "cooking",
-        "requiredLevel": 1,
-        "requiredItems": [{"itemId": "raw_shrimps", "quantity": 1}],
-        "xpPerAction": 30,
-        "baseDuration": 2000,
-        "rewards": [
-            {
-                "itemId": "shrimps",
-                "quantity": 1,
-                "chance": 0.95
-            }
-        ]
-    },
-    "smelt_bronze": {
-        "id": "smelt_bronze",
-        "name": "Smelt Bronze Bar",
-        "skill": "smithing",
-        "requiredLevel": 1,
-        "requiredItems": [
-            {"itemId": "copper_ore", "quantity": 1},
-            {"itemId": "tin_ore", "quantity": 1}
-        ],
-        "xpPerAction": 6.25,
-        "baseDuration": 3000,
-        "rewards": [
-            {
-                "itemId": "bronze_bar",
-                "quantity": 1,
-                "chance": 1.0
             }
         ]
     }
