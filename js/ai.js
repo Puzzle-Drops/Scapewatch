@@ -328,8 +328,14 @@ class AIManager {
 
         // Sort by distance
         nodesWithActivity.sort((a, b) => {
-            const distA = distance(player.position.x, player.position.y, a.position.x, a.position.y);
-            const distB = distance(player.position.x, player.position.y, b.position.x, b.position.y);
+            const distA = Math.sqrt(
+                Math.pow(player.position.x - a.position.x, 2) + 
+                Math.pow(player.position.y - a.position.y, 2)
+            );
+            const distB = Math.sqrt(
+                Math.pow(player.position.x - b.position.x, 2) + 
+                Math.pow(player.position.y - b.position.y, 2)
+            );
             return distA - distB;
         });
 
@@ -340,7 +346,8 @@ class AIManager {
                     player.position.x,
                     player.position.y,
                     node.position.x,
-                    node.position.y
+                    node.position.y,
+                    player.radius
                 );
                 if (path) {
                     return node;
