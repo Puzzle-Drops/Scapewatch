@@ -10,7 +10,8 @@ class Player {
         this.movementTimer = 0; // Timer for discrete movement
         this.movementInterval = 600; // 0.6 seconds in milliseconds
         this.movementStartPos = null; // Starting position for current movement
-        this.movementTargetPos = null; // Target position for current movement (2 pixels away)
+        this.movementTargetPos = null; // Target position for current movement
+        this.tilesMovingThisInterval = 0; // How many tiles we're moving this interval
         this.path = [];
         this.pathIndex = 0;
     }
@@ -36,44 +37,28 @@ class Player {
             this.movementTimer = 0;
             this.movementStartPos = null;
             this.movementTargetPos = null;
+            this.tilesMovingThisInterval = 0;
             this.onReachedTarget();
             return;
         }
 
-        const target = this.path[this.pathIndex];
-        
         // Initialize movement positions if needed
         if (!this.movementStartPos) {
             this.movementStartPos = { x: this.position.x, y: this.position.y };
             
-            // Calculate the target position (2 tiles toward the waypoint)
-            const dx = target.x - this.position.x;
-            const dy = target.y - this.position.y;
+            // Calculate how many tiles we can move (max 2)
+            const tilesRemaining = this.path.length - this.pathIndex;
+            const tilesToMove = Math.min(2, tilesRemaining);
             
-            // Use Chebyshev distance (max of absolute differences) for tile-based movement
-            const distance = Math.max(Math.abs(dx), Math.abs(dy));
+            // Set target to the position after moving 'tilesToMove' tiles along the path
+            const targetIndex = this.pathIndex + tilesToMove - 1;
+            this.movementTargetPos = {
+                x: this.path[targetIndex].x,
+                y: this.path[targetIndex].y
+            };
             
-            if (distance <= 2) {
-                // If we're 2 tiles or less away, move directly to the waypoint
-                this.movementTargetPos = { x: target.x, y: target.y };
-            } else {
-                // Move exactly 2 tiles toward the target
-                // For diagonal movement, we can move 2 pixels in both x and y
-                let moveX = 0;
-                let moveY = 0;
-                
-                if (dx !== 0) {
-                    moveX = dx > 0 ? Math.min(2, dx) : Math.max(-2, dx);
-                }
-                if (dy !== 0) {
-                    moveY = dy > 0 ? Math.min(2, dy) : Math.max(-2, dy);
-                }
-                
-                this.movementTargetPos = {
-                    x: this.position.x + moveX,
-                    y: this.position.y + moveY
-                };
-            }
+            // Store how many tiles we're moving this interval
+            this.tilesMovingThisInterval = tilesToMove;
         }
 
         // Update movement timer
@@ -92,24 +77,18 @@ class Player {
             this.position.x = this.movementTargetPos.x;
             this.position.y = this.movementTargetPos.y;
             
+            // Advance path index by the number of tiles we moved
+            this.pathIndex += this.tilesMovingThisInterval;
+            
             // Reset timer for next movement
             this.movementTimer = 0;
             this.movementStartPos = null;
             this.movementTargetPos = null;
+            this.tilesMovingThisInterval = 0;
             
-            // Check if we've reached the current waypoint
-            const dx = target.x - this.position.x;
-            const dy = target.y - this.position.y;
-            const distanceToWaypoint = Math.max(Math.abs(dx), Math.abs(dy));
-            
-            if (distanceToWaypoint === 0) {
-                // Reached waypoint, move to next one
-                this.pathIndex++;
-                
-                // Update target position for drawing
-                if (this.pathIndex < this.path.length) {
-                    this.targetPosition = this.path[this.path.length - 1];
-                }
+            // Update target position for drawing
+            if (this.pathIndex < this.path.length) {
+                this.targetPosition = this.path[this.path.length - 1];
             }
         }
     }
@@ -241,6 +220,8 @@ class Player {
                 this.movementTimer = 0; // Reset movement timer
                 this.movementStartPos = null; // Reset movement positions
                 this.movementTargetPos = null;
+                this.tilesMovingThisInterval = 0;
+                this.tilesMovingThisInterval = 0;
                 this.stopActivity();
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
@@ -262,6 +243,7 @@ class Player {
                 this.movementTimer = 0; // Reset movement timer
                 this.movementStartPos = null; // Reset movement positions
                 this.movementTargetPos = null;
+                this.tilesMovingThisInterval = 0;
                 this.stopActivity();
             }
         } else {
@@ -276,6 +258,7 @@ class Player {
             this.movementTimer = 0; // Reset movement timer
             this.movementStartPos = null; // Reset movement positions
             this.movementTargetPos = null;
+            this.tilesMovingThisInterval = 0;
             this.stopActivity();
         }
     }
