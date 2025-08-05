@@ -26,7 +26,7 @@ class Pathfinding {
 
         // Check if we have line of sight - if so, just go straight
         if (this.collision.isLineOfSight(start.x, start.y, end.x, end.y)) {
-            return [start, end];
+            return this.createStraightPath(start, end);
         }
 
         // A* implementation
@@ -71,7 +71,17 @@ class Pathfinding {
                     // This path is better
                     cameFrom.set(neighborKey, current);
                     gScore.set(neighborKey, tentativeGScore);
-                    fScore.set(neighborKey, tentativeGScore + this.heuristic(neighbor, end));
+                    
+                    // Add a small tie-breaker to prefer paths that go more directly toward the goal
+                    const h = this.heuristic(neighbor, end);
+                    const dx1 = neighbor.x - end.x;
+                    const dy1 = neighbor.y - end.y;
+                    const dx2 = start.x - end.x;
+                    const dy2 = start.y - end.y;
+                    const cross = Math.abs(dx1 * dy2 - dx2 * dy1);
+                    const tieBreaker = cross * 0.001;
+                    
+                    fScore.set(neighborKey, tentativeGScore + h + tieBreaker);
 
                     if (!openSet.contains(neighbor)) {
                         openSet.enqueue(neighbor, fScore.get(neighborKey));
@@ -86,8 +96,34 @@ class Pathfinding {
     }
 
     heuristic(a, b) {
-        // Euclidean distance
-        return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
+        // Use Chebyshev distance for tile-based movement
+        return Math.max(Math.abs(b.x - a.x), Math.abs(b.y - a.y));
+    }
+
+    createStraightPath(start, end) {
+        const path = [];
+        let x = start.x;
+        let y = start.y;
+        
+        const dx = Math.sign(end.x - start.x);
+        const dy = Math.sign(end.y - start.y);
+        
+        while (x !== end.x || y !== end.y) {
+            path.push({ x, y });
+            
+            // Move diagonally when possible
+            if (x !== end.x && y !== end.y) {
+                x += dx;
+                y += dy;
+            } else if (x !== end.x) {
+                x += dx;
+            } else {
+                y += dy;
+            }
+        }
+        
+        path.push(end);
+        return path;
     }
 
     reconstructPath(cameFrom, current) {
@@ -100,7 +136,7 @@ class Pathfinding {
             currentKey = `${current.x},${current.y}`;
         }
 
-        // Smooth the path
+        // Smooth the path more aggressively
         return this.smoothPath(path);
     }
 
@@ -115,7 +151,7 @@ class Pathfinding {
             
             // Find the farthest point we can see
             for (let i = current + 2; i < path.length; i++) {
-                if (this.collision.isLineOfSight(path[current].x, path[current].y, path[i].x, path[i].y)) {
+                if (this.canWalkStraight(path[current], path[i])) {
                     farthest = i;
                 } else {
                     break;
@@ -127,6 +163,47 @@ class Pathfinding {
         }
 
         return smoothed;
+    }
+
+    canWalkStraight(from, to) {
+        // Check if we can walk in a straight line (allowing diagonal movement)
+        let x = from.x;
+        let y = from.y;
+        
+        const dx = Math.sign(to.x - from.x);
+        const dy = Math.sign(to.y - from.y);
+        
+        while (x !== to.x || y !== to.y) {
+            // Move diagonally when possible
+            let nextX = x;
+            let nextY = y;
+            
+            if (x !== to.x && y !== to.y) {
+                nextX += dx;
+                nextY += dy;
+            } else if (x !== to.x) {
+                nextX += dx;
+            } else {
+                nextY += dy;
+            }
+            
+            // Check if the next position is walkable
+            if (!this.collision.isWalkable(nextX, nextY)) {
+                return false;
+            }
+            
+            // For diagonal movement, also check that we can move through the corners
+            if (nextX !== x && nextY !== y) {
+                if (!this.collision.isWalkable(x, nextY) || !this.collision.isWalkable(nextX, y)) {
+                    return false;
+                }
+            }
+            
+            x = nextX;
+            y = nextY;
+        }
+        
+        return true;
     }
 }
 
