@@ -37,6 +37,169 @@ class SkillBehaviors {
         return this.behaviors[skillName] || this.behaviors.default;
     }
 
+    // ==================== GOAL GENERATION ====================
+    
+    // Generate item banking goals based on current skill levels
+    generateItemGoals(currentSkillLevels, existingGoalCount) {
+        const goals = [];
+        const activities = loadingManager.getData('activities');
+        
+        // Track which items we've already made goals for to avoid duplicates
+        const processedItems = new Set();
+        
+        // Process each activity
+        for (const [activityId, activityData] of Object.entries(activities)) {
+            if (!activityData.rewards) continue;
+            
+            const skill = activityData.skill;
+            const currentLevel = currentSkillLevels[skill] || 1;
+            const requiredLevel = activityData.requiredLevel || 1;
+            
+            // Skip if we can't do this activity yet
+            if (currentLevel < requiredLevel) continue;
+            
+            // Process each reward from the activity
+            for (const reward of activityData.rewards) {
+                const itemId = reward.itemId;
+                
+                // Skip if we already have a goal for this item
+                if (processedItems.has(itemId)) continue;
+                
+                // Skip certain items we don't want to bank (like coins, gems)
+                if (this.shouldSkipBankingItem(itemId)) continue;
+                
+                // Calculate appropriate goal quantity
+                const targetQuantity = this.calculateItemGoalQuantity(
+                    activityData,
+                    reward,
+                    currentLevel
+                );
+                
+                if (targetQuantity > 0) {
+                    goals.push({
+                        type: 'bank_items',
+                        itemId: itemId,
+                        targetCount: targetQuantity,
+                        priority: existingGoalCount + goals.length + 1,
+                        skill: skill, // Track which skill this is from
+                        requiredLevel: requiredLevel
+                    });
+                    
+                    processedItems.add(itemId);
+                }
+            }
+        }
+        
+        // Sort goals by skill and level requirement for better progression
+        goals.sort((a, b) => {
+            // Prioritize lower level requirements first
+            if (a.requiredLevel !== b.requiredLevel) {
+                return a.requiredLevel - b.requiredLevel;
+            }
+            // Then by skill name for consistency
+            return a.skill.localeCompare(b.skill);
+        });
+        
+        return goals;
+    }
+    
+    // Calculate appropriate quantity for an item goal
+    calculateItemGoalQuantity(activityData, reward, currentLevel) {
+        const requiredLevel = reward.requiredLevel || activityData.requiredLevel || 1;
+        
+        // Base calculation: level requirement influences quantity
+        // Higher level items are rarer/harder, so we want fewer
+        const levelMultiplier = Math.max(1, 100 - requiredLevel); // 99 at level 1, 1 at level 99
+        
+        // Factor in success rate if available
+        let successRate = 1.0;
+        if (reward.chanceScaling) {
+            successRate = this.getScaledChance(reward, currentLevel);
+        } else if (reward.chance) {
+            successRate = reward.chance;
+        }
+        
+        // Base quantity formula
+        // For low level items (level 1-20): 50-200 items
+        // For mid level items (level 20-50): 30-150 items  
+        // For high level items (level 50+): 20-100 items
+        let minQuantity, maxQuantity;
+        
+        if (requiredLevel < 20) {
+            minQuantity = 50;
+            maxQuantity = 200;
+        } else if (requiredLevel < 50) {
+            minQuantity = 30;
+            maxQuantity = 150;
+        } else if (requiredLevel < 75) {
+            minQuantity = 20;
+            maxQuantity = 100;
+        } else {
+            minQuantity = 10;
+            maxQuantity = 50;
+        }
+        
+        // Adjust for success rate (lower success = lower targets)
+        minQuantity = Math.ceil(minQuantity * successRate);
+        maxQuantity = Math.ceil(maxQuantity * successRate);
+        
+        // Add some randomization for variety
+        const targetQuantity = minQuantity + Math.floor(Math.random() * (maxQuantity - minQuantity));
+        
+        // Round to nearest 10 for cleaner goals
+        return Math.round(targetQuantity / 10) * 10;
+    }
+    
+    // Determine if we should skip making a banking goal for this item
+    shouldSkipBankingItem(itemId) {
+        const skipItems = [
+            'coins', // Currency
+            'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond', // Gems (rare)
+            'goblin_mail', // Junk armor
+            'feather', 'fishing_bait' // Consumables we buy/find
+        ];
+        
+        return skipItems.includes(itemId);
+    }
+    
+    // Generate skill training goals
+    generateSkillGoals(currentSkillLevels, existingGoalCount) {
+        const goals = [];
+        const trainableSkills = ['woodcutting', 'mining', 'fishing', 'attack', 'cooking', 'smithing'];
+        
+        for (const skill of trainableSkills) {
+            const currentLevel = currentSkillLevels[skill] || 1;
+            
+            if (currentLevel >= 99) continue; // Max level
+            
+            // Generate milestone goals (every 10 levels, or next 5 if close)
+            let targetLevel;
+            if (currentLevel % 10 <= 2) {
+                // Just reached a milestone, aim for next 10
+                targetLevel = Math.ceil(currentLevel / 10) * 10;
+            } else if (currentLevel % 10 >= 7) {
+                // Close to milestone, aim for it
+                targetLevel = Math.ceil(currentLevel / 10) * 10;
+            } else {
+                // In the middle, aim for +5 or +10 randomly
+                targetLevel = currentLevel + (Math.random() < 0.5 ? 5 : 10);
+            }
+            
+            targetLevel = Math.min(targetLevel, 99);
+            
+            if (targetLevel > currentLevel) {
+                goals.push({
+                    type: 'skill_level',
+                    skill: skill,
+                    targetLevel: targetLevel,
+                    priority: existingGoalCount + goals.length + 1
+                });
+            }
+        }
+        
+        return goals;
+    }
+
     // ==================== DEFAULT BEHAVIORS ====================
     
     defaultDuration(baseDuration, skillLevel, activityData) {
@@ -285,7 +448,7 @@ class SkillBehaviors {
 
     fishingRewards(activityData, skillLevel) {
         // Fishing uses one-roll weighted distribution
-        // First, calculate all possible chances
+        // First, calculate all possible catches
         const possibleCatches = [];
         let totalChance = 0;
 
