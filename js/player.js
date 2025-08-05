@@ -11,7 +11,7 @@ class Player {
         this.movementInterval = 600; // 0.6 seconds in milliseconds
         this.movementStartPos = null; // Starting position for current movement
         this.movementTargetPos = null; // Target position for current movement
-        this.tilesMovingThisInterval = 0; // How many tiles we're moving this interval
+        this.targetPathIndex = 0; // Target index in path after current movement
         this.path = [];
         this.pathIndex = 0;
     }
@@ -37,7 +37,6 @@ class Player {
             this.movementTimer = 0;
             this.movementStartPos = null;
             this.movementTargetPos = null;
-            this.tilesMovingThisInterval = 0;
             this.onReachedTarget();
             return;
         }
@@ -46,19 +45,34 @@ class Player {
         if (!this.movementStartPos) {
             this.movementStartPos = { x: this.position.x, y: this.position.y };
             
-            // Calculate how many tiles we can move (max 2)
-            const tilesRemaining = this.path.length - this.pathIndex;
-            const tilesToMove = Math.min(2, tilesRemaining);
+            // We want to move along the path, 2 pixels at a time
+            // But we need to make sure we're moving to actual path points
+            let targetX = this.position.x;
+            let targetY = this.position.y;
+            let pixelsMoved = 0;
+            let tempIndex = this.pathIndex;
             
-            // Set target to the position after moving 'tilesToMove' tiles along the path
-            const targetIndex = this.pathIndex + tilesToMove - 1;
-            this.movementTargetPos = {
-                x: this.path[targetIndex].x,
-                y: this.path[targetIndex].y
-            };
+            // Move up to 2 pixels along the path
+            while (pixelsMoved < 2 && tempIndex < this.path.length) {
+                const nextPoint = this.path[tempIndex];
+                const dx = Math.abs(nextPoint.x - targetX);
+                const dy = Math.abs(nextPoint.y - targetY);
+                const distance = Math.max(dx, dy); // Chebyshev distance (tile distance)
+                
+                if (pixelsMoved + distance <= 2) {
+                    // We can move to this point
+                    targetX = nextPoint.x;
+                    targetY = nextPoint.y;
+                    pixelsMoved += distance;
+                    tempIndex++;
+                } else {
+                    // This would exceed 2 pixels, stop here
+                    break;
+                }
+            }
             
-            // Store how many tiles we're moving this interval
-            this.tilesMovingThisInterval = tilesToMove;
+            this.movementTargetPos = { x: targetX, y: targetY };
+            this.targetPathIndex = tempIndex;
         }
 
         // Update movement timer
@@ -77,14 +91,14 @@ class Player {
             this.position.x = this.movementTargetPos.x;
             this.position.y = this.movementTargetPos.y;
             
-            // Advance path index by the number of tiles we moved
-            this.pathIndex += this.tilesMovingThisInterval;
+            // Update path index
+            this.pathIndex = this.targetPathIndex;
             
-            // Reset timer for next movement
+            // Reset for next movement
             this.movementTimer = 0;
             this.movementStartPos = null;
             this.movementTargetPos = null;
-            this.tilesMovingThisInterval = 0;
+            this.targetPathIndex = 0;
             
             // Update target position for drawing
             if (this.pathIndex < this.path.length) {
@@ -220,7 +234,7 @@ class Player {
                 this.movementTimer = 0; // Reset movement timer
                 this.movementStartPos = null; // Reset movement positions
                 this.movementTargetPos = null;
-                this.tilesMovingThisInterval = 0;
+                this.targetPathIndex = 0;
                 this.tilesMovingThisInterval = 0;
                 this.stopActivity();
                 
@@ -243,7 +257,7 @@ class Player {
                 this.movementTimer = 0; // Reset movement timer
                 this.movementStartPos = null; // Reset movement positions
                 this.movementTargetPos = null;
-                this.tilesMovingThisInterval = 0;
+                this.targetPathIndex = 0;
                 this.stopActivity();
             }
         } else {
@@ -258,7 +272,7 @@ class Player {
             this.movementTimer = 0; // Reset movement timer
             this.movementStartPos = null; // Reset movement positions
             this.movementTargetPos = null;
-            this.tilesMovingThisInterval = 0;
+            this.targetPathIndex = 0;
             this.stopActivity();
         }
     }
