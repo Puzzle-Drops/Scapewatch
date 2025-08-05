@@ -266,6 +266,6 @@
         "name": "Iron Bar",
         "stackable": false,
         "category": "resource"
-    },
+    }
 
 }
