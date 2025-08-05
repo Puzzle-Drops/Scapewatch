@@ -64,8 +64,8 @@
         "name": "River Lum",
         "type": "skill",
         "position": {
-            "x": 4440,
-            "y": 2014
+            "x": 4439,
+            "y": 2015
         },
         "activities": [
             "fish_shrimp"
