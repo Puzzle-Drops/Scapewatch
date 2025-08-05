@@ -20,57 +20,61 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-content">
-            <h1>Scapewatch</h1>
-            <div class="loading-bar">
-                <div class="loading-progress"></div>
-            </div>
-            <p class="loading-text">Loading assets...</p>
-        </div>
-    </div>
-
-    <!-- New scaling wrapper -->
-    <div id="game-wrapper" class="game-wrapper" style="display: none;">
-        <div id="game-container" class="game-container">
-            <div class="map-container">
-                <canvas id="game-canvas"></canvas>
-            </div>
-            
-            <div class="ui-panel">
-                <div class="current-activity panel">
-                    <h3>Current Activity</h3>
-                    <p id="activity-name">Idle</p>
-                    <p id="activity-status">Waiting for instructions...</p>
-                </div>
-
-                <div class="current-goal panel">
-                    <h3>Current Goal</h3>
-                    <p id="goal-name">No active goal</p>
-                    <p id="goal-progress">-</p>
-                </div>
-
-                <div class="skills-panel panel">
-                    <h3>Skills</h3>
-                    <div id="skills-list" class="skills-list"></div>
-                </div>
-
-                <div class="inventory-panel panel">
-                    <h3>Inventory</h3>
-                    <div id="inventory-grid" class="inventory-grid"></div>
-                </div>
-
-                <div class="controls panel">
-                    <button id="bank-toggle">View Bank</button>
-                    <button id="pause-toggle">Pause AI</button>
+    <!-- Scaling wrapper contains everything -->
+    <div id="game-wrapper" class="game-wrapper">
+        <div id="scaled-container" class="scaled-container">
+            <!-- Loading screen is now inside the scaled container -->
+            <div id="loading-screen" class="loading-screen">
+                <div class="loading-content">
+                    <h1>Scapewatch</h1>
+                    <div class="loading-bar">
+                        <div class="loading-progress"></div>
+                    </div>
+                    <p class="loading-text">Loading assets...</p>
                 </div>
             </div>
 
-            <div id="bank-modal" class="modal" style="display: none;">
-                <div class="modal-content">
-                    <h2>Bank</h2>
-                    <div id="bank-grid" class="bank-grid"></div>
-                    <button id="close-bank">Close</button>
+            <!-- Game container -->
+            <div id="game-container" class="game-container" style="display: none;">
+                <div class="map-container">
+                    <canvas id="game-canvas"></canvas>
+                </div>
+                
+                <div class="ui-panel">
+                    <div class="current-activity panel">
+                        <h3>Current Activity</h3>
+                        <p id="activity-name">Idle</p>
+                        <p id="activity-status">Waiting for instructions...</p>
+                    </div>
+
+                    <div class="current-goal panel">
+                        <h3>Current Goal</h3>
+                        <p id="goal-name">No active goal</p>
+                        <p id="goal-progress">-</p>
+                    </div>
+
+                    <div class="skills-panel panel">
+                        <h3>Skills</h3>
+                        <div id="skills-list" class="skills-list"></div>
+                    </div>
+
+                    <div class="inventory-panel panel">
+                        <h3>Inventory</h3>
+                        <div id="inventory-grid" class="inventory-grid"></div>
+                    </div>
+
+                    <div class="controls panel">
+                        <button id="bank-toggle">View Bank</button>
+                        <button id="pause-toggle">Pause AI</button>
+                    </div>
+                </div>
+
+                <div id="bank-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Bank</h2>
+                        <div id="bank-grid" class="bank-grid"></div>
+                        <button id="close-bank">Close</button>
+                    </div>
                 </div>
             </div>
         </div>
