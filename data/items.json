@@ -1,4 +1,97 @@
 {
+    "coins": {
+        "id": "coins",
+        "name": "Coins",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "currency"
+    },
+    "feathers": {
+        "id": "feathers",
+        "name": "Feathers",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "resource"
+    },
+    "fishing_bait": {
+        "id": "fishing_bait",
+        "name": "Fishing Bait",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "resource"
+    },
+    "raw_sardine": {
+        "id": "raw_sardine",
+        "name": "Raw Sardine",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_herring": {
+        "id": "raw_herring",
+        "name": "Raw Herring",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_anchovies": {
+        "id": "raw_anchovies",
+        "name": "Raw Anchovies",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_mackerel": {
+        "id": "raw_mackerel",
+        "name": "Raw Mackerel",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_trout": {
+        "id": "raw_trout",
+        "name": "Raw Trout",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_cod": {
+        "id": "raw_cod",
+        "name": "Raw Cod",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_pike": {
+        "id": "raw_pike",
+        "name": "Raw Pike",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_salmon": {
+        "id": "raw_salmon",
+        "name": "Raw Salmon",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_tuna": {
+        "id": "raw_tuna",
+        "name": "Raw Tuna",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_bass": {
+        "id": "raw_bass",
+        "name": "Raw Bass",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_swordfish": {
+        "id": "raw_swordfish",
+        "name": "Raw Swordfish",
+        "stackable": false,
+        "category": "resource"
+    },
+    "raw_shark": {
+        "id": "raw_shark",
+        "name": "Raw Shark",
+        "stackable": false,
+        "category": "resource"
+    }
     "logs": {
         "id": "logs",
         "name": "Logs",
@@ -162,13 +255,6 @@
         "stackable": false,
         "category": "food",
         "healAmount": 12
-    },
-    "coins": {
-        "id": "coins",
-        "name": "Coins",
-        "stackable": true,
-        "maxStack": 9999999999,
-        "category": "currency"
     },
     "goblin_mail": {
         "id": "goblin_mail",
