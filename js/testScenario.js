@@ -24,7 +24,7 @@ class TestScenario {
         //this.populateInventory();
 
         // Set up test goals
-        this.setupTestGoals();
+        //this.setupTestGoals();
 
         console.log('Test scenario complete!');
     }
