@@ -47,9 +47,12 @@ async function init() {
 }
 
 function startGame() {
-    // Hide loading screen
+    // Hide loading screen and show game wrapper
     document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'flex';
+    document.getElementById('game-wrapper').style.display = 'block';
+    
+    // Initialize scaling system
+    scalingSystem.initialize();
 
     // Initialize game systems (order matters!)
     // skillBehaviors is already instantiated in skillBehaviors.js
@@ -62,18 +65,9 @@ function startGame() {
     window.ui = new UIManager();
     window.ai = new AIManager();
 
-    // Set up canvas
-    const canvas = document.getElementById('game-canvas');
-    const mapContainer = document.querySelector('.map-container');
-    canvas.width = mapContainer.clientWidth;
-    canvas.height = mapContainer.clientHeight;
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        canvas.width = mapContainer.clientWidth;
-        canvas.height = mapContainer.clientHeight;
-        map.render();
-    });
+    // Canvas sizing is now handled by scalingSystem
+    // Just trigger initial render
+    map.render();
 
     // Set up controls
     document.getElementById('bank-toggle').addEventListener('click', () => {
