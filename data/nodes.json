@@ -28,8 +28,7 @@
             "y": 1852
         },
         "activities": [
-            "mine_copper",
-            "mine_tin",
+            "mine_copper_tin",
             "mine_iron",
             "mine_silver",
             "mine_coal",
@@ -102,8 +101,7 @@
             "y": 2024
         },
         "activities": [
-            "mine_copper",
-            "mine_tin"
+            "mine_copper_tin"
         ]
     },
     "east_lumbridge_mine": {
@@ -115,8 +113,7 @@
             "y": 2026
         },
         "activities": [
-            "mine_copper",
-            "mine_tin"
+            "mine_copper_tin"
         ]
     },
     "lumbridge_fishing": {
@@ -188,6 +185,7 @@
             "y": 1588
         },
         "activities": [
+            "mine_copper_tin",
             "mine_iron"
         ]
     },
@@ -200,6 +198,7 @@
             "y": 1588
         },
         "activities": [
+            "mine_copper_tin",
             "mine_iron"
         ]
     },
