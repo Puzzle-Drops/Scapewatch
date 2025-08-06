@@ -54,8 +54,12 @@ applyNoSmoothing() {
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // Update camera to follow player
-        this.updateCamera();
+    // Calculate visual player position (rounded for pixel-perfect rendering)
+    this.visualPlayerX = Math.round(player.position.x);
+    this.visualPlayerY = Math.round(player.position.y);
+
+    // Update camera to follow visual player position
+    this.updateCamera();
 
         // Save context state
         this.ctx.save();
@@ -118,9 +122,13 @@ applyNoSmoothing() {
     }
 
 updateCamera() {
-    // Instant camera follow - no smoothing
-    this.camera.x = Math.round(player.position.x);
-    this.camera.y = Math.round(player.position.y);
+    // Camera follows the visual (rounded) player position, not the float position
+    const targetX = this.visualPlayerX || Math.round(player.position.x);
+    const targetY = this.visualPlayerY || Math.round(player.position.y);
+
+    // Smooth camera follow to visual position
+    this.camera.x = Math.round(lerp(this.camera.x, targetX, 0.3));
+    this.camera.y = Math.round(lerp(this.camera.y, targetY, 0.3));
 }
 
     drawNodes() {
@@ -197,26 +205,28 @@ updateCamera() {
     }
 
     drawPlayer() {
-        const { x, y } = player.position;
+    // Use the same visual position that the camera is following
+    const x = this.visualPlayerX;
+    const y = this.visualPlayerY;
 
-        // Player circle (reduced to 1/5 of original size)
+    // Player circle (reduced to 1/5 of original size)
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+    this.ctx.fillStyle = '#2ecc71';
+    this.ctx.fill();
+    this.ctx.strokeStyle = '#27ae60';
+    this.ctx.lineWidth = 0.4; // reduced from 2
+    this.ctx.stroke();
+
+    // Activity indicator
+    if (player.currentActivity) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+        this.ctx.strokeStyle = '#f39c12';
+        this.ctx.lineWidth = 0.4;  // reduced from 2
         this.ctx.stroke();
-
-        // Activity indicator
-        if (player.currentActivity) {
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 0.4;  // reduced from 2
-            this.ctx.stroke();
-        }
     }
+}
 
     drawPlayerPath() {
         if (!player.path || player.path.length < 2) return;
