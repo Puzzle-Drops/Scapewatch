@@ -117,14 +117,11 @@ applyNoSmoothing() {
         this.drawDebugInfo();
     }
 
-    updateCamera() {
-        // Smooth camera follow
-        const targetX = player.position.x;
-        const targetY = player.position.y;
-
-        this.camera.x = lerp(this.camera.x, targetX, 0.3);
-        this.camera.y = lerp(this.camera.y, targetY, 0.3);
-    }
+updateCamera() {
+    // Instant camera follow - no smoothing
+    this.camera.x = Math.round(player.position.x);
+    this.camera.y = Math.round(player.position.y);
+}
 
     drawNodes() {
         const allNodes = nodes.getAllNodes();
@@ -145,7 +142,9 @@ applyNoSmoothing() {
     }
 
     drawNode(node) {
-        const { x, y } = node.position;
+    // Round positions to prevent subpixel rendering
+    const x = Math.round(node.position.x);
+    const y = Math.round(node.position.y);
 
         // Draw icons based on node type
         if (node.type === 'bank') {
@@ -200,26 +199,28 @@ applyNoSmoothing() {
     }
 
     drawPlayer() {
-        const { x, y } = player.position;
+    // Round position to prevent subpixel swimming
+    const x = Math.round(player.position.x);
+    const y = Math.round(player.position.y);
 
-        // Player circle (reduced to 1/5 of original size)
+    // Player circle (reduced to 1/5 of original size)
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+    this.ctx.fillStyle = '#2ecc71';
+    this.ctx.fill();
+    this.ctx.strokeStyle = '#27ae60';
+    this.ctx.lineWidth = 0.4; // reduced from 2
+    this.ctx.stroke();
+
+    // Activity indicator
+    if (player.currentActivity) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+        this.ctx.strokeStyle = '#f39c12';
+        this.ctx.lineWidth = 0.4;  // reduced from 2
         this.ctx.stroke();
-
-        // Activity indicator
-        if (player.currentActivity) {
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = '#f39c12';
-            this.ctx.lineWidth = 0.4;  // reduced from 2
-            this.ctx.stroke();
-        }
     }
+}
 
     drawPlayerPath() {
         if (!player.path || player.path.length < 2) return;
