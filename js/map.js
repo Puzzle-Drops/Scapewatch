@@ -1,31 +1,32 @@
 class MapRenderer {
     constructor() {
-    this.canvas = document.getElementById('game-canvas');
-    this.ctx = this.canvas.getContext('2d');
-    
-    // Apply crisp rendering settings
-    this.applyNoSmoothing();
-    
-    this.camera = {
-        x: 4395, // Start at player position
-        y: 1882, // Start at player position
-        zoom: 10 // increased by 1/4 from 5
-    };
-    this.worldMap = loadingManager.getImage('worldMap');
-    this.showNodeText = false; // Flag for showing node text
-    this.showCollisionDebug = false; // Flag for showing collision areas
-    this.mapCache = null; // Cached map canvas
-    this.initMapCache();
-}
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Apply crisp rendering settings
+        this.applyNoSmoothing();
+        
+        this.camera = {
+            x: 4395, // Start at player position
+            y: 1882, // Start at player position
+            zoom: 10 // increased by 1/4 from 5
+        };
+        this.worldMap = loadingManager.getImage('worldMap');
+        this.showNodeText = false; // Flag for showing node text
+        this.showCollisionDebug = false; // Flag for showing collision areas
+        this.mapCache = null; // Cached map canvas
+        this.initMapCache();
+    }
 
-// Add this new method right after the constructor
-applyNoSmoothing() {
-    this.ctx.imageSmoothingEnabled = false;
-    this.ctx.webkitImageSmoothingEnabled = false;
-    this.ctx.mozImageSmoothingEnabled = false;
-    this.ctx.msImageSmoothingEnabled = false;
-    this.ctx.imageSmoothingQuality = 'low';
-}
+    // Add this new method right after the constructor
+    applyNoSmoothing() {
+        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        this.ctx.imageSmoothingQuality = 'low';
+    }
+
     initMapCache() {
         if (!this.worldMap) return;
         
@@ -42,20 +43,20 @@ applyNoSmoothing() {
     }
 
     render() {
-    // Ensure no smoothing is applied (in case context was reset)
-    this.applyNoSmoothing();
-    
-    // Initialize map cache if not done yet (in case image loaded after constructor)
-    if (!this.mapCache && this.worldMap) {
-        this.initMapCache();
-    }
-    
-    // Clear canvas
-    this.ctx.fillStyle = '#000';
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        // Ensure no smoothing is applied (in case context was reset)
+        this.applyNoSmoothing();
+        
+        // Initialize map cache if not done yet (in case image loaded after constructor)
+        if (!this.mapCache && this.worldMap) {
+            this.initMapCache();
+        }
+        
+        // Clear canvas
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Update camera to follow player
-    this.updateCamera();
+        // Update camera to follow player
+        this.updateCamera();
 
         // Save context state
         this.ctx.save();
@@ -117,11 +118,11 @@ applyNoSmoothing() {
         this.drawDebugInfo();
     }
 
-updateCamera() {
-    // Camera instantly follows the player position (no lerp, no rounding)
-    this.camera.x = player.position.x;
-    this.camera.y = player.position.y;
-}
+    updateCamera() {
+        // Camera instantly follows the player position (no lerp, no rounding)
+        this.camera.x = player.position.x;
+        this.camera.y = player.position.y;
+    }
 
     drawNodes() {
         const allNodes = nodes.getAllNodes();
@@ -142,17 +143,21 @@ updateCamera() {
     }
 
     drawNode(node) {
-        const { x, y } = node.position;
+        // Center the node on its pixel position
+        const x = Math.floor(node.position.x) + 0.5;
+        const y = Math.floor(node.position.y) + 0.5;
 
         // Draw icons based on node type
         if (node.type === 'bank') {
             const bankIcon = loadingManager.getImage('skill_bank');
             if (bankIcon) {
+                // Draw icon centered on the pixel center
                 this.ctx.drawImage(bankIcon, x - 2, y - 2, 4, 4);
             }
         } else if (node.type === 'quest') {
             const questIcon = loadingManager.getImage('skill_quests');
             if (questIcon) {
+                // Draw icon centered on the pixel center
                 this.ctx.drawImage(questIcon, x - 2, y - 2, 4, 4);
             }
         } else if (node.type === 'skill' && node.activities) {
@@ -197,27 +202,27 @@ updateCamera() {
     }
 
     drawPlayer() {
-    // Use the actual player position for smooth movement
-    const { x, y } = player.position;
+        // Use the actual player position for smooth movement
+        const { x, y } = player.position;
 
-    // Player circle (reduced to 1/5 of original size)
-    this.ctx.beginPath();
-    this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
-    this.ctx.fillStyle = '#2ecc71';
-    this.ctx.fill();
-    this.ctx.strokeStyle = '#27ae60';
-    this.ctx.lineWidth = 0.4; // reduced from 2
-    this.ctx.stroke();
-
-    // Activity indicator
-    if (player.currentActivity) {
+        // Player circle (reduced to 1/5 of original size)
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-        this.ctx.strokeStyle = '#f39c12';
-        this.ctx.lineWidth = 0.4;  // reduced from 2
+        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+        this.ctx.fillStyle = '#2ecc71';
+        this.ctx.fill();
+        this.ctx.strokeStyle = '#27ae60';
+        this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
+
+        // Activity indicator
+        if (player.currentActivity) {
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+            this.ctx.strokeStyle = '#f39c12';
+            this.ctx.lineWidth = 0.4;  // reduced from 2
+            this.ctx.stroke();
+        }
     }
-}
 
     drawPlayerPath() {
         if (!player.path || player.path.length < 2) return;
@@ -254,26 +259,26 @@ updateCamera() {
     }
 
     drawFPS() {
-    // Draw FPS counter in top-left corner
-    this.ctx.font = '16px Arial';
-    this.ctx.strokeStyle = '#000';
-    this.ctx.lineWidth = 3;
-    this.ctx.textAlign = 'left';
-    this.ctx.textBaseline = 'top';
-    
-    // Color code based on FPS
-    if (gameState.fps >= 60) {
-        this.ctx.fillStyle = '#0f0'; // Green for 60+ FPS
-    } else if (gameState.fps >= 30) {
-        this.ctx.fillStyle = '#ff0'; // Yellow for 30-59 FPS
-    } else {
-        this.ctx.fillStyle = '#f00'; // Red for under 30 FPS
+        // Draw FPS counter in top-left corner
+        this.ctx.font = '16px Arial';
+        this.ctx.strokeStyle = '#000';
+        this.ctx.lineWidth = 3;
+        this.ctx.textAlign = 'left';
+        this.ctx.textBaseline = 'top';
+        
+        // Color code based on FPS
+        if (gameState.fps >= 60) {
+            this.ctx.fillStyle = '#0f0'; // Green for 60+ FPS
+        } else if (gameState.fps >= 30) {
+            this.ctx.fillStyle = '#ff0'; // Yellow for 30-59 FPS
+        } else {
+            this.ctx.fillStyle = '#f00'; // Red for under 30 FPS
+        }
+        
+        const fpsText = `${gameState.fps} FPS`;
+        this.ctx.strokeText(fpsText, 10, 10);
+        this.ctx.fillText(fpsText, 10, 10);
     }
-    
-    const fpsText = `${gameState.fps} FPS`;
-    this.ctx.strokeText(fpsText, 10, 10);
-    this.ctx.fillText(fpsText, 10, 10);
-}
 
     drawDebugInfo() {
         // Draw debug info in top-right corner
@@ -305,7 +310,7 @@ updateCamera() {
         const worldX = (gameCoords.x - this.canvas.width / 2) / this.camera.zoom + this.camera.x;
         const worldY = (gameCoords.y - this.canvas.height / 2) / this.camera.zoom + this.camera.y;
 
-        // Check if clicked on a node
+        // Check if clicked on a node (adjusted for pixel-centered positions)
         const clickedNode = nodes.getNodeAt(worldX, worldY);
         if (clickedNode) {
             console.log('Clicked node:', clickedNode.name);
