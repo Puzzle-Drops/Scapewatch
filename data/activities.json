@@ -443,80 +443,53 @@
             }
         ]
     },
-    "mine_copper": {
-        "id": "mine_copper",
-        "name": "Mine Copper",
-        "skill": "mining",
-        "requiredLevel": 1,
-        "xpPerAction": 17.5,
-        "baseDuration": 2500,
-        "durationScaling": {
-            "type": "mining",
-            "breakpoints": [
-                {"level": 1, "duration": 4200},
-                {"level": 5, "duration": 3600},
-                {"level": 10, "duration": 3000},
-                {"level": 31, "duration": 2400},
-                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
-                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
-            ]
-        },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
-        "rewards": [
-            {
-                "itemId": "copper_ore",
-                "quantity": 1,
-                "chanceScaling": {
-                    "minChance": 0.254,
-                    "maxChance": 1.0,
-                    "minLevel": 1,
-                    "maxLevel": 30
-                }
-            }
+    "mine_copper_tin": {
+    "id": "mine_copper_tin",
+    "name": "Mine Copper & Tin",
+    "skill": "mining",
+    "requiredLevel": 1,
+    "xpPerAction": 17.5,
+    "baseDuration": 2500,
+    "durationScaling": {
+        "type": "mining",
+        "breakpoints": [
+            {"level": 1, "duration": 4200},
+            {"level": 5, "duration": 3600},
+            {"level": 10, "duration": 3000},
+            {"level": 31, "duration": 2400},
+            {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
+            {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
         ]
     },
-    "mine_tin": {
-        "id": "mine_tin",
-        "name": "Mine Tin",
-        "skill": "mining",
-        "requiredLevel": 1,
-        "xpPerAction": 17.5,
-        "baseDuration": 2500,
-        "durationScaling": {
-            "type": "mining",
-            "breakpoints": [
-                {"level": 1, "duration": 4200},
-                {"level": 5, "duration": 3600},
-                {"level": 10, "duration": 3000},
-                {"level": 31, "duration": 2400},
-                {"level": 61, "duration": 2400, "boostChance": 0.166667, "boostDuration": 1600},
-                {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
-            ]
-        },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
-        "rewards": [
-            {
-                "itemId": "tin_ore",
-                "quantity": 1,
-                "chanceScaling": {
-                    "minChance": 0.254,
-                    "maxChance": 1.0,
-                    "minLevel": 1,
-                    "maxLevel": 30
-                }
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.0009765625},
+        {"itemId": "uncut_emerald", "chance": 0.00048828125},
+        {"itemId": "uncut_ruby", "chance": 0.000244140625},
+        {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+    ],
+    "alternatingRewards": [
+        {
+            "itemId": "copper_ore",
+            "quantity": 1,
+            "chanceScaling": {
+                "minChance": 0.254,
+                "maxChance": 1.0,
+                "minLevel": 1,
+                "maxLevel": 30
             }
-        ]
-    },
+        },
+        {
+            "itemId": "tin_ore",
+            "quantity": 1,
+            "chanceScaling": {
+                "minChance": 0.254,
+                "maxChance": 1.0,
+                "minLevel": 1,
+                "maxLevel": 30
+            }
+        }
+    ]
+},
     "mine_iron": {
         "id": "mine_iron",
         "name": "Mine Iron",
