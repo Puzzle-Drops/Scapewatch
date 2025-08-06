@@ -225,7 +225,7 @@ class MapRenderer {
     }
 
     drawPlayerPath() {
-        if (!player.path || player.path.length < 2) return;
+        if (!player.path || player.path.length === 0) return;
 
         // Draw the path from destination back to player (reversed)
         this.ctx.beginPath();
