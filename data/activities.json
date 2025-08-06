@@ -462,10 +462,10 @@
         ]
     },
     "gemTable": [
-        {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-        {"itemId": "uncut_emerald", "chance": 0.00048828125},
-        {"itemId": "uncut_ruby", "chance": 0.000244140625},
-        {"itemId": "uncut_diamond", "chance": 0.00006103515625}
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
     ],
     "alternatingRewards": [
         {
@@ -508,12 +508,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "iron_ore",
@@ -545,12 +545,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "silver_ore",
@@ -580,12 +580,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "coal",
@@ -615,12 +615,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "gold_ore",
@@ -650,12 +650,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "mithril_ore",
@@ -683,12 +683,12 @@
                 {"level": 71, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "adamantite_ore",
@@ -715,12 +715,12 @@
                 {"level": 85, "duration": 2400, "boostChance": 0.25, "boostDuration": 1600}
             ]
         },
-        "gemTable": [
-            {"itemId": "uncut_sapphire", "chance": 0.0009765625},
-            {"itemId": "uncut_emerald", "chance": 0.00048828125},
-            {"itemId": "uncut_ruby", "chance": 0.000244140625},
-            {"itemId": "uncut_diamond", "chance": 0.00006103515625}
-        ],
+    "gemTable": [
+        {"itemId": "uncut_sapphire", "chance": 0.00390625},
+        {"itemId": "uncut_emerald", "chance": 0.001953125},
+        {"itemId": "uncut_ruby", "chance": 0.0009765625},
+        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+    ],
         "rewards": [
             {
                 "itemId": "runite_ore",
