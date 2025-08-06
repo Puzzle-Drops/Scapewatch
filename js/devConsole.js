@@ -105,6 +105,11 @@ class DevConsole {
                 usage: 'addgoal <type> <target> <value>',
                 fn: (args) => this.cmdAddGoal(args)
             },
+            goals: {
+                description: 'List all current goals',
+                usage: 'goals',
+                fn: () => this.cmdListGoals()
+            },
             pauseai: {
                 description: 'Toggle AI pause',
                 usage: 'pauseai',
@@ -997,13 +1002,100 @@ class DevConsole {
     }
 
     cmdNodeText() {
-        if (!window.map) {
-            this.log('Map not initialized yet', 'error');
-            return;
-        }
-        map.toggleNodeText();
-        this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
+    if (!window.map) {
+        this.log('Map not initialized yet', 'error');
+        return;
     }
+    map.toggleNodeText();
+    this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
+}
+
+cmdListGoals() {
+    if (!window.ai) {
+        this.log('AI not initialized yet', 'error');
+        return;
+    }
+    
+    if (ai.goals.length === 0) {
+        this.log('No goals in queue', 'info');
+        return;
+    }
+    
+    // Show current goal
+    if (ai.currentGoal) {
+        this.log('=== CURRENT GOAL ===', 'info');
+        this.formatGoal(ai.currentGoal, true);
+        this.log('', 'info');
+    } else {
+        this.log('No active goal (selecting...)', 'info');
+        this.log('', 'info');
+    }
+    
+    // Show all goals in queue
+    this.log('=== GOAL QUEUE ===', 'info');
+    for (const goal of ai.goals) {
+        const isComplete = ai.isGoalComplete(goal);
+        const isCurrent = ai.currentGoal === goal;
+        this.formatGoal(goal, false, isComplete, isCurrent);
+    }
+    
+    this.log(`Total goals: ${ai.goals.length}`, 'info');
+}
+
+formatGoal(goal, detailed = false, isComplete = false, isCurrent = false) {
+    let status = '';
+    if (isCurrent) status = ' [ACTIVE]';
+    else if (isComplete) status = ' [COMPLETE]';
+    
+    switch (goal.type) {
+        case 'skill_level':
+            const currentLevel = skills.getLevel(goal.skill);
+            const currentXp = Math.floor(skills.getXp(goal.skill));
+            const targetXp = getXpForLevel(goal.targetLevel);
+            const progress = Math.floor((currentXp / targetXp) * 100);
+            
+            if (detailed) {
+                this.log(`Type: Skill Training`, 'info');
+                this.log(`Skill: ${goal.skill}`, 'info');
+                this.log(`Target: Level ${goal.targetLevel}`, 'info');
+                this.log(`Current: Level ${currentLevel} (${formatNumber(currentXp)} XP)`, 'info');
+                this.log(`Progress: ${progress}%`, 'info');
+                this.log(`Priority: ${goal.priority}`, 'info');
+            } else {
+                this.log(`#${goal.priority}: Train ${goal.skill} to ${goal.targetLevel} (currently ${currentLevel}) - ${progress}%${status}`, 
+                    isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
+            }
+            break;
+            
+        case 'bank_items':
+            const currentCount = bank.getItemCount(goal.itemId);
+            const itemData = loadingManager.getData('items')[goal.itemId];
+            const itemProgress = Math.floor((currentCount / goal.targetCount) * 100);
+            
+            if (detailed) {
+                this.log(`Type: Item Banking`, 'info');
+                this.log(`Item: ${itemData.name} (${goal.itemId})`, 'info');
+                this.log(`Target: ${formatNumber(goal.targetCount)}`, 'info');
+                this.log(`Current: ${formatNumber(currentCount)}`, 'info');
+                this.log(`Progress: ${itemProgress}%`, 'info');
+                this.log(`Priority: ${goal.priority}`, 'info');
+            } else {
+                this.log(`#${goal.priority}: Bank ${formatNumber(goal.targetCount)} ${itemData.name} (${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}) - ${itemProgress}%${status}`, 
+                    isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
+            }
+            break;
+            
+        default:
+            this.log(`#${goal.priority}: Unknown goal type: ${goal.type}${status}`, 'error');
+    }
+}
+
+    
+
+
+
+
+    
 }
 
 // Create global instance immediately
