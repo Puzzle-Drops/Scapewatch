@@ -778,36 +778,39 @@ class DevConsole {
         if (!this.requireSystem('Player', 'player')) return;
         
         if (args.length === 2) {
-            // Teleport to coordinates
-            const x = this.parseIntArg(args[0], 'X coordinate');
-            const y = this.parseIntArg(args[1], 'Y coordinate');
-            if (x === null || y === null) return;
-            
-            player.position.x = x;
-            player.position.y = y;
-            player.path = [];
-            player.targetPosition = null;
-            player.stopActivity();
-            
-            this.log(`Teleported to ${x}, ${y}`, 'success');
-        } else if (args.length === 1) {
-            // Teleport to node
-            const nodeId = args[0];
-            const node = nodes.getNode(nodeId);
-            
-            if (!node) {
-                this.log(`Node not found: ${nodeId}`, 'error');
-                return;
-            }
-            
-            player.position.x = node.position.x + 0.5;
-            player.position.y = node.position.y + 0.5;
-            //player.currentNode = nodeId;
-            player.path = [];
-            player.targetPosition = null;
-            player.stopActivity();
-            
-            this.log(`Teleported to ${node.name}`, 'success');
+    // Teleport to coordinates
+    const x = this.parseIntArg(args[0], 'X coordinate');
+    const y = this.parseIntArg(args[1], 'Y coordinate');
+    if (x === null || y === null) return;
+    
+    player.position.x = x;
+    player.position.y = y;
+    player.path = [];
+    player.targetPosition = null;
+    player.targetNode = null;
+    player.currentNode = null;
+    player.stopActivity();
+    
+    this.log(`Teleported to ${x}, ${y}`, 'success');
+} else if (args.length === 1) {
+    // Teleport to node
+    const nodeId = args[0];
+    const node = nodes.getNode(nodeId);
+    
+    if (!node) {
+        this.log(`Node not found: ${nodeId}`, 'error');
+        return;
+    }
+    
+    player.position.x = node.position.x + 0.5;
+    player.position.y = node.position.y + 0.5;
+    player.path = [];
+    player.targetPosition = null;
+    player.targetNode = null;
+    player.currentNode = null;
+    player.stopActivity();
+    
+    this.log(`Teleported to ${node.name}`, 'success');
         } else {
             this.log('Usage: tp <x> <y> or tp <nodeId>', 'error');
         }
