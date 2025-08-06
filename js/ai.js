@@ -30,59 +30,6 @@ class AIManager {
             priority: 3
         });
 
-
-        
-        /*
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'raw_shrimps',
-            targetCount: 28,
-            priority: 1
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'logs',
-            targetCount: 10,
-            priority: 2
-        });
-        
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'tin_ore',
-            targetCount: 20,
-            priority: 3
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'copper_ore',
-            targetCount: 20,
-            priority: 4
-        });
-
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 15,
-            priority: 5
-        });
-
-        this.addGoal({
-            type: 'bank_items',
-            itemId: 'oak_logs',
-            targetCount: 50,
-            priority: 6
-        });
-
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'mining',
-            targetLevel: 15,
-            priority: 7
-        });
-        */
     }
 
     addGoal(goal) {
@@ -232,15 +179,21 @@ class AIManager {
     }
 
     trainSkill(skillId) {
-        // Find best activity for training this skill
-        const activities = loadingManager.getData('activities');
-        const skillActivities = Object.entries(activities)
-            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id));
+    // Find best activity for training this skill
+    const activities = loadingManager.getData('activities');
+    const skillActivities = Object.entries(activities)
+        .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id));
 
-        if (skillActivities.length === 0) {
-            console.log(`No available activities for ${skillId}`);
-            return;
-        }
+    if (skillActivities.length === 0) {
+        console.log(`No available activities for ${skillId}`);
+        
+        // Mark this goal as impossible and move to next
+        console.log(`Marking ${skillId} goal as impossible and skipping`);
+        this.currentGoal = null;
+        this.plannedActivity = null;
+        this.selectNewGoal();
+        return;
+    }
 
         // Filter to only reachable activities that we have items for (or no items needed)
         const viableActivities = [];
