@@ -256,18 +256,26 @@ applyNoSmoothing() {
     }
 
     drawFPS() {
-        // Draw FPS counter in top-left corner
-        this.ctx.font = '16px Arial';
-        this.ctx.fillStyle = '#0f0';
-        this.ctx.strokeStyle = '#000';
-        this.ctx.lineWidth = 3;
-        this.ctx.textAlign = 'left';
-        this.ctx.textBaseline = 'top';
-        
-        const fpsText = `FPS: ${gameState.fps}`;
-        this.ctx.strokeText(fpsText, 10, 10);
-        this.ctx.fillText(fpsText, 10, 10);
+    // Draw FPS counter in top-left corner
+    this.ctx.font = '16px Arial';
+    this.ctx.strokeStyle = '#000';
+    this.ctx.lineWidth = 3;
+    this.ctx.textAlign = 'left';
+    this.ctx.textBaseline = 'top';
+    
+    // Color code based on FPS
+    if (gameState.fps >= 60) {
+        this.ctx.fillStyle = '#0f0'; // Green for 60+ FPS
+    } else if (gameState.fps >= 30) {
+        this.ctx.fillStyle = '#ff0'; // Yellow for 30-59 FPS
+    } else {
+        this.ctx.fillStyle = '#f00'; // Red for under 30 FPS
     }
+    
+    const fpsText = `${gameState.fps} FPS`;
+    this.ctx.strokeText(fpsText, 10, 10);
+    this.ctx.fillText(fpsText, 10, 10);
+}
 
     drawDebugInfo() {
         // Draw debug info in top-right corner
