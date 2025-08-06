@@ -293,16 +293,21 @@ class SkillBehaviors {
             );
                 
                 if (targetQuantity > 0) {
-                    goals.push({
-                        type: 'bank_items',
-                        itemId: reward.itemId,
-                        targetCount: targetQuantity,
-                        priority: existingGoalCount + goals.length + 1,
-                        skill: activityData.skill,
-                        requiredLevel: activityData.requiredLevel || 1
-                    });
-                    processedItems.add(reward.itemId);
-                }
+    // Get current count from bank + inventory
+    const currentBankCount = window.bank ? window.bank.getItemCount(reward.itemId) : 0;
+    const currentInvCount = window.inventory ? window.inventory.getItemCount(reward.itemId) : 0;
+    const currentTotal = currentBankCount + currentInvCount;
+    
+    goals.push({
+        type: 'bank_items',
+        itemId: reward.itemId,
+        targetCount: currentTotal + targetQuantity,  // Add to existing amount
+        priority: existingGoalCount + goals.length + 1,
+        skill: activityData.skill,
+        requiredLevel: activityData.requiredLevel || 1
+    });
+    processedItems.add(reward.itemId);
+}
             }
         }
         
