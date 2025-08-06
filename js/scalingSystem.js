@@ -51,37 +51,42 @@ class ScalingSystem {
     }
 
     handleResize() {
-        const windowWidth = window.innerWidth;
-        const windowHeight = window.innerHeight;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Calculate scale to fit screen while maintaining aspect ratio
+    const scaleX = windowWidth / this.baseWidth;
+    const scaleY = windowHeight / this.baseHeight;
+    
+    // Use the smaller scale to ensure the entire game fits
+    this.scale = Math.min(scaleX, scaleY);
+    
+    // Calculate centering offsets
+    const scaledWidth = this.baseWidth * this.scale;
+    const scaledHeight = this.baseHeight * this.scale;
+    this.offsetX = (windowWidth - scaledWidth) / 2;
+    this.offsetY = (windowHeight - scaledHeight) / 2;
+    
+    // Apply the transformation to the scaled container
+    this.scaledContainer.style.transform = `scale(${this.scale})`;
+    this.scaledContainer.style.transformOrigin = 'top left';
+    this.scaledContainer.style.position = 'absolute';
+    this.scaledContainer.style.left = `${this.offsetX}px`;
+    this.scaledContainer.style.top = `${this.offsetY}px`;
+    
+    // Update canvas size if it exists
+    const canvas = document.getElementById('game-canvas');
+    if (canvas) {
+        // Canvas should fill the map container at our fixed resolution
+        canvas.width = this.baseWidth - 350; // Minus UI panel width
+        canvas.height = this.baseHeight;
         
-        // Calculate scale to fit screen while maintaining aspect ratio
-        const scaleX = windowWidth / this.baseWidth;
-        const scaleY = windowHeight / this.baseHeight;
-        
-        // Use the smaller scale to ensure the entire game fits
-        this.scale = Math.min(scaleX, scaleY);
-        
-        // Calculate centering offsets
-        const scaledWidth = this.baseWidth * this.scale;
-        const scaledHeight = this.baseHeight * this.scale;
-        this.offsetX = (windowWidth - scaledWidth) / 2;
-        this.offsetY = (windowHeight - scaledHeight) / 2;
-        
-        // Apply the transformation to the scaled container
-        this.scaledContainer.style.transform = `scale(${this.scale})`;
-        this.scaledContainer.style.transformOrigin = 'top left';
-        this.scaledContainer.style.position = 'absolute';
-        this.scaledContainer.style.left = `${this.offsetX}px`;
-        this.scaledContainer.style.top = `${this.offsetY}px`;
-        
-        // Update canvas size if it exists
-        const canvas = document.getElementById('game-canvas');
-        if (canvas) {
-            // Canvas should fill the map container at our fixed resolution
-            canvas.width = this.baseWidth - 350; // Minus UI panel width
-            canvas.height = this.baseHeight;
+        // Reapply no smoothing after canvas resize
+        if (window.map) {
+            window.map.applyNoSmoothing();
         }
     }
+}
 
     // Convert mouse coordinates from screen space to game space
     screenToGame(screenX, screenY) {
