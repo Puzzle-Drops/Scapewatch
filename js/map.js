@@ -54,11 +54,7 @@ applyNoSmoothing() {
     this.ctx.fillStyle = '#000';
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Calculate visual player position (rounded for pixel-perfect rendering)
-    this.visualPlayerX = Math.round(player.position.x);
-    this.visualPlayerY = Math.round(player.position.y);
-
-    // Update camera to follow visual player position
+    // Update camera to follow player
     this.updateCamera();
 
         // Save context state
@@ -122,13 +118,9 @@ applyNoSmoothing() {
     }
 
 updateCamera() {
-    // Camera follows the visual (rounded) player position, not the float position
-    const targetX = this.visualPlayerX || Math.round(player.position.x);
-    const targetY = this.visualPlayerY || Math.round(player.position.y);
-
-    // Smooth camera follow to visual position
-    this.camera.x = Math.round(lerp(this.camera.x, targetX, 0.3));
-    this.camera.y = Math.round(lerp(this.camera.y, targetY, 0.3));
+    // Camera instantly follows the player position (no lerp, no rounding)
+    this.camera.x = player.position.x;
+    this.camera.y = player.position.y;
 }
 
     drawNodes() {
@@ -205,9 +197,8 @@ updateCamera() {
     }
 
     drawPlayer() {
-    // Use the same visual position that the camera is following
-    const x = this.visualPlayerX;
-    const y = this.visualPlayerY;
+    // Use the actual player position for smooth movement
+    const { x, y } = player.position;
 
     // Player circle (reduced to 1/5 of original size)
     this.ctx.beginPath();
