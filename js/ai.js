@@ -322,15 +322,24 @@ class AIManager {
         }
         
         // Check if we're at a node with this activity
-        const currentNode = nodes.getNode(player.currentNode);
-        console.log(`Trying to do activity ${activityId} at node ${player.currentNode}`);
-        console.log(`Current node activities:`, currentNode?.activities);
-        
-        if (currentNode && currentNode.activities?.includes(activityId)) {
-            console.log(`Starting activity ${activityId}`);
-            player.startActivity(activityId);
-            return;
-        }
+const currentNode = nodes.getNode(player.currentNode);
+console.log(`Trying to do activity ${activityId} at node ${player.currentNode}`);
+console.log(`Current node activities:`, currentNode?.activities);
+
+if (currentNode && currentNode.activities?.includes(activityId)) {
+    // Double-check we're actually at this node position (prevents stale currentNode issues)
+    const nodePos = currentNode.position;
+    const dist = distance(player.position.x, player.position.y, nodePos.x, nodePos.y);
+    
+    if (dist <= 1.5) {  // Within reasonable distance
+        console.log(`Starting activity ${activityId}`);
+        player.startActivity(activityId);
+        return;
+    } else {
+        console.log(`CurrentNode says ${player.currentNode} but we're ${dist} pixels away, need to move there`);
+        player.currentNode = null;  // Clear stale node
+    }
+}
 
         // Find nearest reachable node with this activity
         const targetNode = this.findReachableNodeWithActivity(activityId);
