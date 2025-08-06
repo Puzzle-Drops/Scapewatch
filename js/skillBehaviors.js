@@ -267,25 +267,30 @@ class SkillBehaviors {
     // ==================== GOAL GENERATION ====================
     
     generateItemGoals(currentSkillLevels, existingGoalCount) {
-        const goals = [];
-        const activities = loadingManager.getData('activities');
-        const processedItems = new Set();
+    const goals = [];
+    const activities = loadingManager.getData('activities');
+    const processedItems = new Set();
+    
+    for (const [activityId, activityData] of Object.entries(activities)) {
+        if (!activityData.rewards) continue;
         
-        for (const [activityId, activityData] of Object.entries(activities)) {
-            if (!activityData.rewards) continue;
+        const currentLevel = currentSkillLevels[activityData.skill] || 1;
+        if (currentLevel < (activityData.requiredLevel || 1)) continue;
+        
+        for (const reward of activityData.rewards) {
+            // Check if we can actually get this specific reward
+            if (reward.requiredLevel && currentLevel < reward.requiredLevel) {
+                continue; // Skip rewards we don't have the level for
+            }
             
-            const currentLevel = currentSkillLevels[activityData.skill] || 1;
-            if (currentLevel < (activityData.requiredLevel || 1)) continue;
+            if (processedItems.has(reward.itemId) || this.shouldSkipBankingItem(reward.itemId)) {
+                continue;
+            }
             
-            for (const reward of activityData.rewards) {
-                if (processedItems.has(reward.itemId) || this.shouldSkipBankingItem(reward.itemId)) {
-                    continue;
-                }
-                
-                const targetQuantity = this.calculateItemGoalQuantity(
-                    reward.requiredLevel || activityData.requiredLevel || 1,
-                    this.getChance(reward, currentLevel)
-                );
+            const targetQuantity = this.calculateItemGoalQuantity(
+                reward.requiredLevel || activityData.requiredLevel || 1,
+                this.getChance(reward, currentLevel)
+            );
                 
                 if (targetQuantity > 0) {
                     goals.push({
