@@ -10,22 +10,22 @@ class Pathfinding {
             return null;
         }
 
-        // Round positions to pixels
-        const start = { x: Math.round(startX), y: Math.round(startY) };
-        const end = { x: Math.round(endX), y: Math.round(endY) };
+        // Round positions to pixels and center them (add 0.5)
+        const start = { x: Math.floor(startX) + 0.5, y: Math.floor(startY) + 0.5 };
+        const end = { x: Math.floor(endX) + 0.5, y: Math.floor(endY) + 0.5 };
 
-        // Check if start and end are walkable
-        if (!this.collision.isWalkable(start.x, start.y)) {
+        // Check if start and end are walkable (use floor since collision uses integer coords)
+        if (!this.collision.isWalkable(Math.floor(start.x), Math.floor(start.y))) {
             console.error('Start position is not walkable');
             return null;
         }
-        if (!this.collision.isWalkable(end.x, end.y)) {
+        if (!this.collision.isWalkable(Math.floor(end.x), Math.floor(end.y))) {
             console.error('End position is not walkable');
             return null;
         }
 
         // Check if we have line of sight - if so, just go straight
-        if (this.collision.isLineOfSight(start.x, start.y, end.x, end.y)) {
+        if (this.collision.isLineOfSight(Math.floor(start.x), Math.floor(start.y), Math.floor(end.x), Math.floor(end.y))) {
             return [start, end];
         }
 
@@ -52,10 +52,13 @@ class Pathfinding {
 
             closedSet.add(currentKey);
 
-            // Check all neighbors
-            const neighbors = this.collision.getWalkableNeighbors(current.x, current.y);
+            // Check all neighbors (getWalkableNeighbors returns integer coords, so center them)
+            const neighbors = this.collision.getWalkableNeighbors(Math.floor(current.x), Math.floor(current.y));
             
             for (const neighbor of neighbors) {
+                // Center the neighbor on the pixel
+                neighbor.x = neighbor.x + 0.5;
+                neighbor.y = neighbor.y + 0.5;
                 const neighborKey = `${neighbor.x},${neighbor.y}`;
                 
                 if (closedSet.has(neighborKey)) {
@@ -99,9 +102,15 @@ class Pathfinding {
             path.unshift(current);
             currentKey = `${current.x},${current.y}`;
         }
+        
+        // Ensure all waypoints are centered on pixels
+        const centeredPath = path.map(point => ({
+            x: Math.floor(point.x) + 0.5,
+            y: Math.floor(point.y) + 0.5
+        }));
 
         // Smooth the path
-        return this.smoothPath(path);
+        return this.smoothPath(centeredPath);
     }
 
     smoothPath(path) {
@@ -113,9 +122,14 @@ class Pathfinding {
         while (current < path.length - 1) {
             let farthest = current + 1;
             
-            // Find the farthest point we can see
+            // Find the farthest point we can see (use floor for collision checks)
             for (let i = current + 2; i < path.length; i++) {
-                if (this.collision.isLineOfSight(path[current].x, path[current].y, path[i].x, path[i].y)) {
+                if (this.collision.isLineOfSight(
+                    Math.floor(path[current].x), 
+                    Math.floor(path[current].y), 
+                    Math.floor(path[i].x), 
+                    Math.floor(path[i].y)
+                )) {
                     farthest = i;
                 } else {
                     break;
