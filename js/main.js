@@ -109,8 +109,8 @@ async function startGame() {
 function gameLoop(currentTime) {
     if (!gameState.running) return;
 
-    // Calculate actual time since last frame
-    const deltaTime = Math.min(currentTime - gameState.lastTime, 100); // Cap at 100ms to prevent huge jumps
+    // Calculate delta time since last frame (no cap needed since we're frame-independent)
+    const deltaTime = currentTime - gameState.lastTime;
     gameState.lastTime = currentTime;
     gameState.deltaTime = deltaTime;
     
@@ -122,19 +122,19 @@ function gameLoop(currentTime) {
         gameState.fpsTime = currentTime;
     }
     
-    // Update game systems with actual delta time
+    // Update game systems with delta time
     if (!gameState.paused) {
         ai.update(deltaTime);
         player.update(deltaTime);
     }
 
-    // Update UI only for frequently changing elements
+    // Update UI
     ui.update();
 
-    // Always render the map
+    // Render the map
     map.render();
     
-    // Continue loop
+    // Continue loop - runs at monitor refresh rate
     requestAnimationFrame(gameLoop);
 }
 
