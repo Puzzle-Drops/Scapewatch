@@ -1,17 +1,20 @@
 class Player {
-    constructor() {
-        this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
-        this.targetPosition = null;
-        this.currentNode = 'lumbridge_bank';
-        this.targetNode = null; // Store target node ID
-        this.currentActivity = null;
-        this.activityProgress = 0;
-        this.activityStartTime = 0;
-        this.movementSpeed = 3; // 3 tiles per second
-        this.path = [];
-        this.pathIndex = 0;
-        this.segmentProgress = 0; // Progress along current path segment (0-1)
-    }
+constructor() {
+    this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
+    this.targetPosition = null;
+    this.currentNode = null;
+    this.targetNode = null; // Store target node ID
+    this.currentActivity = null;
+    this.activityProgress = 0;
+    this.activityStartTime = 0;
+    this.movementSpeed = 3; // 3 tiles per second
+    this.path = [];
+    this.pathIndex = 0;
+    this.segmentProgress = 0; // Progress along current path segment (0-1)
+    
+    // Track alternating states for activities
+    this.alternatingStates = {};
+}
 
     update(deltaTime) {
         // Handle movement along path
