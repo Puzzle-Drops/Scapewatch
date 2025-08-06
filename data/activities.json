@@ -463,9 +463,9 @@
     },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
     "alternatingRewards": [
         {
@@ -510,9 +510,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -547,9 +547,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -582,9 +582,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -617,9 +617,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -652,9 +652,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -685,9 +685,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
@@ -717,9 +717,9 @@
         },
     "gemTable": [
         {"itemId": "uncut_sapphire", "chance": 0.00390625},
-        {"itemId": "uncut_emerald", "chance": 0.001953125},
-        {"itemId": "uncut_ruby", "chance": 0.0009765625},
-        {"itemId": "uncut_diamond", "chance": 0.000244140625}
+        {"itemId": "uncut_emerald", "chance": 0.001960784314},
+        {"itemId": "uncut_ruby", "chance": 0.000982318271},
+        {"itemId": "uncut_diamond", "chance": 0.000245816456}
     ],
         "rewards": [
             {
