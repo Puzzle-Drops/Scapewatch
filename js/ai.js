@@ -65,29 +65,42 @@ class AIManager {
         }
 
         // Only make decisions if cooldown has expired
-        if (this.decisionCooldown > 0) return;
+if (this.decisionCooldown > 0) return;
 
-        // Check if we need to make a decision
-        if (!player.isBusy() || inventory.isFull()) {
-            this.makeDecision();
-            this.decisionCooldown = 1000; // 1 second cooldown
-        }
+// Check if we need to make a decision
+// Only make decisions if not busy, OR if inventory is full and we're not already handling it
+if (!player.isBusy()) {
+    this.makeDecision();
+    this.decisionCooldown = 1000; // 1 second cooldown
+} else if (inventory.isFull() && !player.isMoving()) {
+    // Only make decision about full inventory if we're not already moving
+    this.makeDecision();
+    this.decisionCooldown = 1000; // 1 second cooldown
+}
     }
 
     makeDecision() {
-        console.log('AI making decision...', {
-            isBusy: player.isBusy(),
-            inventoryFull: inventory.isFull(),
-            currentGoal: this.currentGoal?.type,
-            currentNode: player.currentNode,
-            plannedActivity: this.plannedActivity
-        });
-        
-        // If inventory is full, go to bank
-        if (inventory.isFull()) {
-            this.goToBank();
-            return;
+    console.log('AI making decision...', {
+        isBusy: player.isBusy(),
+        inventoryFull: inventory.isFull(),
+        currentGoal: this.currentGoal?.type,
+        currentNode: player.currentNode,
+        plannedActivity: this.plannedActivity
+    });
+    
+    // If inventory is full, go to bank (but check if we're already going there)
+    if (inventory.isFull()) {
+        // Check if we're already moving to a bank
+        if (player.isMoving() && player.targetNode) {
+            const targetNode = nodes.getNode(player.targetNode);
+            if (targetNode && targetNode.type === 'bank') {
+                console.log('Already moving to bank, no need to re-path');
+                return; // Already heading to bank, don't re-issue command
+            }
         }
+        this.goToBank();
+        return;
+    }
 
         // Check current goal - if none or complete, select new one
         if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
@@ -496,12 +509,12 @@ class AIManager {
     }
 
     goToBank() {
-        // If already at bank, deposit all
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.type === 'bank') {
-            const deposited = bank.depositAll();
-            console.log(`Deposited ${deposited} items`);
-            ui.updateSkillsList(); // Update UI after banking
+    // If already at bank, deposit all
+    const currentNode = nodes.getNode(player.currentNode);
+    if (currentNode && currentNode.type === 'bank') {
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        ui.updateSkillsList(); // Update UI after banking
             
             // If we have a planned activity, withdraw required items for it
             if (this.plannedActivity && this.hasAccessToRequiredItems(this.plannedActivity)) {
@@ -562,8 +575,15 @@ class AIManager {
             return;
         }
 
-        // Move to bank
-        player.moveTo(nearestBank.id);
+// Check if we're already moving to this bank
+if (player.targetNode === nearestBank.id && player.isMoving()) {
+    console.log(`Already moving to ${nearestBank.name}, not re-pathing`);
+    return;
+}
+
+// Move to bank
+console.log(`Moving to ${nearestBank.name}`);
+player.moveTo(nearestBank.id);
     }
 
     doQuest(questId) {
