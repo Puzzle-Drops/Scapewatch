@@ -17,16 +17,20 @@ constructor() {
 }
 
     update(deltaTime) {
-        // Handle movement along path
-        if (this.path.length > 0 && this.pathIndex < this.path.length) {
-            this.updateSmoothMovement(deltaTime);
-        }
-
-        // Handle activity
-        if (this.currentActivity) {
-            this.updateActivity(deltaTime);
-        }
+    // Handle movement along path
+    if (this.path.length > 0 && this.pathIndex < this.path.length) {
+        this.updateSmoothMovement(deltaTime);
+    } else if (!this.currentNode && !this.isMoving()) {
+        // If we're not moving and don't have a current node, check if we're at one
+        // This handles teleports and any other way we might end up at a node
+        this.checkCurrentNode();
     }
+
+    // Handle activity
+    if (this.currentActivity) {
+        this.updateActivity(deltaTime);
+    }
+}
 
     updateSmoothMovement(deltaTime) {
         if (this.pathIndex >= this.path.length) {
@@ -276,6 +280,36 @@ constructor() {
             }
         }
     }
+
+checkCurrentNode() {
+    // Check if we're at any node (within 1 pixel tolerance)
+    const tolerance = 1;
+    const allNodes = nodes.getAllNodes();
+    
+    for (const [nodeId, node] of Object.entries(allNodes)) {
+        const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
+        if (dist <= tolerance) {
+            if (this.currentNode !== nodeId) {
+                console.log(`Detected arrival at node: ${nodeId}`);
+                this.currentNode = nodeId;
+                
+                // Reset AI decision cooldown
+                if (window.ai) {
+                    window.ai.decisionCooldown = 0;
+                }
+                
+                // Notify UI
+                if (window.ui) {
+                    window.ui.forceActivityUpdate();
+                }
+            }
+            return;
+        }
+    }
+    
+    // Not at any node
+    this.currentNode = null;
+}
 
     startActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
