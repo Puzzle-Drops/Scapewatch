@@ -38,6 +38,17 @@ body {
     overflow: hidden;
 }
 
+/* Scaled container - prevent smoothing during transform */
+.scaled-container {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -webkit-font-smoothing: none;
+    transform-origin: top left;
+}
+
+
 /* Loading Screen */
 .loading-screen {
     position: absolute;
@@ -103,9 +114,14 @@ body {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
     will-change: transform;
-    image-rendering: -webkit-optimize-contrast;
+    /* Comprehensive image-rendering for all browsers */
+    image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -o-crisp-edges;
+    image-rendering: crisp-edges;
     image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 /* UI Panel */
