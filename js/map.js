@@ -1,26 +1,31 @@
 class MapRenderer {
     constructor() {
-        this.canvas = document.getElementById('game-canvas');
-        this.ctx = this.canvas.getContext('2d');
-        
-        // Disable image smoothing for pixel-perfect rendering
-        this.ctx.imageSmoothingEnabled = false;
-        this.ctx.webkitImageSmoothingEnabled = false;
-        this.ctx.mozImageSmoothingEnabled = false;
-        this.ctx.msImageSmoothingEnabled = false;
-        
-        this.camera = {
-            x: 4395, // Start at player position
-            y: 1882, // Start at player position
-            zoom: 10 // increased by 1/4 from 5
-        };
-        this.worldMap = loadingManager.getImage('worldMap');
-        this.showNodeText = false; // Flag for showing node text
-        this.showCollisionDebug = false; // Flag for showing collision areas
-        this.mapCache = null; // Cached map canvas
-        this.initMapCache();
-    }
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx = this.canvas.getContext('2d');
+    
+    // Apply crisp rendering settings
+    this.applyNoSmoothing();
+    
+    this.camera = {
+        x: 4395, // Start at player position
+        y: 1882, // Start at player position
+        zoom: 10 // increased by 1/4 from 5
+    };
+    this.worldMap = loadingManager.getImage('worldMap');
+    this.showNodeText = false; // Flag for showing node text
+    this.showCollisionDebug = false; // Flag for showing collision areas
+    this.mapCache = null; // Cached map canvas
+    this.initMapCache();
+}
 
+// Add this new method right after the constructor
+applyNoSmoothing() {
+    this.ctx.imageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingQuality = 'low';
+}
     initMapCache() {
         if (!this.worldMap) return;
         
@@ -37,14 +42,17 @@ class MapRenderer {
     }
 
     render() {
-        // Initialize map cache if not done yet (in case image loaded after constructor)
-        if (!this.mapCache && this.worldMap) {
-            this.initMapCache();
-        }
-        
-        // Clear canvas
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    // Ensure no smoothing is applied (in case context was reset)
+    this.applyNoSmoothing();
+    
+    // Initialize map cache if not done yet (in case image loaded after constructor)
+    if (!this.mapCache && this.worldMap) {
+        this.initMapCache();
+    }
+    
+    // Clear canvas
+    this.ctx.fillStyle = '#000';
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Update camera to follow player
         this.updateCamera();
