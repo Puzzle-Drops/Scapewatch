@@ -117,14 +117,11 @@ applyNoSmoothing() {
         this.drawDebugInfo();
     }
 
-    updateCamera() {
-        // Smooth camera follow
-        const targetX = player.position.x;
-        const targetY = player.position.y;
-
-        this.camera.x = lerp(this.camera.x, targetX, 0.3);
-        this.camera.y = lerp(this.camera.y, targetY, 0.3);
-    }
+updateCamera() {
+    // Instant camera follow - no smoothing
+    this.camera.x = Math.round(player.position.x);
+    this.camera.y = Math.round(player.position.y);
+}
 
     drawNodes() {
         const allNodes = nodes.getAllNodes();
