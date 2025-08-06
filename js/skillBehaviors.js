@@ -339,41 +339,72 @@ class SkillBehaviors {
     }
 
     miningRewards(activityData, skillLevel) {
-        const rewards = [];
+    const rewards = [];
 
-        // First, roll for gems if gem table exists
-        if (activityData.gemTable) {
-            for (const gem of activityData.gemTable) {
-                if (Math.random() <= gem.chance) {
-                    rewards.push({
-                        itemId: gem.itemId,
-                        quantity: 1
-                    });
-                    // In OSRS, you can get multiple gems in one action
-                    // but for simplicity, we'll return after first gem
-                    return rewards;
-                }
-            }
+    // Check if this is an alternating activity
+    if (activityData.alternatingRewards) {
+        // Get or initialize the state for this activity
+        const stateKey = activityData.id;
+        if (window.player.alternatingStates[stateKey] === undefined) {
+            window.player.alternatingStates[stateKey] = 0;
         }
-
-        // If no gem, roll for ore
-        if (activityData.rewards) {
-            for (const reward of activityData.rewards) {
-                const chance = reward.chanceScaling ? 
-                    this.getScaledChance(reward, skillLevel) : 
-                    (reward.chance || 1.0);
-                
-                if (Math.random() <= chance) {
-                    rewards.push({
-                        itemId: reward.itemId,
-                        quantity: reward.quantity
-                    });
-                }
-            }
+        
+        // Get current index in the alternating sequence
+        const currentIndex = window.player.alternatingStates[stateKey];
+        const alternatingReward = activityData.alternatingRewards[currentIndex];
+        
+        // Roll for success using the reward's chance scaling
+        const chance = alternatingReward.chanceScaling ? 
+            this.getScaledChance(alternatingReward, skillLevel) : 
+            (alternatingReward.chance || 1.0);
+        
+        if (Math.random() <= chance) {
+            rewards.push({
+                itemId: alternatingReward.itemId,
+                quantity: alternatingReward.quantity || 1
+            });
         }
-
+        
+        // Move to next item in sequence
+        window.player.alternatingStates[stateKey] = 
+            (currentIndex + 1) % activityData.alternatingRewards.length;
+        
         return rewards;
     }
+
+    // First, roll for gems if gem table exists
+    if (activityData.gemTable) {
+        for (const gem of activityData.gemTable) {
+            if (Math.random() <= gem.chance) {
+                rewards.push({
+                    itemId: gem.itemId,
+                    quantity: 1
+                });
+                // In OSRS, you can get multiple gems in one action
+                // but for simplicity, we'll return after first gem
+                return rewards;
+            }
+        }
+    }
+
+    // If no gem, roll for ore
+    if (activityData.rewards) {
+        for (const reward of activityData.rewards) {
+            const chance = reward.chanceScaling ? 
+                this.getScaledChance(reward, skillLevel) : 
+                (reward.chance || 1.0);
+            
+            if (Math.random() <= chance) {
+                rewards.push({
+                    itemId: reward.itemId,
+                    quantity: reward.quantity
+                });
+            }
+        }
+    }
+
+    return rewards;
+}
 
     miningShouldGrantXP(earnedRewards, activityData) {
         // Mining only grants XP if you get ore (not gems)
