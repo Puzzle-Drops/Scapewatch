@@ -282,9 +282,13 @@ constructor() {
     }
 
 checkCurrentNode() {
+    // Store the previous node to detect changes
+    const previousNode = this.currentNode;
+    
     // Check if we're at any node (within 1 pixel tolerance)
     const tolerance = 1;
     const allNodes = nodes.getAllNodes();
+    let foundNode = false;
     
     for (const [nodeId, node] of Object.entries(allNodes)) {
         const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
@@ -292,6 +296,7 @@ checkCurrentNode() {
             if (this.currentNode !== nodeId) {
                 console.log(`Detected arrival at node: ${nodeId}`);
                 this.currentNode = nodeId;
+                foundNode = true;
                 
                 // Reset AI decision cooldown
                 if (window.ai) {
@@ -302,13 +307,23 @@ checkCurrentNode() {
                 if (window.ui) {
                     window.ui.forceActivityUpdate();
                 }
+            } else {
+                foundNode = true;
             }
-            return;
+            break;
         }
     }
     
     // Not at any node
-    this.currentNode = null;
+    if (!foundNode) {
+        this.currentNode = null;
+    }
+    
+    // If node changed and we have an activity, stop it
+    if (previousNode !== this.currentNode && this.currentActivity) {
+        console.log(`Node changed from ${previousNode} to ${this.currentNode}, stopping activity`);
+        this.stopActivity();
+    }
 }
 
     startActivity(activityId) {
