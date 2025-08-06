@@ -165,7 +165,7 @@ class SkillBehaviors {
     // Generate skill training goals
     generateSkillGoals(currentSkillLevels, existingGoalCount) {
         const goals = [];
-        const trainableSkills = ['woodcutting', 'mining', 'fishing', 'attack', 'cooking', 'smithing'];
+        const trainableSkills = ['woodcutting', 'mining', 'fishing', 'attack'];
         
         for (const skill of trainableSkills) {
             const currentLevel = currentSkillLevels[skill] || 1;
