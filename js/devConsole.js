@@ -715,8 +715,8 @@ class DevConsole {
             this.cmdActionSpeed(['0.1']);
             
             this.log('Test mode ENABLED', 'success');
-            this.log('- Player speed: 20 tiles/sec', 'info');
-            this.log('- Actions: 10x faster', 'info');
+            this.log('- Player speed: 30 tiles/sec', 'info');
+            this.log('- Actions: 100x faster', 'info');
         } else {
             // Reset to defaults
             this.cmdResetSpeeds();
