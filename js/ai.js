@@ -13,21 +13,27 @@ class AIManager {
 
         this.addGoal({
             type: 'skill_level',
-            skill: 'woodcutting',
+            skill: 'mining',
             targetLevel: 5,
             priority: 1
         });
         this.addGoal({
             type: 'skill_level',
-            skill: 'fishing',
+            skill: 'woodcutting',
             targetLevel: 5,
             priority: 2
         });
         this.addGoal({
             type: 'skill_level',
-            skill: 'mining',
+            skill: 'fishing',
             targetLevel: 5,
             priority: 3
+        });
+        this.addGoal({
+            type: 'skill_level',
+            skill: 'attack',
+            targetLevel: 5,
+            priority: 4
         });
 
     }
