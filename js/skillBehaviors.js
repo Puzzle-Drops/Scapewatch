@@ -342,35 +342,35 @@ class SkillBehaviors {
     const rewards = [];
 
     // Check if this is an alternating activity
-    if (activityData.alternatingRewards) {
-        // Get or initialize the state for this activity
-        const stateKey = activityData.id;
-        if (window.player.alternatingStates[stateKey] === undefined) {
-            window.player.alternatingStates[stateKey] = 0;
-        }
+if (activityData.alternatingRewards) {
+    // Get or initialize the state for this activity
+    const stateKey = activityData.id;
+    if (window.player.alternatingStates[stateKey] === undefined) {
+        window.player.alternatingStates[stateKey] = 0;
+    }
+    
+    // Get current index in the alternating sequence
+    const currentIndex = window.player.alternatingStates[stateKey];
+    const alternatingReward = activityData.alternatingRewards[currentIndex];
+    
+    // Roll for success using the reward's chance scaling
+    const chance = alternatingReward.chanceScaling ? 
+        this.getScaledChance(alternatingReward, skillLevel) : 
+        (alternatingReward.chance || 1.0);
+    
+    if (Math.random() <= chance) {
+        rewards.push({
+            itemId: alternatingReward.itemId,
+            quantity: alternatingReward.quantity || 1
+        });
         
-        // Get current index in the alternating sequence
-        const currentIndex = window.player.alternatingStates[stateKey];
-        const alternatingReward = activityData.alternatingRewards[currentIndex];
-        
-        // Roll for success using the reward's chance scaling
-        const chance = alternatingReward.chanceScaling ? 
-            this.getScaledChance(alternatingReward, skillLevel) : 
-            (alternatingReward.chance || 1.0);
-        
-        if (Math.random() <= chance) {
-            rewards.push({
-                itemId: alternatingReward.itemId,
-                quantity: alternatingReward.quantity || 1
-            });
-        }
-        
-        // Move to next item in sequence
+        // ONLY move to next item if we successfully mined
         window.player.alternatingStates[stateKey] = 
             (currentIndex + 1) % activityData.alternatingRewards.length;
-        
-        return rewards;
     }
+    
+    return rewards;
+}
 
     // First, roll for gems if gem table exists
     if (activityData.gemTable) {
@@ -380,8 +380,7 @@ class SkillBehaviors {
                     itemId: gem.itemId,
                     quantity: 1
                 });
-                // In OSRS, you can get multiple gems in one action
-                // but for simplicity, we'll return after first gem
+                // end rewards if received a gem, you only get gem, no ore or exp
                 return rewards;
             }
         }
