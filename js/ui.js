@@ -9,6 +9,8 @@ class UIManager {
         this.initializeUI();
     }
 
+    // ==================== INITIALIZATION ====================
+
     initializeUI() {
         // Initialize item order from items.json
         this.initializeItemOrder();
@@ -31,6 +33,8 @@ class UIManager {
             this.itemOrderMap[itemId] = index;
         });
     }
+
+    // ==================== UPDATE CYCLE ====================
 
     // Called from game loop - only updates if data changed
     update() {
@@ -63,6 +67,8 @@ class UIManager {
     forceGoalUpdate() {
         this.updateGoal();
     }
+
+    // ==================== STATE CHANGE DETECTION ====================
 
     hasActivityChanged() {
         const currentState = {
@@ -107,47 +113,60 @@ class UIManager {
         return changed;
     }
 
+    // ==================== ACTIVITY & GOAL DISPLAY ====================
+
     updateActivity() {
         const activityName = document.getElementById('activity-name');
         const activityStatus = document.getElementById('activity-status');
 
         if (player.currentActivity) {
-            const activityData = loadingManager.getData('activities')[player.currentActivity];
-            const currentNode = nodes.getNode(player.currentNode);
-            
-            // Format activity name with location
-            let displayName = activityData.name;
-            if (currentNode) {
-                displayName = `${activityData.name} at ${currentNode.name}`;
-            }
-            activityName.textContent = displayName;
-
-            // Get skill-specific behavior and calculate XP rate
-            const behavior = skillBehaviors.getBehavior(activityData.skill);
-            const xpPerHour = Math.floor(
-                behavior.getEffectiveXpRate(activityData, skills.getLevel(activityData.skill))
-            );
-            
-            activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
+            this.displayCurrentActivity(activityName, activityStatus);
         } else if (player.isMoving()) {
-            const targetNode = nodes.getNode(player.targetNode);
-            const targetName = targetNode ? targetNode.name : 'Unknown';
-            activityName.textContent = 'Moving';
-            activityStatus.textContent = `To: ${targetName}`;
+            this.displayMovement(activityName, activityStatus);
         } else {
-            // Player is idle
-            const currentNode = nodes.getNode(player.currentNode);
-            if (currentNode) {
-                activityName.textContent = `Idle at ${currentNode.name}`;
-                if (window.ai && window.ai.currentGoal) {
-                    activityStatus.textContent = 'Planning next action...';
-                } else {
-                    activityStatus.textContent = 'Waiting for AI decision...';
-                }
+            this.displayIdle(activityName, activityStatus);
+        }
+    }
+
+    displayCurrentActivity(activityName, activityStatus) {
+        const activityData = loadingManager.getData('activities')[player.currentActivity];
+        const currentNode = nodes.getNode(player.currentNode);
+        
+        // Format activity name with location
+        let displayName = activityData.name;
+        if (currentNode) {
+            displayName = `${activityData.name} at ${currentNode.name}`;
+        }
+        activityName.textContent = displayName;
+
+        // Get skill-specific behavior and calculate XP rate
+        const behavior = skillBehaviors.getBehavior(activityData.skill);
+        const xpPerHour = Math.floor(
+            behavior.getEffectiveXpRate(activityData, skills.getLevel(activityData.skill))
+        );
+        
+        activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
+    }
+
+    displayMovement(activityName, activityStatus) {
+        const targetNode = nodes.getNode(player.targetNode);
+        const targetName = targetNode ? targetNode.name : 'Unknown';
+        activityName.textContent = 'Moving';
+        activityStatus.textContent = `To: ${targetName}`;
+    }
+
+    displayIdle(activityName, activityStatus) {
+        const currentNode = nodes.getNode(player.currentNode);
+        if (currentNode) {
+            activityName.textContent = `Idle at ${currentNode.name}`;
+            if (window.ai && window.ai.currentGoal) {
+                activityStatus.textContent = 'Planning next action...';
             } else {
-                activityName.textContent = 'Idle';
                 activityStatus.textContent = 'Waiting for AI decision...';
             }
+        } else {
+            activityName.textContent = 'Idle';
+            activityStatus.textContent = 'Waiting for AI decision...';
         }
     }
 
@@ -156,28 +175,7 @@ class UIManager {
         const goalProgress = document.getElementById('goal-progress');
         
         if (!window.ai || !window.ai.currentGoal) {
-            // Check if AI is selecting a new goal
-            if (window.ai && window.ai.goals.length > 0) {
-                // Find next incomplete goal
-                let nextGoal = null;
-                for (const goal of window.ai.goals) {
-                    if (!window.ai.isGoalComplete(goal)) {
-                        nextGoal = goal;
-                        break;
-                    }
-                }
-                
-                if (nextGoal) {
-                    goalName.textContent = 'Selecting next goal...';
-                    goalProgress.textContent = 'Planning...';
-                } else {
-                    goalName.textContent = 'All goals complete!';
-                    goalProgress.textContent = 'Generating new goals...';
-                }
-            } else {
-                goalName.textContent = 'No active goal';
-                goalProgress.textContent = '-';
-            }
+            this.displayNoGoal(goalName, goalProgress);
             return;
         }
 
@@ -185,51 +183,11 @@ class UIManager {
         
         switch (goal.type) {
             case 'skill_level':
-                const currentLevel = skills.getLevel(goal.skill);
-                const skillData = loadingManager.getData('skills')[goal.skill];
-                
-                // Show starting level if different from current
-                if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
-                    goalName.textContent = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
-                } else {
-                    goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
-                }
-                
-                // Calculate XP progress from starting point to target
-                const currentXp = skills.getXp(goal.skill);
-                const targetXp = getXpForLevel(goal.targetLevel);
-                
-                let xpProgress;
-                if (goal.startingXp !== undefined) {
-                    // Calculate progress from starting XP to target XP
-                    const xpGained = currentXp - goal.startingXp;
-                    const xpNeeded = targetXp - goal.startingXp;
-                    xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
-                } else {
-                    // Fallback to old calculation
-                    xpProgress = Math.floor((currentXp / targetXp) * 100);
-                }
-                
-                goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
+                this.displaySkillGoal(goal, goalName, goalProgress);
                 break;
                 
             case 'bank_items':
-                const currentCount = bank.getItemCount(goal.itemId);
-                const itemData = loadingManager.getData('items')[goal.itemId];
-                goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
-                
-                // Calculate progress from starting count to target
-                let percentage;
-                if (goal.startingCount !== undefined) {
-                    const itemsGained = currentCount - goal.startingCount;
-                    const itemsNeeded = goal.targetCount - goal.startingCount;
-                    percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
-                } else {
-                    // Fallback to old calculation
-                    percentage = Math.floor((currentCount / goal.targetCount) * 100);
-                }
-                
-                goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
+                this.displayBankGoal(goal, goalName, goalProgress);
                 break;
                 
             case 'complete_quest':
@@ -242,6 +200,81 @@ class UIManager {
                 goalProgress.textContent = '-';
         }
     }
+
+    displayNoGoal(goalName, goalProgress) {
+        // Check if AI is selecting a new goal
+        if (window.ai && window.ai.goals.length > 0) {
+            // Find next incomplete goal
+            let nextGoal = null;
+            for (const goal of window.ai.goals) {
+                if (!window.ai.isGoalComplete(goal)) {
+                    nextGoal = goal;
+                    break;
+                }
+            }
+            
+            if (nextGoal) {
+                goalName.textContent = 'Selecting next goal...';
+                goalProgress.textContent = 'Planning...';
+            } else {
+                goalName.textContent = 'All goals complete!';
+                goalProgress.textContent = 'Generating new goals...';
+            }
+        } else {
+            goalName.textContent = 'No active goal';
+            goalProgress.textContent = '-';
+        }
+    }
+
+    displaySkillGoal(goal, goalName, goalProgress) {
+        const currentLevel = skills.getLevel(goal.skill);
+        const skillData = loadingManager.getData('skills')[goal.skill];
+        
+        // Show starting level if different from current
+        if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
+            goalName.textContent = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
+        } else {
+            goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+        }
+        
+        // Calculate XP progress from starting point to target
+        const currentXp = skills.getXp(goal.skill);
+        const targetXp = getXpForLevel(goal.targetLevel);
+        
+        let xpProgress;
+        if (goal.startingXp !== undefined) {
+            // Calculate progress from starting XP to target XP
+            const xpGained = currentXp - goal.startingXp;
+            const xpNeeded = targetXp - goal.startingXp;
+            xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
+        } else {
+            // Fallback to old calculation
+            xpProgress = Math.floor((currentXp / targetXp) * 100);
+        }
+        
+        goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
+    }
+
+    displayBankGoal(goal, goalName, goalProgress) {
+        const currentCount = bank.getItemCount(goal.itemId);
+        const itemData = loadingManager.getData('items')[goal.itemId];
+        goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
+        
+        // Calculate progress from starting count to target
+        let percentage;
+        if (goal.startingCount !== undefined) {
+            const itemsGained = currentCount - goal.startingCount;
+            const itemsNeeded = goal.targetCount - goal.startingCount;
+            percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
+        } else {
+            // Fallback to old calculation
+            percentage = Math.floor((currentCount / goal.targetCount) * 100);
+        }
+        
+        goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
+    }
+
+    // ==================== SKILLS DISPLAY ====================
 
     updateSkillsList() {
         const skillsList = document.getElementById('skills-list');
@@ -265,162 +298,173 @@ class UIManager {
                 const skillId = skillLayout[col][row];
                 if (!skillId || !allSkills[skillId]) continue;
 
-                const skill = allSkills[skillId];
-                const skillDiv = document.createElement('div');
-                skillDiv.className = 'skill-item';
-                
-                // Create content container
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'skill-content';
-                
-                // Use preloaded skill icon
-                const icon = document.createElement('img');
-                icon.className = 'skill-icon';
-                const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
-                if (preloadedIcon) {
-                    icon.src = preloadedIcon.src;
-                } else {
-                    // Fallback text if icon not loaded
-                    const textDiv = document.createElement('div');
-                    textDiv.style.fontSize = '12px';
-                    textDiv.style.fontWeight = 'bold';
-                    textDiv.style.width = '24px';
-                    textDiv.textContent = skill.name.substring(0, 3);
-                    contentDiv.appendChild(textDiv);
-                }
-                
-                // Create level display
-                const levelDiv = document.createElement('div');
-                levelDiv.className = 'skill-level';
-                levelDiv.textContent = skill.level;
-                
-                // Add icon and level to content
-                if (preloadedIcon) {
-                    contentDiv.appendChild(icon);
-                }
-                contentDiv.appendChild(levelDiv);
-                
-                // Create progress bar
-                const progressBar = document.createElement('div');
-                progressBar.className = 'skill-progress-bar';
-                
-                const progressFill = document.createElement('div');
-                progressFill.className = 'skill-progress-fill';
-                
-                const xpPercent = skill.level < 99 ? 
-                    ((skill.xp - getXpForLevel(skill.level)) / 
-                    (getXpForLevel(skill.level + 1) - getXpForLevel(skill.level))) * 100 : 100;
-                
-                progressFill.style.width = `${xpPercent}%`;
-                progressBar.appendChild(progressFill);
-                
-                // Create tooltip
-                const tooltip = document.createElement('div');
-                tooltip.className = 'skill-tooltip';
-                
-                // Build tooltip content
-                let tooltipContent = `${skill.name}<br>Level ${skill.level}<br>`;
-                
-                if (skill.level < 99) {
-                    const totalXp = Math.floor(skill.xp);
-                    const nextLevelXp = getXpForLevel(skill.level + 1);
-                    const xpToNext = nextLevelXp - totalXp;
-                    
-                    tooltipContent += `${formatNumber(totalXp)}/${formatNumber(nextLevelXp)} exp<br>`;
-                    tooltipContent += `${formatNumber(xpToNext)} exp to level ${skill.level + 1}`;
-                } else {
-                    tooltipContent += `${formatNumber(Math.floor(skill.xp))} exp`;
-                }
-                
-                tooltip.innerHTML = tooltipContent;
-                
-                // Assemble skill item
-                skillDiv.appendChild(contentDiv);
-                skillDiv.appendChild(progressBar);
-                skillDiv.appendChild(tooltip);
-                
+                const skillDiv = this.createSkillElement(skillId, allSkills[skillId]);
                 skillsList.appendChild(skillDiv);
             }
         }
 
         // Add total level and combat level
+        const levelDiv = this.createLevelTotals(allSkills);
+        skillsList.appendChild(levelDiv);
+    }
+
+    createSkillElement(skillId, skill) {
+        const skillDiv = document.createElement('div');
+        skillDiv.className = 'skill-item';
+        
+        // Create content container
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'skill-content';
+        
+        // Add skill icon
+        const iconElement = this.createSkillIcon(skillId, skill);
+        if (iconElement) {
+            contentDiv.appendChild(iconElement);
+        }
+        
+        // Create level display
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'skill-level';
+        levelDiv.textContent = skill.level;
+        contentDiv.appendChild(levelDiv);
+        
+        // Create progress bar
+        const progressBar = this.createSkillProgressBar(skill);
+        
+        // Create tooltip
+        const tooltip = this.createSkillTooltip(skill);
+        
+        // Assemble skill item
+        skillDiv.appendChild(contentDiv);
+        skillDiv.appendChild(progressBar);
+        skillDiv.appendChild(tooltip);
+        
+        return skillDiv;
+    }
+
+    createSkillIcon(skillId, skill) {
+        const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
+        if (preloadedIcon) {
+            const icon = document.createElement('img');
+            icon.className = 'skill-icon';
+            icon.src = preloadedIcon.src;
+            return icon;
+        } else {
+            // Fallback text if icon not loaded
+            const textDiv = document.createElement('div');
+            textDiv.style.fontSize = '12px';
+            textDiv.style.fontWeight = 'bold';
+            textDiv.style.width = '24px';
+            textDiv.textContent = skill.name.substring(0, 3);
+            return textDiv;
+        }
+    }
+
+    createSkillProgressBar(skill) {
+        const progressBar = document.createElement('div');
+        progressBar.className = 'skill-progress-bar';
+        
+        const progressFill = document.createElement('div');
+        progressFill.className = 'skill-progress-fill';
+        
+        const xpPercent = skill.level < 99 ? 
+            ((skill.xp - getXpForLevel(skill.level)) / 
+            (getXpForLevel(skill.level + 1) - getXpForLevel(skill.level))) * 100 : 100;
+        
+        progressFill.style.width = `${xpPercent}%`;
+        progressBar.appendChild(progressFill);
+        
+        return progressBar;
+    }
+
+    createSkillTooltip(skill) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'skill-tooltip';
+        
+        // Build tooltip content
+        let tooltipContent = `${skill.name}<br>Level ${skill.level}<br>`;
+        
+        if (skill.level < 99) {
+            const totalXp = Math.floor(skill.xp);
+            const nextLevelXp = getXpForLevel(skill.level + 1);
+            const xpToNext = nextLevelXp - totalXp;
+            
+            tooltipContent += `${formatNumber(totalXp)}/${formatNumber(nextLevelXp)} exp<br>`;
+            tooltipContent += `${formatNumber(xpToNext)} exp to level ${skill.level + 1}`;
+        } else {
+            tooltipContent += `${formatNumber(Math.floor(skill.xp))} exp`;
+        }
+        
+        tooltip.innerHTML = tooltipContent;
+        return tooltip;
+    }
+
+    createLevelTotals(allSkills) {
         const levelDiv = document.createElement('div');
         levelDiv.className = 'level-total';
         
         // Total level
-        const totalLevelItem = document.createElement('div');
-        totalLevelItem.className = 'level-item';
-        totalLevelItem.style.position = 'relative';
-        
-        const totalIcon = document.createElement('img');
-        totalIcon.className = 'level-icon';
-        const skillsIcon = loadingManager.getImage('skill_skills');
-        if (skillsIcon) {
-            totalIcon.src = skillsIcon.src;
-        }
-        
-        const totalText = document.createElement('div');
-        totalText.style.fontSize = '20px';
-        totalText.style.fontWeight = 'bold';
-        totalText.style.color = '#f39c12';
-        totalText.textContent = skills.getTotalLevel();
-        
-        // Create tooltip for total level
-        const totalTooltip = document.createElement('div');
-        totalTooltip.className = 'skill-tooltip';
-        totalTooltip.style.textAlign = 'left';
-        
-        // Calculate total exp
-        let totalExp = 0;
-        for (const skill of Object.values(allSkills)) {
-            totalExp += Math.floor(skill.xp);
-        }
-        
-        totalTooltip.innerHTML = `Total Level: ${skills.getTotalLevel()}<br>Total Exp: ${formatNumber(totalExp)}`;
-        
-        if (skillsIcon) {
-            totalLevelItem.appendChild(totalIcon);
-        }
-        totalLevelItem.appendChild(totalText);
-        totalLevelItem.appendChild(totalTooltip);
+        const totalLevelItem = this.createLevelItem(
+            'skill_skills',
+            skills.getTotalLevel(),
+            '#f39c12',
+            `Total Level: ${skills.getTotalLevel()}<br>Total Exp: ${formatNumber(this.calculateTotalExp(allSkills))}`
+        );
         
         // Combat level
-        const combatLevelItem = document.createElement('div');
-        combatLevelItem.className = 'level-item';
-        combatLevelItem.style.position = 'relative';
-        
-        const combatIcon = document.createElement('img');
-        combatIcon.className = 'level-icon';
-        const combatIconImg = loadingManager.getImage('skill_combat');
-        if (combatIconImg) {
-            combatIcon.src = combatIconImg.src;
-        }
-        
-        const combatText = document.createElement('div');
-        combatText.style.fontSize = '20px';
-        combatText.style.fontWeight = 'bold';
-        combatText.style.color = '#e74c3c';
-        combatText.textContent = skills.getCombatLevel();
-        
-        // Create tooltip for combat level
-        const combatTooltip = document.createElement('div');
-        combatTooltip.className = 'skill-tooltip';
-        combatTooltip.style.textAlign = 'left';
-        combatTooltip.innerHTML = `Combat Level: ${skills.getCombatLevel()}`;
-        
-        if (combatIconImg) {
-            combatLevelItem.appendChild(combatIcon);
-        }
-        combatLevelItem.appendChild(combatText);
-        combatLevelItem.appendChild(combatTooltip);
+        const combatLevelItem = this.createLevelItem(
+            'skill_combat',
+            skills.getCombatLevel(),
+            '#e74c3c',
+            `Combat Level: ${skills.getCombatLevel()}`
+        );
         
         levelDiv.appendChild(totalLevelItem);
         levelDiv.appendChild(combatLevelItem);
         
-        skillsList.appendChild(levelDiv);
+        return levelDiv;
     }
 
-    // Helper function to get coin image based on quantity
+    createLevelItem(iconKey, value, color, tooltipText) {
+        const levelItem = document.createElement('div');
+        levelItem.className = 'level-item';
+        levelItem.style.position = 'relative';
+        
+        const icon = loadingManager.getImage(iconKey);
+        if (icon) {
+            const iconImg = document.createElement('img');
+            iconImg.className = 'level-icon';
+            iconImg.src = icon.src;
+            levelItem.appendChild(iconImg);
+        }
+        
+        const text = document.createElement('div');
+        text.style.fontSize = '20px';
+        text.style.fontWeight = 'bold';
+        text.style.color = color;
+        text.textContent = value;
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'skill-tooltip';
+        tooltip.style.textAlign = 'left';
+        tooltip.innerHTML = tooltipText;
+        
+        levelItem.appendChild(text);
+        levelItem.appendChild(tooltip);
+        
+        return levelItem;
+    }
+
+    calculateTotalExp(allSkills) {
+        let totalExp = 0;
+        for (const skill of Object.values(allSkills)) {
+            totalExp += Math.floor(skill.xp);
+        }
+        return totalExp;
+    }
+
+    // ==================== ITEM DISPLAY HELPERS ====================
+
     getCoinImage(quantity) {
         if (quantity >= 10000) return 'coins_10000';
         if (quantity >= 1000) return 'coins_1000';
@@ -434,7 +478,6 @@ class UIManager {
         return 'coins_1';
     }
 
-    // Helper function to format coin count
     formatCoinCount(quantity) {
         if (quantity >= 10000000) {
             const millions = Math.floor(quantity / 1000000);
@@ -442,6 +485,75 @@ class UIManager {
         }
         return { text: formatNumber(quantity), isGreen: false };
     }
+
+    createItemSlot(itemId, quantity, slotClass) {
+        const slotDiv = document.createElement('div');
+        slotDiv.className = slotClass;
+        
+        const itemData = loadingManager.getData('items')[itemId];
+        
+        // Create and setup image
+        const img = this.createItemImage(itemId, quantity);
+        
+        // Handle missing images
+        img.onerror = function() {
+            this.style.display = 'none';
+            const textDiv = document.createElement('div');
+            textDiv.style.fontSize = '12px';
+            textDiv.textContent = itemData.name.substring(0, 3);
+            slotDiv.appendChild(textDiv);
+        };
+        
+        slotDiv.appendChild(img);
+        
+        // Add quantity display if needed
+        if (quantity > 1 || slotClass === 'bank-slot') {
+            const countDiv = this.createItemCount(itemId, quantity);
+            slotDiv.appendChild(countDiv);
+        }
+        
+        slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
+        
+        return slotDiv;
+    }
+
+    createItemImage(itemId, quantity) {
+        const img = document.createElement('img');
+        
+        // Special handling for coins
+        if (itemId === 'coins') {
+            const coinImage = this.getCoinImage(quantity);
+            img.src = `assets/items/${coinImage}.png`;
+        } else {
+            img.src = `assets/items/${itemId}.png`;
+        }
+        
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        
+        return img;
+    }
+
+    createItemCount(itemId, quantity) {
+        const countDiv = document.createElement('div');
+        countDiv.className = 'item-count';
+        
+        // Special formatting for coins
+        if (itemId === 'coins') {
+            const formatted = this.formatCoinCount(quantity);
+            countDiv.textContent = formatted.text;
+            if (formatted.isGreen) {
+                countDiv.style.color = '#2ecc71';
+            }
+        } else {
+            countDiv.textContent = formatNumber(quantity);
+        }
+        
+        return countDiv;
+    }
+
+    // ==================== INVENTORY & BANK DISPLAY ====================
 
     updateInventory() {
         const inventoryGrid = document.getElementById('inventory-grid');
@@ -457,60 +569,15 @@ class UIManager {
 
         for (let i = 0; i < inventory.maxSlots; i++) {
             const slot = inventory.slots[i];
-            const slotDiv = document.createElement('div');
-            slotDiv.className = 'inventory-slot';
-
             if (slot) {
-                const itemData = loadingManager.getData('items')[slot.itemId];
-                
-                // Create image element
-                const img = document.createElement('img');
-                
-                // Special handling for coins
-                if (slot.itemId === 'coins') {
-                    const coinImage = this.getCoinImage(slot.quantity);
-                    img.src = `assets/items/${coinImage}.png`;
-                } else {
-                    img.src = `assets/items/${slot.itemId}.png`;
-                }
-                
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'contain';
-                
-                // Handle missing images
-                img.onerror = function() {
-                    this.style.display = 'none';
-                    const textDiv = document.createElement('div');
-                    textDiv.style.fontSize = '12px';
-                    textDiv.textContent = itemData.name.substring(0, 3);
-                    slotDiv.appendChild(textDiv);
-                };
-                
-                slotDiv.appendChild(img);
-                
-                if (slot.quantity > 1) {
-                    const countDiv = document.createElement('div');
-                    countDiv.className = 'item-count';
-                    
-                    // Special formatting for coins
-                    if (slot.itemId === 'coins') {
-                        const formatted = this.formatCoinCount(slot.quantity);
-                        countDiv.textContent = formatted.text;
-                        if (formatted.isGreen) {
-                            countDiv.style.color = '#2ecc71';
-                        }
-                    } else {
-                        countDiv.textContent = formatNumber(slot.quantity);
-                    }
-                    
-                    slotDiv.appendChild(countDiv);
-                }
-                
-                slotDiv.title = `${itemData.name} x${formatNumber(slot.quantity)}`;
+                const slotDiv = this.createItemSlot(slot.itemId, slot.quantity, 'inventory-slot');
+                inventoryGrid.appendChild(slotDiv);
+            } else {
+                // Empty slot
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'inventory-slot';
+                inventoryGrid.appendChild(emptySlot);
             }
-
-            inventoryGrid.appendChild(slotDiv);
         }
     }
 
@@ -536,54 +603,7 @@ class UIManager {
         });
 
         for (const [itemId, quantity] of sortedItems) {
-            const itemData = loadingManager.getData('items')[itemId];
-            const slotDiv = document.createElement('div');
-            slotDiv.className = 'bank-slot';
-            
-            // Create image element
-            const img = document.createElement('img');
-            
-            // Special handling for coins
-            if (itemId === 'coins') {
-                const coinImage = this.getCoinImage(quantity);
-                img.src = `assets/items/${coinImage}.png`;
-            } else {
-                img.src = `assets/items/${itemId}.png`;
-            }
-            
-            img.style.width = '100%';
-            img.style.height = '100%';
-            img.style.objectFit = 'contain';
-            
-            // Handle missing images
-            img.onerror = function() {
-                this.style.display = 'none';
-                const textDiv = document.createElement('div');
-                textDiv.style.fontSize = '12px';
-                textDiv.textContent = itemData.name.substring(0, 3);
-                slotDiv.appendChild(textDiv);
-            };
-            
-            slotDiv.appendChild(img);
-            
-            const countDiv = document.createElement('div');
-            countDiv.className = 'item-count';
-            
-            // Special formatting for coins
-            if (itemId === 'coins') {
-                const formatted = this.formatCoinCount(quantity);
-                countDiv.textContent = formatted.text;
-                if (formatted.isGreen) {
-                    countDiv.style.color = '#2ecc71';
-                }
-            } else {
-                countDiv.textContent = formatNumber(quantity);
-            }
-            
-            slotDiv.appendChild(countDiv);
-            
-            slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
-
+            const slotDiv = this.createItemSlot(itemId, quantity, 'bank-slot');
             bankGrid.appendChild(slotDiv);
         }
     }
@@ -597,6 +617,8 @@ class UIManager {
             this.updateBank();
         }
     }
+
+    // ==================== NOTIFICATIONS ====================
 
     showNotification(message, type = 'info') {
         console.log(`[${type.toUpperCase()}] ${message}`);
