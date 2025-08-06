@@ -90,9 +90,19 @@ class DevConsole {
                 usage: 'testmode [on/off]',
                 fn: (args) => this.cmdTestMode(args)
             },
+            t: {
+                description: 'Toggle fast testing mode (shortcut)',
+                usage: 't',
+                fn: (args) => this.cmdTestMode(args)
+            },
             resetspeeds: {
                 description: 'Reset all speeds to default',
                 usage: 'resetspeeds',
+                fn: () => this.cmdResetSpeeds()
+            },
+            r: {
+                description: 'Reset all speeds to default (shortcut)',
+                usage: 'r',
                 fn: () => this.cmdResetSpeeds()
             },
             
@@ -694,11 +704,11 @@ class DevConsole {
         
         if (enable) {
             // Fast testing mode
-            this.speedModifiers.playerSpeed = 20; // 20 tiles/sec
-            this.speedModifiers.actionDuration = 0.1; // 10x faster actions
+            this.speedModifiers.playerSpeed = 30; // 30 tiles/sec
+            this.speedModifiers.actionDuration = 0.01; // 100x faster actions
             
             if (window.player) {
-                player.movementSpeed = 20;
+                player.movementSpeed = 30;
             }
             
             // Apply action speed
