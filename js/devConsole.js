@@ -8,9 +8,30 @@ class DevConsole {
         this.consoleOutput = [];
         this.maxConsoleOutput = 500;
         
+        // Testing speed modifiers
+        this.speedModifiers = {
+            playerSpeed: 3, // Default 3 tiles/second
+            actionDuration: 1.0, // Multiplier for action durations
+            defaultPlayerSpeed: 3,
+            defaultActionDuration: 1.0
+        };
+        
         // Capture console methods before anything else loads
         this.captureConsole();
         
+        this.initializeCommands();
+        
+        // Initialize after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initialize());
+        } else {
+            this.initialize();
+        }
+    }
+
+    // ==================== INITIALIZATION ====================
+
+    initializeCommands() {
         this.commands = {
             // Help
             help: {
@@ -51,6 +72,28 @@ class DevConsole {
                 description: 'Reset player to starting position',
                 usage: 'resetplayer',
                 fn: () => this.cmdResetPlayer()
+            },
+            
+            // Speed controls (NEW)
+            playerspeed: {
+                description: 'Set player movement speed',
+                usage: 'playerspeed [speed] (default: 3 tiles/sec)',
+                fn: (args) => this.cmdPlayerSpeed(args)
+            },
+            actionspeed: {
+                description: 'Set action duration multiplier',
+                usage: 'actionspeed [multiplier] (0.1 = 10x faster, 2 = 2x slower)',
+                fn: (args) => this.cmdActionSpeed(args)
+            },
+            testmode: {
+                description: 'Toggle fast testing mode',
+                usage: 'testmode [on/off]',
+                fn: (args) => this.cmdTestMode(args)
+            },
+            resetspeeds: {
+                description: 'Reset all speeds to default',
+                usage: 'resetspeeds',
+                fn: () => this.cmdResetSpeeds()
             },
             
             // Skill commands
@@ -155,13 +198,6 @@ class DevConsole {
                 fn: () => this.cmdNodeText()
             }
         };
-        
-        // Initialize after DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => this.initialize());
-        } else {
-            this.initialize();
-        }
     }
 
     captureConsole() {
@@ -488,7 +524,211 @@ class DevConsole {
         }
     }
 
-    // Command implementations
+    // ==================== HELPER METHODS ====================
+
+    requireSystem(systemName, windowProperty) {
+        if (!window[windowProperty]) {
+            this.log(`${systemName} not initialized yet`, 'error');
+            return false;
+        }
+        return true;
+    }
+
+    parseIntArg(arg, name, min = null, max = null) {
+        const value = parseInt(arg);
+        if (isNaN(value)) {
+            this.log(`${name} must be a number`, 'error');
+            return null;
+        }
+        if (min !== null && value < min) {
+            this.log(`${name} must be at least ${min}`, 'error');
+            return null;
+        }
+        if (max !== null && value > max) {
+            this.log(`${name} must be at most ${max}`, 'error');
+            return null;
+        }
+        return value;
+    }
+
+    parseFloatArg(arg, name, min = null, max = null) {
+        const value = parseFloat(arg);
+        if (isNaN(value)) {
+            this.log(`${name} must be a number`, 'error');
+            return null;
+        }
+        if (min !== null && value < min) {
+            this.log(`${name} must be at least ${min}`, 'error');
+            return null;
+        }
+        if (max !== null && value > max) {
+            this.log(`${name} must be at most ${max}`, 'error');
+            return null;
+        }
+        return value;
+    }
+
+    validateSkill(skillId) {
+        if (!this.requireSystem('Skills', 'skills')) return null;
+        
+        const skill = skills.skills[skillId.toLowerCase()];
+        if (!skill) {
+            this.log(`Unknown skill: ${skillId}`, 'error');
+            return null;
+        }
+        return skillId.toLowerCase();
+    }
+
+    validateItem(itemId) {
+        if (!this.requireSystem('Loading manager', 'loadingManager')) return null;
+        
+        const items = loadingManager.getData('items');
+        if (!items || !items[itemId]) {
+            this.log(`Unknown item: ${itemId}`, 'error');
+            return null;
+        }
+        return itemId;
+    }
+
+    validateActivity(activityId) {
+        if (!this.requireSystem('Loading manager', 'loadingManager')) return null;
+        
+        const activities = loadingManager.getData('activities');
+        if (!activities || !activities[activityId]) {
+            this.log(`Unknown activity: ${activityId}`, 'error');
+            return null;
+        }
+        return activityId;
+    }
+
+    searchData(dataType, searchTerm) {
+        if (!this.requireSystem('Loading manager', 'loadingManager')) return [];
+        
+        const data = loadingManager.getData(dataType);
+        if (!data) {
+            this.log(`${dataType} data not loaded`, 'error');
+            return [];
+        }
+        
+        let matches = Object.entries(data);
+        if (searchTerm) {
+            const search = searchTerm.toLowerCase();
+            matches = matches.filter(([id, item]) => {
+                // Search in ID
+                if (id.toLowerCase().includes(search)) return true;
+                // Search in name
+                if (item.name && item.name.toLowerCase().includes(search)) return true;
+                // Search in skill (for activities)
+                if (item.skill && item.skill.toLowerCase().includes(search)) return true;
+                return false;
+            });
+        }
+        
+        return matches;
+    }
+
+    // ==================== SPEED CONTROL COMMANDS (NEW) ====================
+
+    cmdPlayerSpeed(args) {
+        if (args.length === 0) {
+            this.log(`Current player speed: ${this.speedModifiers.playerSpeed} tiles/second`, 'info');
+            this.log(`Default: ${this.speedModifiers.defaultPlayerSpeed} tiles/second`, 'info');
+            return;
+        }
+        
+        const speed = this.parseFloatArg(args[0], 'Speed', 0.1, 100);
+        if (speed === null) return;
+        
+        this.speedModifiers.playerSpeed = speed;
+        
+        // Apply to player if exists
+        if (window.player) {
+            player.movementSpeed = speed;
+        }
+        
+        this.log(`Player speed set to ${speed} tiles/second`, 'success');
+    }
+
+    cmdActionSpeed(args) {
+        if (args.length === 0) {
+            this.log(`Current action speed multiplier: ${this.speedModifiers.actionDuration}x`, 'info');
+            this.log(`(0.1 = 10x faster, 1.0 = normal, 2.0 = 2x slower)`, 'info');
+            return;
+        }
+        
+        const multiplier = this.parseFloatArg(args[0], 'Multiplier', 0.01, 10);
+        if (multiplier === null) return;
+        
+        this.speedModifiers.actionDuration = multiplier;
+        
+        // Hook into skillBehaviors if it exists
+        if (window.skillBehaviors) {
+            // Override the getDuration methods to apply multiplier
+            const originalGetDuration = skillBehaviors.behaviors.default.getDuration;
+            for (const behavior of Object.values(skillBehaviors.behaviors)) {
+                const original = behavior.getDuration;
+                behavior.getDuration = (base, level, data) => {
+                    const duration = original.call(behavior, base, level, data);
+                    return duration * window.devConsole.speedModifiers.actionDuration;
+                };
+            }
+        }
+        
+        this.log(`Action speed multiplier set to ${multiplier}x`, 'success');
+        if (multiplier < 1) {
+            this.log(`Actions are now ${Math.round(1/multiplier)}x faster`, 'info');
+        } else if (multiplier > 1) {
+            this.log(`Actions are now ${multiplier}x slower`, 'info');
+        }
+    }
+
+    cmdTestMode(args) {
+        const mode = args.length > 0 ? args[0].toLowerCase() : 'toggle';
+        
+        let enable = false;
+        if (mode === 'toggle') {
+            enable = this.speedModifiers.playerSpeed === this.speedModifiers.defaultPlayerSpeed;
+        } else {
+            enable = mode === 'on' || mode === 'true' || mode === '1';
+        }
+        
+        if (enable) {
+            // Fast testing mode
+            this.speedModifiers.playerSpeed = 20; // 20 tiles/sec
+            this.speedModifiers.actionDuration = 0.1; // 10x faster actions
+            
+            if (window.player) {
+                player.movementSpeed = 20;
+            }
+            
+            // Apply action speed
+            this.cmdActionSpeed(['0.1']);
+            
+            this.log('Test mode ENABLED', 'success');
+            this.log('- Player speed: 20 tiles/sec', 'info');
+            this.log('- Actions: 10x faster', 'info');
+        } else {
+            // Reset to defaults
+            this.cmdResetSpeeds();
+        }
+    }
+
+    cmdResetSpeeds() {
+        this.speedModifiers.playerSpeed = this.speedModifiers.defaultPlayerSpeed;
+        this.speedModifiers.actionDuration = this.speedModifiers.defaultActionDuration;
+        
+        if (window.player) {
+            player.movementSpeed = this.speedModifiers.defaultPlayerSpeed;
+        }
+        
+        // Reset action speed
+        this.cmdActionSpeed(['1.0']);
+        
+        this.log('All speeds reset to default', 'success');
+    }
+
+    // ==================== COMMAND IMPLEMENTATIONS ====================
+
     cmdHelp(args) {
         if (args.length > 0) {
             const cmd = args[0].toLowerCase();
@@ -525,20 +765,13 @@ class DevConsole {
     }
 
     cmdTeleport(args) {
-        if (!window.player) {
-            this.log('Player not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Player', 'player')) return;
         
         if (args.length === 2) {
             // Teleport to coordinates
-            const x = parseInt(args[0]);
-            const y = parseInt(args[1]);
-            
-            if (isNaN(x) || isNaN(y)) {
-                this.log('Invalid coordinates', 'error');
-                return;
-            }
+            const x = this.parseIntArg(args[0], 'X coordinate');
+            const y = this.parseIntArg(args[1], 'Y coordinate');
+            if (x === null || y === null) return;
             
             player.position.x = x;
             player.position.y = y;
@@ -557,9 +790,9 @@ class DevConsole {
                 return;
             }
             
-            player.position.x = node.position.x;
-            player.position.y = node.position.y;
-            player.currentNode = nodeId;
+            player.position.x = node.position.x + 0.5;
+            player.position.y = node.position.y + 0.5;
+            //player.currentNode = nodeId;
             player.path = [];
             player.targetPosition = null;
             player.stopActivity();
@@ -571,46 +804,30 @@ class DevConsole {
     }
 
     cmdPosition() {
-        if (!window.player) {
-            this.log('Player not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Player', 'player')) return;
+        
         this.log(`Position: ${Math.round(player.position.x)}, ${Math.round(player.position.y)}`, 'info');
         this.log(`Current node: ${player.currentNode}`, 'info');
     }
 
     cmdResetPlayer() {
-        if (!window.testScenario) {
-            this.log('Test scenario not available', 'error');
-            return;
-        }
+        if (!this.requireSystem('Test scenario', 'testScenario')) return;
+        
         testScenario.resetPlayer();
         this.log('Player reset to starting position', 'success');
     }
 
     cmdSetLevel(args) {
-        if (!window.skills) {
-            this.log('Skills not initialized yet', 'error');
-            return;
-        }
-        
         if (args.length !== 2) {
             this.log('Usage: setlevel <skill> <level>', 'error');
             return;
         }
         
-        const skillId = args[0].toLowerCase();
-        const level = parseInt(args[1]);
+        const skillId = this.validateSkill(args[0]);
+        if (!skillId) return;
         
-        if (!skills.skills[skillId]) {
-            this.log(`Unknown skill: ${skillId}`, 'error');
-            return;
-        }
-        
-        if (isNaN(level) || level < 1 || level > 99) {
-            this.log('Level must be between 1 and 99', 'error');
-            return;
-        }
+        const level = this.parseIntArg(args[1], 'Level', 1, 99);
+        if (level === null) return;
         
         if (window.testScenario) {
             testScenario.setSkillLevel(skillId, level);
@@ -630,28 +847,16 @@ class DevConsole {
     }
 
     cmdAddXp(args) {
-        if (!window.skills) {
-            this.log('Skills not initialized yet', 'error');
-            return;
-        }
-        
         if (args.length !== 2) {
             this.log('Usage: addxp <skill> <amount>', 'error');
             return;
         }
         
-        const skillId = args[0].toLowerCase();
-        const amount = parseInt(args[1]);
+        const skillId = this.validateSkill(args[0]);
+        if (!skillId) return;
         
-        if (!skills.skills[skillId]) {
-            this.log(`Unknown skill: ${skillId}`, 'error');
-            return;
-        }
-        
-        if (isNaN(amount) || amount < 0) {
-            this.log('Amount must be a positive number', 'error');
-            return;
-        }
+        const amount = this.parseIntArg(args[1], 'Amount', 0);
+        if (amount === null) return;
         
         skills.addXp(skillId, amount);
         if (window.ui) ui.updateSkillsList();
@@ -659,114 +864,71 @@ class DevConsole {
     }
 
     cmdMaxSkills() {
-        if (!window.testScenario) {
-            this.log('Test scenario not available', 'error');
-            return;
-        }
+        if (!this.requireSystem('Test scenario', 'testScenario')) return;
+        
         testScenario.maxAllSkills();
         if (window.ui) ui.updateSkillsList();
         this.log('All skills set to 99', 'success');
     }
 
     cmdGive(args) {
-        if (!window.inventory) {
-            this.log('Inventory not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Inventory', 'inventory')) return;
         
         if (args.length < 1) {
             this.log('Usage: give <itemId> [quantity]', 'error');
             return;
         }
         
-        const itemId = args[0];
-        const quantity = args.length > 1 ? parseInt(args[1]) : 1;
+        const itemId = this.validateItem(args[0]);
+        if (!itemId) return;
         
-        if (!window.loadingManager) {
-            this.log('Loading manager not ready', 'error');
-            return;
-        }
+        const quantity = args.length > 1 ? this.parseIntArg(args[1], 'Quantity', 1) : 1;
+        if (quantity === null) return;
         
         const items = loadingManager.getData('items');
-        if (!items || !items[itemId]) {
-            this.log(`Unknown item: ${itemId}`, 'error');
-            return;
-        }
-        
-        if (isNaN(quantity) || quantity < 1) {
-            this.log('Quantity must be a positive number', 'error');
-            return;
-        }
-        
         const added = inventory.addItem(itemId, quantity);
         this.log(`Added ${added} ${items[itemId].name} to inventory`, 'success');
     }
 
     cmdClearInv() {
-        if (!window.inventory) {
-            this.log('Inventory not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Inventory', 'inventory')) return;
+        
         inventory.clear();
         this.log('Inventory cleared', 'success');
     }
 
     cmdBank(args) {
-        if (!window.bank) {
-            this.log('Bank not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Bank', 'bank')) return;
         
         if (args.length < 1) {
             this.log('Usage: bank <itemId> [quantity]', 'error');
             return;
         }
         
-        const itemId = args[0];
-        const quantity = args.length > 1 ? parseInt(args[1]) : 1;
+        const itemId = this.validateItem(args[0]);
+        if (!itemId) return;
         
-        if (!window.loadingManager) {
-            this.log('Loading manager not ready', 'error');
-            return;
-        }
+        const quantity = args.length > 1 ? this.parseIntArg(args[1], 'Quantity', 1) : 1;
+        if (quantity === null) return;
         
         const items = loadingManager.getData('items');
-        if (!items || !items[itemId]) {
-            this.log(`Unknown item: ${itemId}`, 'error');
-            return;
-        }
-        
-        if (isNaN(quantity) || quantity < 1) {
-            this.log('Quantity must be a positive number', 'error');
-            return;
-        }
-        
         bank.deposit(itemId, quantity);
         this.log(`Added ${quantity} ${items[itemId].name} to bank`, 'success');
     }
 
     cmdGiveAll(args) {
-        if (!window.testScenario) {
-            this.log('Test scenario not available', 'error');
-            return;
-        }
+        if (!this.requireSystem('Test scenario', 'testScenario')) return;
         
-        const quantity = args.length > 0 ? parseInt(args[0]) : 100;
-        
-        if (isNaN(quantity) || quantity < 1) {
-            this.log('Quantity must be a positive number', 'error');
-            return;
-        }
+        const quantity = args.length > 0 ? this.parseIntArg(args[0], 'Quantity', 1) : 100;
+        if (quantity === null) return;
         
         testScenario.giveAllItems(quantity);
         this.log(`Added ${quantity} of each item to bank`, 'success');
     }
 
     cmdClearGoals() {
-        if (!window.ai) {
-            this.log('AI not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('AI', 'ai')) return;
+        
         ai.goals = [];
         ai.currentGoal = null;
         if (window.ui) ui.updateGoal();
@@ -774,10 +936,7 @@ class DevConsole {
     }
 
     cmdAddGoal(args) {
-        if (!window.ai) {
-            this.log('AI not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('AI', 'ai')) return;
         
         if (args.length < 3) {
             this.log('Usage: addgoal <type> <target> <value>', 'error');
@@ -791,13 +950,11 @@ class DevConsole {
         const priority = ai.goals.length + 1;
         
         if (type === 'skill') {
-            const skillId = args[1].toLowerCase();
-            const level = parseInt(args[2]);
+            const skillId = this.validateSkill(args[1]);
+            if (!skillId) return;
             
-            if (!window.skills || !skills.skills[skillId]) {
-                this.log(`Unknown skill: ${skillId}`, 'error');
-                return;
-            }
+            const level = this.parseIntArg(args[2], 'Level', 1, 99);
+            if (level === null) return;
             
             ai.addGoal({
                 type: 'skill_level',
@@ -808,20 +965,13 @@ class DevConsole {
             
             this.log(`Added goal: ${skillId} to level ${level}`, 'success');
         } else if (type === 'item') {
-            const itemId = args[1];
-            const count = parseInt(args[2]);
+            const itemId = this.validateItem(args[1]);
+            if (!itemId) return;
             
-            if (!window.loadingManager) {
-                this.log('Loading manager not ready', 'error');
-                return;
-            }
+            const count = this.parseIntArg(args[2], 'Count', 1);
+            if (count === null) return;
             
             const items = loadingManager.getData('items');
-            if (!items || !items[itemId]) {
-                this.log(`Unknown item: ${itemId}`, 'error');
-                return;
-            }
-            
             ai.addGoal({
                 type: 'bank_items',
                 itemId: itemId,
@@ -836,10 +986,8 @@ class DevConsole {
     }
 
     cmdPauseAI() {
-        if (!window.gameState) {
-            this.log('Game not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Game', 'gameState')) return;
+        
         gameState.paused = !gameState.paused;
         const pauseBtn = document.getElementById('pause-toggle');
         if (pauseBtn) {
@@ -849,58 +997,31 @@ class DevConsole {
     }
 
     cmdStartActivity(args) {
-        if (!window.player) {
-            this.log('Player not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Player', 'player')) return;
         
         if (args.length !== 1) {
             this.log('Usage: startactivity <activityId>', 'error');
             return;
         }
         
-        const activityId = args[0];
-        
-        if (!window.loadingManager) {
-            this.log('Loading manager not ready', 'error');
-            return;
-        }
+        const activityId = this.validateActivity(args[0]);
+        if (!activityId) return;
         
         const activities = loadingManager.getData('activities');
-        if (!activities || !activities[activityId]) {
-            this.log(`Unknown activity: ${activityId}`, 'error');
-            return;
-        }
-        
         player.startActivity(activityId);
         this.log(`Started activity: ${activities[activityId].name}`, 'success');
     }
 
     cmdStopActivity() {
-        if (!window.player) {
-            this.log('Player not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Player', 'player')) return;
+        
         player.stopActivity();
         this.log('Activity stopped', 'success');
     }
 
     cmdNodes(args) {
-        if (!window.nodes) {
-            this.log('Nodes not initialized yet', 'error');
-            return;
-        }
-        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
-        const allNodes = nodes.getAllNodes();
-        
-        let matches = Object.entries(allNodes);
-        if (search) {
-            matches = matches.filter(([id, node]) => 
-                id.toLowerCase().includes(search) || 
-                node.name.toLowerCase().includes(search)
-            );
-        }
+        const matches = this.searchData('nodes', search);
         
         if (matches.length === 0) {
             this.log('No nodes found', 'info');
@@ -918,26 +1039,8 @@ class DevConsole {
     }
 
     cmdItems(args) {
-        if (!window.loadingManager) {
-            this.log('Loading manager not ready', 'error');
-            return;
-        }
-        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
-        const allItems = loadingManager.getData('items');
-        
-        if (!allItems) {
-            this.log('Items data not loaded', 'error');
-            return;
-        }
-        
-        let matches = Object.entries(allItems);
-        if (search) {
-            matches = matches.filter(([id, item]) => 
-                id.toLowerCase().includes(search) || 
-                item.name.toLowerCase().includes(search)
-            );
-        }
+        const matches = this.searchData('items', search);
         
         if (matches.length === 0) {
             this.log('No items found', 'info');
@@ -955,27 +1058,8 @@ class DevConsole {
     }
 
     cmdActivities(args) {
-        if (!window.loadingManager) {
-            this.log('Loading manager not ready', 'error');
-            return;
-        }
-        
         const search = args.length > 0 ? args.join(' ').toLowerCase() : '';
-        const allActivities = loadingManager.getData('activities');
-        
-        if (!allActivities) {
-            this.log('Activities data not loaded', 'error');
-            return;
-        }
-        
-        let matches = Object.entries(allActivities);
-        if (search) {
-            matches = matches.filter(([id, activity]) => 
-                id.toLowerCase().includes(search) || 
-                activity.name.toLowerCase().includes(search) ||
-                activity.skill.toLowerCase().includes(search)
-            );
-        }
+        const matches = this.searchData('activities', search);
         
         if (matches.length === 0) {
             this.log('No activities found', 'info');
@@ -993,109 +1077,95 @@ class DevConsole {
     }
 
     cmdCollision() {
-        if (!window.map) {
-            this.log('Map not initialized yet', 'error');
-            return;
-        }
+        if (!this.requireSystem('Map', 'map')) return;
+        
         map.toggleCollisionDebug();
         this.log(`Collision debug ${map.showCollisionDebug ? 'enabled' : 'disabled'}`, 'success');
     }
 
     cmdNodeText() {
-    if (!window.map) {
-        this.log('Map not initialized yet', 'error');
-        return;
+        if (!this.requireSystem('Map', 'map')) return;
+        
+        map.toggleNodeText();
+        this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
     }
-    map.toggleNodeText();
-    this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
-}
 
-cmdListGoals() {
-    if (!window.ai) {
-        this.log('AI not initialized yet', 'error');
-        return;
+    cmdListGoals() {
+        if (!this.requireSystem('AI', 'ai')) return;
+        
+        if (ai.goals.length === 0) {
+            this.log('No goals in queue', 'info');
+            return;
+        }
+        
+        // Show current goal
+        if (ai.currentGoal) {
+            this.log('=== CURRENT GOAL ===', 'info');
+            this.formatGoal(ai.currentGoal, true);
+            this.log('', 'info');
+        } else {
+            this.log('No active goal (selecting...)', 'info');
+            this.log('', 'info');
+        }
+        
+        // Show all goals in queue
+        this.log('=== GOAL QUEUE ===', 'info');
+        for (const goal of ai.goals) {
+            const isComplete = ai.isGoalComplete(goal);
+            const isCurrent = ai.currentGoal === goal;
+            this.formatGoal(goal, false, isComplete, isCurrent);
+        }
+        
+        this.log(`Total goals: ${ai.goals.length}`, 'info');
     }
-    
-    if (ai.goals.length === 0) {
-        this.log('No goals in queue', 'info');
-        return;
+
+    formatGoal(goal, detailed = false, isComplete = false, isCurrent = false) {
+        let status = '';
+        if (isCurrent) status = ' [ACTIVE]';
+        else if (isComplete) status = ' [COMPLETE]';
+        
+        switch (goal.type) {
+            case 'skill_level':
+                const currentLevel = skills.getLevel(goal.skill);
+                const currentXp = Math.floor(skills.getXp(goal.skill));
+                const targetXp = getXpForLevel(goal.targetLevel);
+                const progress = Math.floor((currentXp / targetXp) * 100);
+                
+                if (detailed) {
+                    this.log(`Type: Skill Training`, 'info');
+                    this.log(`Skill: ${goal.skill}`, 'info');
+                    this.log(`Target: Level ${goal.targetLevel}`, 'info');
+                    this.log(`Current: Level ${currentLevel} (${formatNumber(currentXp)} XP)`, 'info');
+                    this.log(`Progress: ${progress}%`, 'info');
+                    this.log(`Priority: ${goal.priority}`, 'info');
+                } else {
+                    this.log(`#${goal.priority}: Train ${goal.skill} to ${goal.targetLevel} (currently ${currentLevel}) - ${progress}%${status}`, 
+                        isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
+                }
+                break;
+                
+            case 'bank_items':
+                const currentCount = bank.getItemCount(goal.itemId);
+                const itemData = loadingManager.getData('items')[goal.itemId];
+                const itemProgress = Math.floor((currentCount / goal.targetCount) * 100);
+                
+                if (detailed) {
+                    this.log(`Type: Item Banking`, 'info');
+                    this.log(`Item: ${itemData.name} (${goal.itemId})`, 'info');
+                    this.log(`Target: ${formatNumber(goal.targetCount)}`, 'info');
+                    this.log(`Current: ${formatNumber(currentCount)}`, 'info');
+                    this.log(`Progress: ${itemProgress}%`, 'info');
+                    this.log(`Priority: ${goal.priority}`, 'info');
+                } else {
+                    this.log(`#${goal.priority}: Bank ${formatNumber(goal.targetCount)} ${itemData.name} (${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}) - ${itemProgress}%${status}`, 
+                        isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
+                }
+                break;
+                
+            default:
+                this.log(`#${goal.priority}: Unknown goal type: ${goal.type}${status}`, 'error');
+        }
     }
-    
-    // Show current goal
-    if (ai.currentGoal) {
-        this.log('=== CURRENT GOAL ===', 'info');
-        this.formatGoal(ai.currentGoal, true);
-        this.log('', 'info');
-    } else {
-        this.log('No active goal (selecting...)', 'info');
-        this.log('', 'info');
-    }
-    
-    // Show all goals in queue
-    this.log('=== GOAL QUEUE ===', 'info');
-    for (const goal of ai.goals) {
-        const isComplete = ai.isGoalComplete(goal);
-        const isCurrent = ai.currentGoal === goal;
-        this.formatGoal(goal, false, isComplete, isCurrent);
-    }
-    
-    this.log(`Total goals: ${ai.goals.length}`, 'info');
-}
-
-formatGoal(goal, detailed = false, isComplete = false, isCurrent = false) {
-    let status = '';
-    if (isCurrent) status = ' [ACTIVE]';
-    else if (isComplete) status = ' [COMPLETE]';
-    
-    switch (goal.type) {
-        case 'skill_level':
-            const currentLevel = skills.getLevel(goal.skill);
-            const currentXp = Math.floor(skills.getXp(goal.skill));
-            const targetXp = getXpForLevel(goal.targetLevel);
-            const progress = Math.floor((currentXp / targetXp) * 100);
-            
-            if (detailed) {
-                this.log(`Type: Skill Training`, 'info');
-                this.log(`Skill: ${goal.skill}`, 'info');
-                this.log(`Target: Level ${goal.targetLevel}`, 'info');
-                this.log(`Current: Level ${currentLevel} (${formatNumber(currentXp)} XP)`, 'info');
-                this.log(`Progress: ${progress}%`, 'info');
-                this.log(`Priority: ${goal.priority}`, 'info');
-            } else {
-                this.log(`#${goal.priority}: Train ${goal.skill} to ${goal.targetLevel} (currently ${currentLevel}) - ${progress}%${status}`, 
-                    isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
-            }
-            break;
-            
-        case 'bank_items':
-            const currentCount = bank.getItemCount(goal.itemId);
-            const itemData = loadingManager.getData('items')[goal.itemId];
-            const itemProgress = Math.floor((currentCount / goal.targetCount) * 100);
-            
-            if (detailed) {
-                this.log(`Type: Item Banking`, 'info');
-                this.log(`Item: ${itemData.name} (${goal.itemId})`, 'info');
-                this.log(`Target: ${formatNumber(goal.targetCount)}`, 'info');
-                this.log(`Current: ${formatNumber(currentCount)}`, 'info');
-                this.log(`Progress: ${itemProgress}%`, 'info');
-                this.log(`Priority: ${goal.priority}`, 'info');
-            } else {
-                this.log(`#${goal.priority}: Bank ${formatNumber(goal.targetCount)} ${itemData.name} (${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}) - ${itemProgress}%${status}`, 
-                    isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
-            }
-            break;
-            
-        default:
-            this.log(`#${goal.priority}: Unknown goal type: ${goal.type}${status}`, 'error');
-    }
-}
-
-    
-
-
-
-
-    
 }
 
 // Create global instance immediately
