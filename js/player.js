@@ -137,6 +137,23 @@ constructor() {
         // Get skill-specific behavior
         const behavior = skillBehaviors.getBehavior(activityData.skill);
         
+        // For cooking, consume the raw item BEFORE processing rewards
+        if (activityData.skill === 'cooking' && activityData.cookingTable) {
+            // Find what raw item we're cooking
+            const rawItem = behavior.findRawItemToCook ? 
+                behavior.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking')) : 
+                null;
+            
+            if (rawItem) {
+                // Consume the raw item
+                inventory.removeItem(rawItem.rawItemId, 1);
+            } else {
+                // No raw items to cook
+                this.stopActivity();
+                return;
+            }
+        }
+        
         // Process rewards using skill-specific logic
         const earnedRewards = behavior.processRewards(activityData, skills.getLevel(activityData.skill));
         
@@ -453,4 +470,21 @@ checkCurrentNode() {
 
         return required;
     }
+
+    // Check if player has any raw food items for cooking
+    hasRawFood() {
+        const activityData = loadingManager.getData('activities')['cook_food'];
+        if (!activityData || !activityData.cookingTable) return false;
+        
+        const cookingLevel = skills.getLevel('cooking');
+        
+        for (const recipe of activityData.cookingTable) {
+            if (cookingLevel >= recipe.requiredLevel && inventory.hasItem(recipe.rawItemId, 1)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
 }
