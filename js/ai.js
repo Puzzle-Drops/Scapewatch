@@ -296,6 +296,13 @@ class AIManager {
             return;
         }
 
+        // Special handling for cooking goals - cook cooked food items
+        if (this.isCookedFoodItem(itemId)) {
+            console.log(`${itemId} is a cooked food item, switching to cooking`);
+            this.cookFood(itemId);
+            return;
+        }
+
         // Find activities that give this item
         const activities = loadingManager.getData('activities');
         const itemActivities = Object.entries(activities)
@@ -389,6 +396,120 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
     doQuest(questId) {
         // TODO: Implement quest system
         console.log(`Quest system not yet implemented: ${questId}`);
+    }
+
+    // ==================== COOKING OPERATIONS ====================
+    
+    cookFood(targetItemId = null) {
+        // Check if we have raw food in inventory
+        if (player.hasRawFood()) {
+            // We have raw food, go cook it
+            this.doActivity('cook_food');
+            return;
+        }
+        
+        // No raw food in inventory, check bank
+        if (this.hasRawFoodInBank()) {
+            // Go to bank to get raw food
+            this.goToBankForCooking();
+            return;
+        }
+        
+        // No raw food at all, skip this goal
+        console.log('No raw food available for cooking');
+        this.skipCurrentGoal('cooking goal - no raw food available');
+    }
+    
+    hasRawFoodInBank() {
+        const activityData = loadingManager.getData('activities')['cook_food'];
+        if (!activityData || !activityData.cookingTable) return false;
+        
+        const cookingLevel = skills.getLevel('cooking');
+        
+        for (const recipe of activityData.cookingTable) {
+            if (cookingLevel >= recipe.requiredLevel && bank.getItemCount(recipe.rawItemId) > 0) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    goToBankForCooking() {
+        // If already at bank, handle cooking banking
+        const currentNode = nodes.getNode(player.currentNode);
+        if (currentNode && currentNode.type === 'bank') {
+            this.handleBankingForCooking();
+            return;
+        }
+        
+        // Find nearest bank
+        const nearestBank = nodes.getNearestBank(player.position);
+        if (!nearestBank) {
+            console.log('No reachable bank found!');
+            return;
+        }
+        
+        // Move to bank
+        console.log(`Moving to ${nearestBank.name} to get raw food for cooking`);
+        player.moveTo(nearestBank.id);
+    }
+    
+    handleBankingForCooking() {
+        // Deposit all first
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        
+        // Withdraw raw food items (prioritize by level requirement)
+        const activityData = loadingManager.getData('activities')['cook_food'];
+        const cookingLevel = skills.getLevel('cooking');
+        
+        // Sort recipes by required level (lowest first)
+        const availableRecipes = activityData.cookingTable
+            .filter(recipe => cookingLevel >= recipe.requiredLevel)
+            .sort((a, b) => a.requiredLevel - b.requiredLevel);
+        
+        let withdrawnAny = false;
+        let totalWithdrawn = 0;
+        
+        for (const recipe of availableRecipes) {
+            const bankCount = bank.getItemCount(recipe.rawItemId);
+            if (bankCount > 0) {
+                // Withdraw up to 28 raw items
+                const toWithdraw = Math.min(28 - totalWithdrawn, bankCount);
+                const withdrawn = bank.withdrawUpTo(recipe.rawItemId, toWithdraw);
+                
+                if (withdrawn > 0) {
+                    inventory.addItem(recipe.rawItemId, withdrawn);
+                    console.log(`Withdrew ${withdrawn} ${recipe.rawItemId}`);
+                    withdrawnAny = true;
+                    totalWithdrawn += withdrawn;
+                    
+                    if (totalWithdrawn >= 28) break; // Inventory full
+                }
+            }
+        }
+        
+        if (!withdrawnAny) {
+            console.log('No raw food to withdraw for cooking');
+            this.skipCurrentGoal('cooking goal - no raw food in bank');
+            return;
+        }
+        
+        // Update UI
+        ui.updateSkillsList();
+        
+        // Now go cook the food
+        this.clearCooldown();
+        this.doActivity('cook_food');
+    }
+    
+    isCookedFoodItem(itemId) {
+        // Check if this is a cooked food item
+        const cookedFoods = ['meat', 'shrimps', 'anchovies', 'sardine', 'herring', 
+                           'mackerel', 'trout', 'cod', 'pike', 'salmon', 
+                           'tuna', 'lobster', 'bass', 'swordfish', 'shark'];
+        return cookedFoods.includes(itemId);
     }
 
     // ==================== BANKING OPERATIONS ====================
