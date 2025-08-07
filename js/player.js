@@ -1,40 +1,34 @@
 class Player {
-constructor() {
-    this.position = { x: 4395, y: 1882 }; // Start at Lumbridge bank
-    this.targetPosition = null;
-    this.currentNode = null;
-    this.targetNode = null; // Store target node ID
-    this.currentActivity = null;
-    this.activityProgress = 0;
-    this.activityStartTime = 0;
-    this.movementSpeed = 3; // 3 tiles per second
-    this.path = [];
-    this.pathIndex = 0;
-    this.segmentProgress = 0; // Progress along current path segment (0-1)
-    
-    // Track alternating states for activities
-    this.alternatingStates = {};
-}
+    constructor() {
+        this.position = { x: 4395, y: 1882 };
+        this.targetPosition = null;
+        this.currentNode = null;
+        this.targetNode = null;
+        this.currentActivity = null;
+        this.activityProgress = 0;
+        this.activityStartTime = 0;
+        this.movementSpeed = 3;
+        this.path = [];
+        this.pathIndex = 0;
+        this.segmentProgress = 0;
+    }
 
     update(deltaTime) {
-    // Handle movement along path
-    if (this.path.length > 0 && this.pathIndex < this.path.length) {
-        this.updateSmoothMovement(deltaTime);
-    } else if (!this.currentNode && !this.isMoving()) {
-        // If we're not moving and don't have a current node, check if we're at one
-        // This handles teleports and any other way we might end up at a node
-        this.checkCurrentNode();
-    }
+        // Handle movement along path
+        if (this.path.length > 0 && this.pathIndex < this.path.length) {
+            this.updateSmoothMovement(deltaTime);
+        } else if (!this.currentNode && !this.isMoving()) {
+            this.checkCurrentNode();
+        }
 
-    // Handle activity
-    if (this.currentActivity) {
-        this.updateActivity(deltaTime);
+        // Handle activity
+        if (this.currentActivity) {
+            this.updateActivity(deltaTime);
+        }
     }
-}
 
     updateSmoothMovement(deltaTime) {
         if (this.pathIndex >= this.path.length) {
-            // Reached end of path
             this.path = [];
             this.pathIndex = 0;
             this.targetPosition = null;
@@ -43,40 +37,31 @@ constructor() {
             return;
         }
 
-        // Get current and next waypoint
         const currentWaypoint = this.pathIndex === 0 ? this.position : this.path[this.pathIndex - 1];
         const targetWaypoint = this.path[this.pathIndex];
 
-        // Calculate distance between waypoints
         const dx = targetWaypoint.x - currentWaypoint.x;
         const dy = targetWaypoint.y - currentWaypoint.y;
         const segmentDistance = Math.sqrt(dx * dx + dy * dy);
 
-        // If segment distance is 0, skip to next waypoint
         if (segmentDistance < 0.001) {
             this.pathIndex++;
             this.segmentProgress = 0;
             return;
         }
 
-        // Calculate how much to move this frame
-        const moveDistance = (this.getMovementSpeed() * deltaTime) / 1000; // Convert ms to seconds
+        const moveDistance = (this.getMovementSpeed() * deltaTime) / 1000;
         const moveRatio = moveDistance / segmentDistance;
 
-        // Update segment progress
         this.segmentProgress += moveRatio;
 
-        // Check if we've reached the target waypoint
         if (this.segmentProgress >= 1) {
-            // Move to exact waypoint position
             this.position.x = targetWaypoint.x;
             this.position.y = targetWaypoint.y;
             
-            // Move to next segment
             this.pathIndex++;
             this.segmentProgress = 0;
             
-            // Check if we've completed the path
             if (this.pathIndex >= this.path.length) {
                 this.path = [];
                 this.pathIndex = 0;
@@ -84,7 +69,6 @@ constructor() {
                 this.onReachedTarget();
             }
         } else {
-            // Interpolate position along the segment
             this.position.x = currentWaypoint.x + dx * this.segmentProgress;
             this.position.y = currentWaypoint.y + dy * this.segmentProgress;
         }
@@ -96,13 +80,11 @@ constructor() {
         const activityData = loadingManager.getData('activities')[this.currentActivity];
         if (!activityData) return;
 
-        // Get skill-specific behavior
-        const behavior = skillBehaviors.getBehavior(activityData.skill);
-        const duration = behavior.getDuration(
-            activityData.baseDuration,
-            skills.getLevel(activityData.skill),
-            activityData
-        );
+        // Get skill-specific duration
+        const skill = skillRegistry.getSkillForActivity(this.currentActivity);
+        const duration = skill ? 
+            skill.getDuration(activityData.baseDuration, skills.getLevel(activityData.skill), activityData) :
+            activityData.baseDuration;
 
         if (!duration) {
             this.stopActivity();
@@ -119,52 +101,23 @@ constructor() {
 
     completeActivity() {
         const activityData = loadingManager.getData('activities')[this.currentActivity];
+        const skill = skillRegistry.getSkillForActivity(this.currentActivity);
         
-        // Check for required items (old system compatibility)
-        if (activityData.requiredItems) {
-            for (const req of activityData.requiredItems) {
-                if (!inventory.hasItem(req.itemId, req.quantity)) {
-                    this.stopActivity();
-                    return;
-                }
-            }
-            // Consume required items
-            for (const req of activityData.requiredItems) {
-                inventory.removeItem(req.itemId, req.quantity);
-            }
-        }
-
-        // Get skill-specific behavior
-        const behavior = skillBehaviors.getBehavior(activityData.skill);
-        
-        // For cooking, consume the raw item BEFORE processing rewards
-        if (activityData.skill === 'cooking' && activityData.cookingTable) {
-            // Find what raw item we're cooking
-            const rawItem = behavior.findRawItemToCook ? 
-                behavior.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking')) : 
-                null;
-            
-            if (rawItem) {
-                // Consume the raw item
-                inventory.removeItem(rawItem.rawItemId, 1);
-            } else {
-                // No raw items to cook
-                this.stopActivity();
-                return;
-            }
+        if (!skill) {
+            console.error('No skill found for activity:', this.currentActivity);
+            this.stopActivity();
+            return;
         }
         
         // Process rewards using skill-specific logic
-        const earnedRewards = behavior.processRewards(activityData, skills.getLevel(activityData.skill));
+        const earnedRewards = skill.processRewards(activityData, skills.getLevel(activityData.skill));
         
         // Add rewards to inventory
         for (const reward of earnedRewards) {
             const added = inventory.addItem(reward.itemId, reward.quantity);
             if (added < reward.quantity) {
-                // Inventory full
                 console.log('Inventory full!');
                 this.stopActivity();
-                // Reset AI decision cooldown to react immediately
                 if (window.ai) {
                     window.ai.decisionCooldown = 0;
                 }
@@ -172,7 +125,7 @@ constructor() {
             }
         }
 
-        // Consume items on success (for fishing bait/feathers)
+        // Consume items on success (for fishing)
         if (activityData.consumeOnSuccess && earnedRewards.length > 0) {
             for (const consumable of activityData.consumeOnSuccess) {
                 inventory.removeItem(consumable.itemId, consumable.quantity);
@@ -180,8 +133,8 @@ constructor() {
         }
 
         // Grant XP based on skill-specific rules
-        if (behavior.shouldGrantXP(earnedRewards, activityData)) {
-            const xpToGrant = behavior.getXpToGrant(earnedRewards, activityData);
+        if (skill.shouldGrantXP(earnedRewards, activityData)) {
+            const xpToGrant = skill.getXpToGrant(earnedRewards, activityData);
             if (xpToGrant > 0) {
                 skills.addXp(activityData.skill, xpToGrant);
             }
@@ -194,16 +147,20 @@ constructor() {
             }
         }
         
-        // Update UI to show new XP/levels
+        // Let skill handle post-activity logic
+        if (skill.onActivityComplete) {
+            skill.onActivityComplete(activityData);
+        }
+        
+        // Update UI
         if (window.ui) {
             window.ui.updateSkillsList();
         }
 
-        // Check if current goal is complete after this action
+        // Check if goal is complete
         if (window.ai && window.ai.currentGoal && window.ai.isGoalComplete(window.ai.currentGoal)) {
             console.log('Goal completed after action!');
             this.stopActivity();
-            // Force AI to make a new decision immediately
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
                 window.ai.currentGoal = null;
@@ -212,7 +169,7 @@ constructor() {
             return;
         }
 
-        // Reset for next action if we're continuing
+        // Reset for next action
         if (this.currentActivity) {
             this.activityProgress = 0;
             this.activityStartTime = Date.now();
@@ -228,7 +185,6 @@ constructor() {
             return;
         }
 
-        // Find path to target
         if (window.pathfinding) {
             const path = pathfinding.findPath(
                 this.position.x,
@@ -238,7 +194,6 @@ constructor() {
             );
 
             if (path && path.length > 0) {
-                // Remove the first point if it's our current position
                 if (path.length > 1 && 
                     Math.abs(path[0].x - this.position.x) < 0.1 && 
                     Math.abs(path[0].y - this.position.y) < 0.1) {
@@ -254,13 +209,11 @@ constructor() {
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
                 
-                // Notify UI about movement change
                 if (window.ui) {
                     window.ui.forceActivityUpdate();
                 }
             } else {
                 console.error(`No path found to node ${targetNodeId}`);
-                // Still try to move there directly as fallback
                 this.path = [{ x: node.position.x, y: node.position.y }];
                 this.pathIndex = 0;
                 this.segmentProgress = 0;
@@ -269,7 +222,6 @@ constructor() {
                 this.stopActivity();
             }
         } else {
-            // Fallback to direct movement if pathfinding not available
             this.path = [{ x: node.position.x, y: node.position.y }];
             this.pathIndex = 0;
             this.segmentProgress = 0;
@@ -286,62 +238,54 @@ constructor() {
             
             console.log(`Reached node: ${this.currentNode}`);
             
-            // Reset AI decision cooldown when reaching a destination
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
             }
             
-            // Notify UI
             if (window.ui) {
                 window.ui.forceActivityUpdate();
             }
         }
     }
 
-checkCurrentNode() {
-    // Store the previous node to detect changes
-    const previousNode = this.currentNode;
-    
-    // Check if we're at any node (within 1 pixel tolerance)
-    const tolerance = 1;
-    const allNodes = nodes.getAllNodes();
-    let foundNode = false;
-    
-    for (const [nodeId, node] of Object.entries(allNodes)) {
-        const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
-        if (dist <= tolerance) {
-            if (this.currentNode !== nodeId) {
-                console.log(`Detected arrival at node: ${nodeId}`);
-                this.currentNode = nodeId;
-                foundNode = true;
-                
-                // Reset AI decision cooldown
-                if (window.ai) {
-                    window.ai.decisionCooldown = 0;
+    checkCurrentNode() {
+        const previousNode = this.currentNode;
+        
+        const tolerance = 1;
+        const allNodes = nodes.getAllNodes();
+        let foundNode = false;
+        
+        for (const [nodeId, node] of Object.entries(allNodes)) {
+            const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
+            if (dist <= tolerance) {
+                if (this.currentNode !== nodeId) {
+                    console.log(`Detected arrival at node: ${nodeId}`);
+                    this.currentNode = nodeId;
+                    foundNode = true;
+                    
+                    if (window.ai) {
+                        window.ai.decisionCooldown = 0;
+                    }
+                    
+                    if (window.ui) {
+                        window.ui.forceActivityUpdate();
+                    }
+                } else {
+                    foundNode = true;
                 }
-                
-                // Notify UI
-                if (window.ui) {
-                    window.ui.forceActivityUpdate();
-                }
-            } else {
-                foundNode = true;
+                break;
             }
-            break;
+        }
+        
+        if (!foundNode) {
+            this.currentNode = null;
+        }
+        
+        if (previousNode !== this.currentNode && this.currentActivity) {
+            console.log(`Node changed, stopping activity`);
+            this.stopActivity();
         }
     }
-    
-    // Not at any node
-    if (!foundNode) {
-        this.currentNode = null;
-    }
-    
-    // If node changed and we have an activity, stop it
-    if (previousNode !== this.currentNode && this.currentActivity) {
-        console.log(`Node changed from ${previousNode} to ${this.currentNode}, stopping activity`);
-        this.stopActivity();
-    }
-}
 
     startActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
@@ -350,15 +294,25 @@ checkCurrentNode() {
             return;
         }
 
-        if (!skills.canPerformActivity(activityId)) {
-            console.log(`Cannot perform activity ${activityId} - level too low`);
+        // Check level requirement
+        const skill = skillRegistry.getSkillForActivity(activityId);
+        if (skill && !skill.canPerformActivity(activityId)) {
+            console.log(`Cannot perform activity ${activityId} - requirements not met`);
             return;
         }
 
-        // Check for required items (consumeOnSuccess acts as required items for fishing)
+        // Check required items
         if (!this.hasRequiredItems(activityId)) {
             console.log(`Cannot perform activity ${activityId} - missing required items`);
             return;
+        }
+
+        // Let skill handle pre-activity logic
+        if (skill && skill.beforeActivityStart) {
+            if (!skill.beforeActivityStart(activityData)) {
+                console.log(`Activity ${activityId} cancelled by skill`);
+                return;
+            }
         }
 
         this.currentActivity = activityId;
@@ -367,7 +321,6 @@ checkCurrentNode() {
         
         console.log(`Started activity: ${activityData.name}`);
         
-        // Notify UI
         if (window.ui) {
             window.ui.forceActivityUpdate();
         }
@@ -380,16 +333,14 @@ checkCurrentNode() {
         this.currentActivity = null;
         this.activityProgress = 0;
         
-        // Notify UI
         if (window.ui) {
             window.ui.forceActivityUpdate();
         }
     }
 
     getMovementSpeed() {
-        // Calculate speed with agility bonus
         const agilityLevel = skills.getLevel('agility');
-        const speedBonus = 1 + (agilityLevel - 1) * 0.01; // 1% per level
+        const speedBonus = 1 + (agilityLevel - 1) * 0.01;
         return this.movementSpeed * speedBonus;
     }
 
@@ -409,12 +360,11 @@ checkCurrentNode() {
         return this.isMoving() || this.isPerformingActivity();
     }
 
-    // Check if player has required items for an activity
     hasRequiredItems(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
         if (!activityData) return false;
 
-        // Check consumeOnSuccess items (used as required items for fishing)
+        // Check consumeOnSuccess items (fishing)
         if (activityData.consumeOnSuccess) {
             for (const required of activityData.consumeOnSuccess) {
                 if (!inventory.hasItem(required.itemId, required.quantity)) {
@@ -424,7 +374,7 @@ checkCurrentNode() {
             }
         }
 
-        // Check requiredItems if they exist (for compatibility)
+        // Check requiredItems (legacy)
         if (activityData.requiredItems) {
             for (const required of activityData.requiredItems) {
                 if (!inventory.hasItem(required.itemId, required.quantity)) {
@@ -437,14 +387,12 @@ checkCurrentNode() {
         return true;
     }
 
-    // Get list of required items for an activity
     getRequiredItems(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
         if (!activityData) return [];
 
         const required = [];
 
-        // Add consumeOnSuccess items (used as required items for fishing)
         if (activityData.consumeOnSuccess) {
             for (const item of activityData.consumeOnSuccess) {
                 required.push({
@@ -454,10 +402,8 @@ checkCurrentNode() {
             }
         }
 
-        // Add requiredItems if they exist (for compatibility)
         if (activityData.requiredItems) {
             for (const item of activityData.requiredItems) {
-                // Check if not already in list
                 const existing = required.find(r => r.itemId === item.itemId);
                 if (!existing) {
                     required.push({
@@ -470,21 +416,4 @@ checkCurrentNode() {
 
         return required;
     }
-
-    // Check if player has any raw food items for cooking
-    hasRawFood() {
-        const activityData = loadingManager.getData('activities')['cook_food'];
-        if (!activityData || !activityData.cookingTable) return false;
-        
-        const cookingLevel = skills.getLevel('cooking');
-        
-        for (const recipe of activityData.cookingTable) {
-            if (cookingLevel >= recipe.requiredLevel && inventory.hasItem(recipe.rawItemId, 1)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
 }
