@@ -20,6 +20,12 @@
         "maxStack": 9999999999,
         "category": "resource"
     },
+    "raw_meat": {
+        "id": "raw_meat",
+        "name": "Raw Meat",
+        "stackable": false,
+        "category": "resource"
+    },
     "raw_shrimps": {
         "id": "raw_shrimps",
         "name": "Raw Shrimps",
@@ -103,6 +109,117 @@
         "name": "Raw Shark",
         "stackable": false,
         "category": "resource"
+    },
+    "meat": {
+        "id": "meat",
+        "name": "Cooked Meat",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 3
+    },
+    "shrimps": {
+        "id": "shrimps",
+        "name": "Shrimps",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 3
+    },
+    "sardine": {
+        "id": "sardine",
+        "name": "Sardine",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 4
+    },
+    "anchovies": {
+        "id": "anchovies",
+        "name": "Anchovies",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 1
+    },
+    "herring": {
+        "id": "herring",
+        "name": "Herring",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 5
+    },
+    "mackerel": {
+        "id": "mackerel",
+        "name": "Mackerel",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 6
+    },
+    "trout": {
+        "id": "trout",
+        "name": "Trout",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 7
+    },
+    "cod": {
+        "id": "cod",
+        "name": "Cod",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 7
+    },
+    "pike": {
+        "id": "pike",
+        "name": "Pike",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 8
+    },
+    "salmon": {
+        "id": "salmon",
+        "name": "Salmon",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 9
+    },
+    "tuna": {
+        "id": "tuna",
+        "name": "Tuna",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 10
+    },
+    "lobster": {
+        "id": "lobster",
+        "name": "Lobster",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 12
+    },
+    "bass": {
+        "id": "bass",
+        "name": "Bass",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 13
+    },
+    "swordfish": {
+        "id": "swordfish",
+        "name": "Swordfish",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 14
+    },
+    "shark": {
+        "id": "shark",
+        "name": "Shark",
+        "stackable": false,
+        "category": "food",
+        "healAmount": 20
+    },
+    "burnt_food": {
+        "id": "burnt_food",
+        "name": "Burnt Food",
+        "stackable": false,
+        "category": "junk"
     },
     "logs": {
         "id": "logs",
@@ -241,13 +358,6 @@
         "name": "Uncut Diamond",
         "stackable": false,
         "category": "gem"
-    },
-    "shrimps": {
-        "id": "shrimps",
-        "name": "Shrimps",
-        "stackable": false,
-        "category": "food",
-        "healAmount": 3
     },
     "goblin_mail": {
         "id": "goblin_mail",
