@@ -63,8 +63,8 @@
         "name": "Lumbridge Kitchen",
         "type": "skill",
         "position": {
-            "x": 4375,
-            "y": 1886
+            "x": 4374,
+            "y": 1885
         },
         "activities": [
             "cook_food"
@@ -75,8 +75,8 @@
         "name": "Lumbridge Bank",
         "type": "bank",
         "position": {
-            "x": 4360,
-            "y": 1904
+            "x": 4361,
+            "y": 1903
         }
     },
     "lumbridge_trees": {
