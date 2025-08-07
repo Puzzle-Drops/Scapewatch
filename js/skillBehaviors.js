@@ -22,6 +22,13 @@ class SkillBehaviors {
                 getEffectiveXpRate: this.calculateXpRate.bind(this, 'fishing'),
                 getXpToGrant: () => this.lastCatchXp || 0
             },
+            cooking: {
+                getDuration: (base) => base, // Always 2400
+                processRewards: this.cookingRewards.bind(this),
+                shouldGrantXP: (rewards) => this.lastCookingXp > 0,
+                getEffectiveXpRate: this.calculateXpRate.bind(this, 'cooking'),
+                getXpToGrant: () => this.lastCookingXp || 0
+            },
             default: {
                 getDuration: (base) => base,
                 processRewards: this.standardRewards.bind(this),
@@ -30,6 +37,10 @@ class SkillBehaviors {
                 getXpToGrant: (rewards, data) => data.xpPerAction || 0
             }
         };
+        
+        // Add tracking for cooking
+        this.lastCookingXp = 0;
+        this.currentRawItem = null;
     }
 
     getBehavior(skillName) {
@@ -117,6 +128,9 @@ class SkillBehaviors {
                 
             case 'fishing':
                 return actionsPerHour * this.getFishingExpectedXp(activityData, skillLevel);
+                
+            case 'cooking':
+                return actionsPerHour * this.getCookingExpectedXp(activityData, skillLevel);
                 
             default:
                 return actionsPerHour * xpPerAction;
@@ -264,6 +278,63 @@ class SkillBehaviors {
         return [];
     }
 
+    // ==================== COOKING SPECIFIC ====================
+    
+    cookingRewards(activityData, skillLevel) {
+        // Find what raw item we have in inventory
+        const rawItem = this.findRawItemToCook(activityData.cookingTable, skillLevel);
+        
+        if (!rawItem) {
+            console.log('No raw items to cook');
+            this.lastCookingXp = 0;
+            return [];
+        }
+        
+        // Always consume the raw item (handled by player)
+        this.currentRawItem = rawItem.rawItemId;
+        
+        // Check success
+        const successChance = this.getChance(rawItem, skillLevel);
+        const success = Math.random() <= successChance;
+        
+        if (success) {
+            this.lastCookingXp = rawItem.xpPerAction;
+            return [{ itemId: rawItem.cookedItemId, quantity: 1 }];
+        } else {
+            this.lastCookingXp = 0;
+            return [{ itemId: rawItem.burntItemId, quantity: 1 }];
+        }
+    }
+    
+    findRawItemToCook(cookingTable, skillLevel) {
+        // Sort by required level (lowest first)
+        const availableRecipes = cookingTable
+            .filter(recipe => skillLevel >= recipe.requiredLevel)
+            .sort((a, b) => a.requiredLevel - b.requiredLevel);
+        
+        // Find first recipe where we have the raw item
+        for (const recipe of availableRecipes) {
+            if (window.inventory && inventory.hasItem(recipe.rawItemId, 1)) {
+                return recipe;
+            }
+        }
+        
+        return null;
+    }
+    
+    getCookingExpectedXp(activityData, skillLevel) {
+        // Calculate average XP/action for cooking
+        const availableRecipes = activityData.cookingTable
+            .filter(recipe => skillLevel >= recipe.requiredLevel);
+        
+        if (availableRecipes.length === 0) return 0;
+        
+        // Use the lowest level recipe as that's what we'd cook first
+        const recipe = availableRecipes[0];
+        const successChance = this.getChance(recipe, skillLevel);
+        return recipe.xpPerAction * successChance;
+    }
+
     // ==================== GOAL GENERATION ====================
     
     generateItemGoals(currentSkillLevels, existingGoalCount) {
@@ -339,7 +410,7 @@ class SkillBehaviors {
     
     generateSkillGoals(currentSkillLevels, existingGoalCount) {
         const goals = [];
-        const trainableSkills = ['woodcutting', 'mining', 'fishing', 'attack'];
+        const trainableSkills = ['woodcutting', 'mining', 'fishing', 'attack', 'cooking'];
         
         for (const skill of trainableSkills) {
             const currentLevel = currentSkillLevels[skill] || 1;
