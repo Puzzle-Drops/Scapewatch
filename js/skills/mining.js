@@ -4,6 +4,24 @@ class MiningSkill extends BaseSkill {
         this.alternatingStates = {};
     }
     
+    // ==================== BANKING DECISIONS ====================
+    
+    needsBanking(goal) {
+        // Mining is a gathering skill - bank when inventory is full
+        if (inventory.isFull()) {
+            console.log('Inventory full of ores/gems, banking needed');
+            return true;
+        }
+        return false;
+    }
+    
+    canContinueWithInventory(goal) {
+        // Mining can continue as long as there's inventory space
+        return !inventory.isFull();
+    }
+    
+    // ==================== CORE BEHAVIOR ====================
+    
     getDuration(baseDuration, level, activityData) {
         if (!activityData.durationScaling?.breakpoints) return baseDuration;
         
@@ -113,6 +131,8 @@ class MiningSkill extends BaseSkill {
         return actionsPerHour * xpPerAction * successChance;
     }
     
+    // ==================== GOAL GENERATION ====================
+    
     generateItemGoals(currentLevel, priority) {
         const goals = [];
         const ores = [
@@ -147,10 +167,31 @@ class MiningSkill extends BaseSkill {
     }
     
     shouldBankItem(itemId) {
-        // Don't auto-bank gems
+        // Don't auto-bank gems (player might want to keep them for crafting)
         const gems = ['uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond'];
         return !gems.includes(itemId);
     }
+    
+    // ==================== BANKING ====================
+    
+    handleBanking(ai, goal) {
+        // Mining just deposits everything
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} ores and gems`);
+        
+        // Update UI
+        if (window.ui) {
+            window.ui.updateSkillsList();
+        }
+        
+        // Continue mining
+        ai.clearCooldown();
+        if (goal) {
+            ai.executeGoal(goal);
+        }
+    }
+    
+    // ==================== STATE MANAGEMENT ====================
     
     // Save/restore alternating states
     saveState() {
