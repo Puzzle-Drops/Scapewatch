@@ -33,6 +33,23 @@ class BaseSkill {
         // Override in subclass if needed
     }
     
+    // ==================== BANKING DECISIONS ====================
+    
+    // Check if this skill needs banking given current inventory state
+    needsBanking(goal) {
+        // Default behavior for gathering skills: bank when inventory is full
+        if (inventory.isFull()) {
+            return true;
+        }
+        return false;
+    }
+    
+    // Check if this skill can continue working with current inventory
+    canContinueWithInventory(goal) {
+        // Default: can continue if not full
+        return !inventory.isFull();
+    }
+    
     // ==================== XP & PROGRESSION ====================
     
     calculateXpRate(activityData, level) {
