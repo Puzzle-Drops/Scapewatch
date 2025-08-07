@@ -263,7 +263,6 @@
             }
         ]
     },
-    ,
     "cook_food": {
         "id": "cook_food",
         "name": "Cook Food",
