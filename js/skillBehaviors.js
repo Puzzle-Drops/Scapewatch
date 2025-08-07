@@ -403,8 +403,11 @@ class SkillBehaviors {
         // Skip gems (they have category: 'gem')
         if (item.category === 'gem') return true;
         
+        // Skip junk items
+        if (item.category === 'junk') return true;
+        
         // Skip specific items we don't want to bank
-        const skipList = ['coins', 'goblin_mail', 'feather', 'fishing_bait'];
+        const skipList = ['coins', 'goblin_mail', 'feather', 'fishing_bait', 'burnt_food'];
         return skipList.includes(itemId);
     }
     
