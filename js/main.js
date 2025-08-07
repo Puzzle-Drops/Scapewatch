@@ -56,7 +56,7 @@ async function startGame() {
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('game-container').style.display = 'flex';
     
-    // Scaling system is already initialized, just update for game container
+    // Scaling system is already initialized
     scalingSystem.setupInitialScaling();
 
     // Initialize collision system first
@@ -66,8 +66,10 @@ async function startGame() {
     // Initialize pathfinding with collision system
     window.pathfinding = new Pathfinding(collision);
     
+    // Initialize skill registry before other systems
+    await skillRegistry.initialize();
+    
     // Initialize game systems (order matters!)
-    // skillBehaviors is already instantiated in skillBehaviors.js
     window.skills = new SkillsManager();
     window.inventory = new Inventory();
     window.bank = new Bank();
@@ -82,8 +84,7 @@ async function startGame() {
         testScenario.run();
     }
 
-    // Canvas sizing is now handled by scalingSystem
-    // Just trigger initial render
+    // Canvas sizing is handled by scalingSystem
     map.render();
 
     // Set up controls
