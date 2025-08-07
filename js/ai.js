@@ -3,40 +3,17 @@ class AIManager {
         this.currentGoal = null;
         this.goals = [];
         this.decisionCooldown = 0;
-        this.failedNodes = new Set(); // Track nodes we couldn't reach
-        this.plannedActivity = null; // Track what activity we plan to do
-        this.unachievableGoals = new Map(); // Track temporarily unachievable goals with retry time
+        this.failedNodes = new Set();
+        this.plannedActivity = null;
+        this.unachievableGoals = new Map();
         this.initializeGoals();
     }
 
     // ==================== INITIALIZATION & GOAL MANAGEMENT ====================
 
     initializeGoals() {
-        // Set up initial goals
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'mining',
-            targetLevel: 5,
-            priority: 1
-        });
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 5,
-            priority: 2
-        });
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'fishing',
-            targetLevel: 5,
-            priority: 3
-        });
-        this.addGoal({
-            type: 'skill_level',
-            skill: 'attack',
-            targetLevel: 5,
-            priority: 4
-        });
+        // Let skills generate initial goals
+        this.generateNewGoals();
     }
 
     addGoal(goal) {
@@ -53,10 +30,10 @@ class AIManager {
     }
 
     selectNewGoal() {
-        // Clean up expired unachievable goals (retry after 30 seconds)
+        // Clean up expired unachievable goals
         const now = Date.now();
         for (const [goalKey, timestamp] of this.unachievableGoals.entries()) {
-            if (now - timestamp > 30000) { // 30 seconds
+            if (now - timestamp > 30000) {
                 this.unachievableGoals.delete(goalKey);
                 console.log(`Retrying previously unachievable goal: ${goalKey}`);
             }
@@ -66,7 +43,6 @@ class AIManager {
         for (const goal of this.goals) {
             const goalKey = this.getGoalKey(goal);
             
-            // Skip if marked as unachievable
             if (this.unachievableGoals.has(goalKey)) {
                 continue;
             }
@@ -74,7 +50,7 @@ class AIManager {
             if (!this.isGoalComplete(goal)) {
                 this.currentGoal = goal;
                 
-                // Update starting values when goal is selected
+                // Update starting values
                 if (goal.type === 'skill_level') {
                     goal.startingLevel = skills.getLevel(goal.skill);
                     goal.startingXp = skills.getXp(goal.skill);
@@ -83,7 +59,6 @@ class AIManager {
                 }
                 
                 console.log('New goal selected:', goal);
-                // Update UI immediately when new goal is selected
                 if (window.ui) {
                     window.ui.forceGoalUpdate();
                 }
@@ -91,13 +66,12 @@ class AIManager {
             }
         }
 
-        // All goals complete or unachievable - add new ones
+        // All goals complete or unachievable
         console.log('All goals complete or unachievable, generating new goals');
         this.generateNewGoals();
-        this.selectNewGoal(); // Try selecting again after generating new goals
+        this.selectNewGoal();
     }
 
-    // Generate a unique key for a goal to track it
     getGoalKey(goal) {
         switch (goal.type) {
             case 'skill_level':
@@ -120,8 +94,7 @@ class AIManager {
                 return bank.getItemCount(goal.itemId) >= goal.targetCount;
             
             case 'complete_quest':
-                // TODO: Implement quest completion check
-                return false;
+                return false; // TODO: Implement
             
             default:
                 return false;
@@ -129,31 +102,17 @@ class AIManager {
     }
 
     generateNewGoals() {
-        // Generate new goals based on current progress
         const baseGoalCount = this.goals.length;
         
-        // Get current skill levels
-        const currentSkillLevels = {};
-        const allSkills = skills.getAllSkills();
-        for (const [skillId, skillData] of Object.entries(allSkills)) {
-            currentSkillLevels[skillId] = skillData.level;
-        }
+        // Let skill registry generate all goals
+        const newGoals = skillRegistry.generateAllGoals(baseGoalCount);
         
-        // Generate skill training goals
-        const skillGoals = skillBehaviors.generateSkillGoals(currentSkillLevels, baseGoalCount);
-        for (const goal of skillGoals) {
+        for (const goal of newGoals) {
             this.addGoal(goal);
         }
         
-        // Generate item banking goals based on activities and current levels
-        const itemGoals = skillBehaviors.generateItemGoals(currentSkillLevels, this.goals.length);
-        for (const goal of itemGoals) {
-            this.addGoal(goal);
-        }
+        console.log(`Generated ${newGoals.length} new goals`);
         
-        console.log(`Generated ${this.goals.length - baseGoalCount} new goals (${skillGoals.length} skill, ${itemGoals.length} item)`);
-        
-        // Notify UI
         if (window.ui) {
             window.ui.forceGoalUpdate();
         }
@@ -162,7 +121,6 @@ class AIManager {
     // ==================== DECISION MAKING & EXECUTION ====================
 
     update(deltaTime) {
-        // Cooldown to prevent too frequent decisions
         this.decisionCooldown -= deltaTime;
         
         // Always check if current goal is complete
@@ -173,13 +131,11 @@ class AIManager {
         // Only make decisions if cooldown has expired
         if (this.decisionCooldown > 0) return;
 
-        // Check if we need to make a decision
-        // Only make decisions if not busy, OR if inventory is full and we're not already handling it
+        // Make decisions when not busy or inventory full
         if (!player.isBusy()) {
             this.makeDecision();
             this.resetDecisionCooldown();
         } else if (inventory.isFull() && !player.isMoving()) {
-            // Only make decision about full inventory if we're not already moving
             this.makeDecision();
             this.resetDecisionCooldown();
         }
@@ -194,17 +150,17 @@ class AIManager {
             plannedActivity: this.plannedActivity
         });
         
-        // If inventory is full, go to bank (but check if we're already going there)
+        // If inventory is full, go to bank
         if (inventory.isFull()) {
             if (this.isMovingToBank()) {
-                console.log('Already moving to bank, no need to re-path');
+                console.log('Already moving to bank');
                 return;
             }
             this.goToBank();
             return;
         }
 
-        // Check current goal - if none or complete, select new one
+        // Check current goal
         if (!this.currentGoal || this.isGoalComplete(this.currentGoal)) {
             this.selectNewGoal();
         }
@@ -214,172 +170,75 @@ class AIManager {
             return;
         }
 
-        // Always try to execute the current goal when making a decision
         console.log('Executing goal:', this.currentGoal);
         this.executeGoal(this.currentGoal);
     }
 
     executeGoal(goal) {
+        // Delegate to skill-specific logic
+        if (goal.skill) {
+            const skill = skillRegistry.getSkill(goal.skill);
+            if (skill) {
+                skill.executeGoal(goal, this);
+                return;
+            }
+        }
+        
+        // Handle item goals that might be from a skill
+        if (goal.type === 'bank_items') {
+            // Check if any skill handles this item
+            for (const skill of skillRegistry.getAllSkills()) {
+                if (skill.executeGoal) {
+                    // Let skill check if it handles this item
+                    const handled = skill.executeGoal(goal, this);
+                    if (handled !== undefined) return;
+                }
+            }
+        }
+        
+        // Fallback for non-skill goals
         switch (goal.type) {
-            case 'skill_level':
-                this.trainSkill(goal.skill);
-                break;
-            
-            case 'bank_items':
-                this.gatherItems(goal.itemId);
-                break;
-            
             case 'complete_quest':
                 this.doQuest(goal.questId);
                 break;
+            default:
+                console.log('Unknown goal type:', goal.type);
         }
     }
 
     // ==================== ACTIVITY MANAGEMENT ====================
 
-    trainSkill(skillId) {
-        // Find best activity for training this skill
-        const activities = loadingManager.getData('activities');
-        const skillActivities = Object.entries(activities)
-            .filter(([id, data]) => data.skill === skillId && skills.canPerformActivity(id));
-
-        if (skillActivities.length === 0) {
-            console.log(`No available activities for ${skillId}`);
-            this.skipCurrentGoal(`${skillId} goal as impossible`);
-            return;
-        }
-
-        // Filter to only reachable activities that we have items for
-        const { viableActivities, activitiesNeedingItems } = this.categorizeActivities(skillActivities);
-        
-        console.log(`Found ${viableActivities.length} viable activities and ${activitiesNeedingItems.length} requiring unavailable items for ${skillId}`);
-        
-        if (viableActivities.length === 0) {
-            if (activitiesNeedingItems.length > 0) {
-                console.log(`All ${skillId} activities require items we don't have. Skipping skill training.`);
-            } else {
-                console.log(`No reachable activities found for ${skillId}`);
-            }
-            return;
-        }
-        
-        // Let skillBehaviors choose the best activity from viable ones
-        const chosenActivity = skillBehaviors.chooseBestActivity(
-            skillId, 
-            viableActivities, 
-            skills.getLevel(skillId)
-        );
-        
-        if (chosenActivity) {
-            console.log(`Chosen activity for ${skillId}: ${chosenActivity}`);
-            this.doActivity(chosenActivity);
-        }
-    }
-
-    gatherItems(itemId) {
-        console.log(`Gathering items: ${itemId}`);
-        
-        // Check if we already have enough in bank
-        if (bank.getItemCount(itemId) >= this.currentGoal.targetCount) {
-            console.log(`Already have enough ${itemId} in bank`);
-            return;
-        }
-
-        // If we have items in inventory but not enough total, bank first
-        const inventoryCount = inventory.getItemCount(itemId);
-        const bankCount = bank.getItemCount(itemId);
-        const totalCount = inventoryCount + bankCount;
-        
-        if (inventoryCount > 0 && totalCount < this.currentGoal.targetCount) {
-            console.log(`Banking ${inventoryCount} ${itemId} first`);
-            this.goToBank();
-            return;
-        }
-
-        // Special handling for cooking goals - cook cooked food items
-        if (this.isCookedFoodItem(itemId)) {
-            console.log(`${itemId} is a cooked food item, switching to cooking`);
-            this.cookFood(itemId);
-            return;
-        }
-
-        // Find activities that give this item
-        const activities = loadingManager.getData('activities');
-        const itemActivities = Object.entries(activities)
-            .filter(([id, data]) => {
-                if (!skills.canPerformActivity(id)) return false;
-                return data.rewards?.some(r => r.itemId === itemId);
-            });
-
-        console.log(`Found ${itemActivities.length} activities for ${itemId}`);
-        
-        if (itemActivities.length === 0) {
-            console.log(`No activities found for item ${itemId}`);
-            return;
-        }
-
-        // Filter to activities we have items for
-        const { viableActivities, activitiesNeedingItems } = this.categorizeActivities(itemActivities);
-        
-        console.log(`Found ${viableActivities.length} viable activities and ${activitiesNeedingItems.length} requiring unavailable items for ${itemId}`);
-        
-        if (viableActivities.length === 0) {
-            if (activitiesNeedingItems.length > 0) {
-                console.log(`All activities for ${itemId} require items we don't have. Cannot gather this item.`);
-                // Mark as temporarily unachievable
-                this.markGoalUnachievable(this.currentGoal);
-            } else {
-                console.log(`No reachable activities found for item ${itemId}`);
-            }
-            
-            this.skipCurrentGoal(`goal to gather ${itemId} as it's currently unachievable`);
-            return;
-        }
-
-        // Choose the first viable activity
-        const selectedActivity = viableActivities[0][0];
-        console.log(`Selected activity: ${selectedActivity}`);
-        this.doActivity(selectedActivity);
-    }
-
     doActivity(activityId) {
-        // Store the planned activity
         this.plannedActivity = activityId;
         
-        // Check if we have required items in inventory
+        // Check if we have required items
         if (!player.hasRequiredItems(activityId)) {
-            // Check if we have them in bank
             if (this.hasAccessToRequiredItems(activityId)) {
-                console.log(`Missing required items for ${activityId} in inventory, going to bank`);
+                console.log(`Missing required items for ${activityId}, going to bank`);
                 this.goToBankForItems(activityId);
                 return;
             } else {
                 console.log(`Cannot perform ${activityId} - required items not available`);
                 this.resetPlannedActivity();
-                this.findAlternativeActivity(activityId);
                 return;
             }
         }
         
         // Check if we're at a node with this activity
-const currentNode = nodes.getNode(player.currentNode);
-console.log(`Trying to do activity ${activityId} at node ${player.currentNode}`);
-console.log(`Current node activities:`, currentNode?.activities);
-
-if (currentNode && currentNode.activities?.includes(activityId)) {
-    // Double-check we're actually at this node position (prevents stale currentNode issues)
-    const nodePos = currentNode.position;
-    const dist = distance(player.position.x, player.position.y, nodePos.x, nodePos.y);
-    
-    if (dist <= 1.5) {  // Within reasonable distance
-        console.log(`Starting activity ${activityId}`);
-        player.startActivity(activityId);
-        return;
-    } else {
-        console.log(`CurrentNode says ${player.currentNode} but we're ${dist} pixels away, need to move there`);
-        player.currentNode = null;  // Clear stale node
-    }
-}
+        const currentNode = nodes.getNode(player.currentNode);
+        if (currentNode && currentNode.activities?.includes(activityId)) {
+            const nodePos = currentNode.position;
+            const dist = distance(player.position.x, player.position.y, nodePos.x, nodePos.y);
+            
+            if (dist <= 1.5) {
+                console.log(`Starting activity ${activityId}`);
+                player.startActivity(activityId);
+                return;
+            } else {
+                console.log(`Need to move to node position`);
+                player.currentNode = null;
+            }
+        }
 
         // Find nearest reachable node with this activity
         const targetNode = this.findReachableNodeWithActivity(activityId);
@@ -394,154 +253,34 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
     }
 
     doQuest(questId) {
-        // TODO: Implement quest system
         console.log(`Quest system not yet implemented: ${questId}`);
-    }
-
-    // ==================== COOKING OPERATIONS ====================
-    
-    cookFood(targetItemId = null) {
-        // Check if we have raw food in inventory
-        if (player.hasRawFood()) {
-            // We have raw food, go cook it
-            this.doActivity('cook_food');
-            return;
-        }
-        
-        // No raw food in inventory, check bank
-        if (this.hasRawFoodInBank()) {
-            // Go to bank to get raw food
-            this.goToBankForCooking();
-            return;
-        }
-        
-        // No raw food at all, skip this goal
-        console.log('No raw food available for cooking');
-        this.skipCurrentGoal('cooking goal - no raw food available');
-    }
-    
-    hasRawFoodInBank() {
-        const activityData = loadingManager.getData('activities')['cook_food'];
-        if (!activityData || !activityData.cookingTable) return false;
-        
-        const cookingLevel = skills.getLevel('cooking');
-        
-        for (const recipe of activityData.cookingTable) {
-            if (cookingLevel >= recipe.requiredLevel && bank.getItemCount(recipe.rawItemId) > 0) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    goToBankForCooking() {
-        // If already at bank, handle cooking banking
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.type === 'bank') {
-            this.handleBankingForCooking();
-            return;
-        }
-        
-        // Find nearest bank
-        const nearestBank = nodes.getNearestBank(player.position);
-        if (!nearestBank) {
-            console.log('No reachable bank found!');
-            return;
-        }
-        
-        // Move to bank
-        console.log(`Moving to ${nearestBank.name} to get raw food for cooking`);
-        player.moveTo(nearestBank.id);
-    }
-    
-    handleBankingForCooking() {
-        // Deposit all first
-        const deposited = bank.depositAll();
-        console.log(`Deposited ${deposited} items`);
-        
-        // Withdraw raw food items (prioritize by level requirement)
-        const activityData = loadingManager.getData('activities')['cook_food'];
-        const cookingLevel = skills.getLevel('cooking');
-        
-        // Sort recipes by required level (lowest first)
-        const availableRecipes = activityData.cookingTable
-            .filter(recipe => cookingLevel >= recipe.requiredLevel)
-            .sort((a, b) => a.requiredLevel - b.requiredLevel);
-        
-        let withdrawnAny = false;
-        let totalWithdrawn = 0;
-        
-        for (const recipe of availableRecipes) {
-            const bankCount = bank.getItemCount(recipe.rawItemId);
-            if (bankCount > 0) {
-                // Withdraw up to 28 raw items
-                const toWithdraw = Math.min(28 - totalWithdrawn, bankCount);
-                const withdrawn = bank.withdrawUpTo(recipe.rawItemId, toWithdraw);
-                
-                if (withdrawn > 0) {
-                    inventory.addItem(recipe.rawItemId, withdrawn);
-                    console.log(`Withdrew ${withdrawn} ${recipe.rawItemId}`);
-                    withdrawnAny = true;
-                    totalWithdrawn += withdrawn;
-                    
-                    if (totalWithdrawn >= 28) break; // Inventory full
-                }
-            }
-        }
-        
-        if (!withdrawnAny) {
-            console.log('No raw food to withdraw for cooking');
-            this.skipCurrentGoal('cooking goal - no raw food in bank');
-            return;
-        }
-        
-        // Update UI
-        ui.updateSkillsList();
-        
-        // Now go cook the food
-        this.clearCooldown();
-        this.doActivity('cook_food');
-    }
-    
-    isCookedFoodItem(itemId) {
-        // Check if this is a cooked food item
-        const cookedFoods = ['meat', 'shrimps', 'anchovies', 'sardine', 'herring', 
-                           'mackerel', 'trout', 'cod', 'pike', 'salmon', 
-                           'tuna', 'lobster', 'bass', 'swordfish', 'shark'];
-        return cookedFoods.includes(itemId);
     }
 
     // ==================== BANKING OPERATIONS ====================
 
     goToBank() {
-        // If already at bank, deposit all
         const currentNode = nodes.getNode(player.currentNode);
         if (currentNode && currentNode.type === 'bank') {
             this.performBanking();
             return;
         }
 
-        // Find nearest reachable bank
         const nearestBank = nodes.getNearestBank(player.position);
         if (!nearestBank) {
             console.log('No reachable bank found!');
             return;
         }
 
-        // Check if we're already moving to this bank
         if (player.targetNode === nearestBank.id && player.isMoving()) {
-            console.log(`Already moving to ${nearestBank.name}, not re-pathing`);
+            console.log(`Already moving to ${nearestBank.name}`);
             return;
         }
 
-        // Move to bank
         console.log(`Moving to ${nearestBank.name}`);
         player.moveTo(nearestBank.id);
     }
 
     goToBankForItems(activityId) {
-        // Find the node where we'll do the activity
         const targetNode = this.findReachableNodeWithActivity(activityId);
         if (!targetNode) {
             console.log(`No node found for activity ${activityId}`);
@@ -549,7 +288,6 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
             return;
         }
 
-        // Find nearest bank to the activity location
         const nearestBank = nodes.getNearestBank(targetNode.position);
         if (!nearestBank) {
             console.log('No reachable bank found!');
@@ -557,62 +295,55 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
             return;
         }
 
-        // If already at bank, handle items
         const currentNode = nodes.getNode(player.currentNode);
         if (currentNode && currentNode.type === 'bank') {
             this.handleBankingForActivity(activityId);
             return;
         }
 
-        // Move to bank
         console.log(`Moving to ${nearestBank.name} to get items for ${activityId}`);
         player.moveTo(nearestBank.id);
     }
 
     performBanking() {
-        const deposited = bank.depositAll();
-        console.log(`Deposited ${deposited} items`);
-        ui.updateSkillsList(); // Update UI after banking
-        
-        // If we have a planned activity, withdraw required items for it
-        if (this.plannedActivity && this.hasAccessToRequiredItems(this.plannedActivity)) {
-            this.withdrawItemsForActivity(this.plannedActivity);
+        // Check if current goal has skill-specific banking
+        if (this.currentGoal && this.currentGoal.skill) {
+            const skill = skillRegistry.getSkill(this.currentGoal.skill);
+            if (skill && skill.handleBanking) {
+                skill.handleBanking(this, this.currentGoal);
+                return;
+            }
         }
         
-        // Check if current goal is complete after banking
+        // Default banking behavior
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        ui.updateSkillsList();
+        
+        // Check if goal is complete after banking
         if (this.currentGoal && this.isGoalComplete(this.currentGoal)) {
             this.completeCurrentGoal();
         } else {
-            // Reset decision cooldown and continue with current goal
             this.clearCooldown();
-            
             if (this.currentGoal) {
-                console.log('Continuing/starting goal after banking:', this.currentGoal);
+                console.log('Continuing goal after banking:', this.currentGoal);
                 this.executeGoal(this.currentGoal);
             }
         }
     }
 
     handleBankingForActivity(activityId) {
-        // Deposit all first
         const deposited = bank.depositAll();
         console.log(`Deposited ${deposited} items`);
         
-        // Try to withdraw items for the activity
         if (!this.withdrawItemsForActivity(activityId)) {
-            // Cannot do this activity, try alternatives
             this.resetPlannedActivity();
-            this.findAlternativeActivity(activityId);
             return;
         }
         
-        // Update UI
         ui.updateSkillsList();
-        
-        // Reset decision cooldown and continue with activity
         this.clearCooldown();
         
-        // Now try to do the activity again
         if (this.plannedActivity) {
             console.log(`Continuing with planned activity: ${this.plannedActivity}`);
             this.executeGoal(this.currentGoal);
@@ -623,7 +354,7 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         const requiredItems = player.getRequiredItems(activityId);
         
         if (requiredItems.length === 0) {
-            return true; // No items needed
+            return true;
         }
         
         console.log(`Withdrawing required items for ${activityId}:`, requiredItems);
@@ -633,18 +364,11 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
             const bankCount = bank.getItemCount(required.itemId);
             
             if (bankCount === 0) {
-                console.log(`No ${required.itemId} in bank, cannot perform activity`);
-                return false; // Missing required items
+                console.log(`No ${required.itemId} in bank`);
+                return false;
             }
             
-            let withdrawAmount;
-            if (itemData.stackable) {
-                // Withdraw all for stackable items
-                withdrawAmount = bankCount;
-            } else {
-                // Withdraw 14 for non-stackable (half inventory)
-                withdrawAmount = Math.min(14, bankCount);
-            }
+            let withdrawAmount = itemData.stackable ? bankCount : Math.min(14, bankCount);
             
             const withdrawn = bank.withdrawUpTo(required.itemId, withdrawAmount);
             if (withdrawn > 0) {
@@ -653,25 +377,22 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
             }
         }
         
-        return true; // Successfully withdrew all items
+        return true;
     }
 
     // ==================== NAVIGATION & MOVEMENT ====================
 
     findReachableNodeWithActivity(activityId) {
-        // Get all nodes with this activity
         const nodesWithActivity = Object.values(nodes.getAllNodes()).filter(
             node => node.activities && node.activities.includes(activityId) && !this.failedNodes.has(node.id)
         );
 
-        // Sort by distance
         nodesWithActivity.sort((a, b) => {
             const distA = distance(player.position.x, player.position.y, a.position.x, a.position.y);
             const distB = distance(player.position.x, player.position.y, b.position.x, b.position.y);
             return distA - distB;
         });
 
-        // Find first reachable node
         for (const node of nodesWithActivity) {
             if (window.pathfinding) {
                 const path = pathfinding.findPath(
@@ -683,11 +404,10 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
                 if (path) {
                     return node;
                 } else {
-                    console.warn(`Node ${node.id} is not reachable, marking as failed`);
+                    console.warn(`Node ${node.id} is not reachable`);
                     this.failedNodes.add(node.id);
                 }
             } else {
-                // If pathfinding not available, assume all nodes are reachable
                 return node;
             }
         }
@@ -697,7 +417,6 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
 
     // ==================== HELPER METHODS ====================
 
-    // Check if player has access to required items (in inventory or bank)
     hasAccessToRequiredItems(activityId) {
         const requiredItems = player.getRequiredItems(activityId);
         
@@ -706,7 +425,7 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
             const inBank = bank.getItemCount(required.itemId);
             
             if (inInventory + inBank === 0) {
-                console.log(`No access to required item ${required.itemId} for activity ${activityId}`);
+                console.log(`No access to required item ${required.itemId}`);
                 return false;
             }
         }
@@ -714,31 +433,6 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         return true;
     }
 
-    // Check if activity can be performed (has level and items)
-    canPerformActivity(activityId) {
-        return skills.canPerformActivity(activityId) && this.hasAccessToRequiredItems(activityId);
-    }
-
-    // Categorize activities into viable and those needing items
-    categorizeActivities(activities) {
-        const viableActivities = [];
-        const activitiesNeedingItems = [];
-        
-        for (const [activityId, activityData] of activities) {
-            const reachableNode = this.findReachableNodeWithActivity(activityId);
-            if (!reachableNode) continue;
-            
-            if (this.hasAccessToRequiredItems(activityId)) {
-                viableActivities.push([activityId, activityData]);
-            } else {
-                activitiesNeedingItems.push([activityId, activityData]);
-            }
-        }
-        
-        return { viableActivities, activitiesNeedingItems };
-    }
-
-    // Check if currently moving to a bank
     isMovingToBank() {
         if (!player.isMoving() || !player.targetNode) return false;
         
@@ -746,16 +440,6 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         return targetNode && targetNode.type === 'bank';
     }
 
-    // Find alternative activity for the same skill
-    findAlternativeActivity(activityId) {
-        const activityData = loadingManager.getData('activities')[activityId];
-        if (activityData && activityData.skill) {
-            console.log(`Looking for alternative ${activityData.skill} activities...`);
-            this.trainSkill(activityData.skill);
-        }
-    }
-
-    // Complete the current goal and select a new one
     completeCurrentGoal() {
         console.log('Goal complete:', this.currentGoal);
         this.currentGoal = null;
@@ -764,17 +448,14 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         this.clearCooldown();
     }
 
-    // Skip current goal and move to next
     skipCurrentGoal(reason) {
         console.log(`Skipping ${reason}`);
         this.currentGoal = null;
         this.resetPlannedActivity();
-        // Add a small delay before selecting new goal to prevent tight loops
-        this.decisionCooldown = 100; // 100ms cooldown
+        this.decisionCooldown = 100;
         this.selectNewGoal();
     }
 
-    // Mark a goal as temporarily unachievable
     markGoalUnachievable(goal) {
         if (!goal) return;
         
@@ -783,7 +464,6 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         console.log(`Marked goal as temporarily unachievable: ${goalKey}`);
     }
 
-    // Clear planned activity with logging
     resetPlannedActivity() {
         if (this.plannedActivity) {
             console.log(`Clearing planned activity: ${this.plannedActivity}`);
@@ -791,17 +471,14 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
         this.plannedActivity = null;
     }
 
-    // Reset decision cooldown
     resetDecisionCooldown() {
-        this.decisionCooldown = 1000; // 1 second cooldown
+        this.decisionCooldown = 1000;
     }
 
-    // Clear cooldown for immediate decision
     clearCooldown() {
         this.decisionCooldown = 0;
     }
 
-    // Get status text for UI
     getStatus() {
         if (!this.currentGoal) return 'No active goal';
 
