@@ -3,6 +3,24 @@ class WoodcuttingSkill extends BaseSkill {
         super('woodcutting', 'Woodcutting');
     }
     
+    // ==================== BANKING DECISIONS ====================
+    
+    needsBanking(goal) {
+        // Woodcutting is a gathering skill - bank when inventory is full
+        if (inventory.isFull()) {
+            console.log('Inventory full of logs, banking needed');
+            return true;
+        }
+        return false;
+    }
+    
+    canContinueWithInventory(goal) {
+        // Woodcutting can continue as long as there's inventory space
+        return !inventory.isFull();
+    }
+    
+    // ==================== CORE BEHAVIOR ====================
+    
     // Woodcutting has no duration scaling
     getDuration(baseDuration, level, activityData) {
         return baseDuration;
@@ -35,6 +53,8 @@ class WoodcuttingSkill extends BaseSkill {
         
         return actionsPerHour * xpPerAction * successChance;
     }
+    
+    // ==================== GOAL GENERATION ====================
     
     generateItemGoals(currentLevel, priority) {
         const goals = [];
@@ -92,5 +112,24 @@ class WoodcuttingSkill extends BaseSkill {
         
         console.log(`Choosing ${chosen.id} for woodcutting (${Math.floor(chosen.xpRate)} XP/hr)`);
         return chosen.id;
+    }
+    
+    // ==================== BANKING ====================
+    
+    handleBanking(ai, goal) {
+        // Woodcutting just deposits everything
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} logs`);
+        
+        // Update UI
+        if (window.ui) {
+            window.ui.updateSkillsList();
+        }
+        
+        // Continue woodcutting
+        ai.clearCooldown();
+        if (goal) {
+            ai.executeGoal(goal);
+        }
     }
 }
