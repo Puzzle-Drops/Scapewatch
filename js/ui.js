@@ -139,11 +139,14 @@ class UIManager {
         }
         activityName.textContent = displayName;
 
-        // Get skill-specific behavior and calculate XP rate
-        const behavior = skillBehaviors.getBehavior(activityData.skill);
-        const xpPerHour = Math.floor(
-            behavior.getEffectiveXpRate(activityData, skills.getLevel(activityData.skill))
-        );
+        // Get skill from registry and calculate XP rate
+        const skill = skillRegistry.getSkill(activityData.skill);
+        let xpPerHour = 0;
+        if (skill) {
+            xpPerHour = Math.floor(
+                skill.calculateXpRate(activityData, skills.getLevel(activityData.skill))
+            );
+        }
         
         activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
     }
