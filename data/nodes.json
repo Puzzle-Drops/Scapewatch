@@ -25,7 +25,7 @@
         "type": "skill",
         "position": {
             "x": 4325,
-            "y": 1852
+            "y": 1842
         },
         "activities": [
             "mine_copper_tin",
@@ -45,7 +45,7 @@
         "type": "skill",
         "position": {
             "x": 4325,
-            "y": 1872
+            "y": 1852
         },
         "activities": [
             "small_fishing_net",
@@ -58,13 +58,25 @@
             "harpoon_shark"
         ]
     },
+    "lumbridge_kitchen": {
+        "id": "lumbridge_kitchen",
+        "name": "Lumbridge Kitchen",
+        "type": "skill",
+        "position": {
+            "x": 4375,
+            "y": 1886
+        },
+        "activities": [
+            "cook_food"
+        ]
+    },
     "lumbridge_bank": {
         "id": "lumbridge_bank",
         "name": "Lumbridge Bank",
         "type": "bank",
         "position": {
-            "x": 4370,
-            "y": 1879
+            "x": 4360,
+            "y": 1904
         }
     },
     "lumbridge_trees": {
