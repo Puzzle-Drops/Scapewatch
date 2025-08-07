@@ -4,6 +4,8 @@ class FishingSkill extends BaseSkill {
         this.lastCatchXp = 0;
     }
     
+    // ==================== CORE BEHAVIOR ====================
+    
     getDuration(baseDuration, level, activityData) {
         // Handle duration boosts (pike has 20% chance of 3600ms boost)
         if (activityData.durationBoost && Math.random() < activityData.durationBoost.chance) {
@@ -78,6 +80,8 @@ class FishingSkill extends BaseSkill {
             }, 0);
     }
     
+    // ==================== GOAL GENERATION ====================
+    
     generateItemGoals(currentLevel, priority) {
         const goals = [];
         const fish = [
@@ -138,6 +142,8 @@ class FishingSkill extends BaseSkill {
         return true;
     }
     
+    // ==================== AI EXECUTION ====================
+    
     executeGoal(goal, ai) {
         if (goal.type === 'skill_level') {
             this.trainFishing(ai);
@@ -162,6 +168,7 @@ class FishingSkill extends BaseSkill {
         
         const bestActivity = this.chooseBestActivity(activities, skills.getLevel(this.id));
         if (bestActivity) {
+            ai.plannedActivity = bestActivity; // Store planned activity for banking
             ai.doActivity(bestActivity);
         }
     }
@@ -173,6 +180,9 @@ class FishingSkill extends BaseSkill {
             ai.skipCurrentGoal(`Cannot fish ${itemId}`);
             return;
         }
+        
+        // Store planned activity for banking
+        ai.plannedActivity = activity;
         
         // Check if this activity needs supplies
         const activityData = loadingManager.getData('activities')[activity];
@@ -217,28 +227,32 @@ class FishingSkill extends BaseSkill {
         }
     }
     
+    // ==================== BANKING ====================
+    
     handleBanking(ai, goal) {
         bank.depositAll();
         
-        // Withdraw fishing supplies (bait and feathers)
-        let withdrew = false;
+        // Determine what supplies we need based on planned activity or best available
+        const suppliesNeeded = this.determineNeededSupplies(ai);
         
-        const baitCount = bank.getItemCount('fishing_bait');
-        if (baitCount > 0) {
-            const toWithdraw = Math.min(500, baitCount);
-            bank.withdrawUpTo('fishing_bait', toWithdraw);
-            inventory.addItem('fishing_bait', toWithdraw);
-            withdrew = true;
-            console.log(`Withdrew ${toWithdraw} fishing bait`);
+        if (suppliesNeeded.length === 0) {
+            console.log('No fishing supplies needed');
+            ai.clearCooldown();
+            ai.executeGoal(goal);
+            return;
         }
         
-        const featherCount = bank.getItemCount('feather');
-        if (featherCount > 0) {
-            const toWithdraw = Math.min(500, featherCount);
-            bank.withdrawUpTo('feather', toWithdraw);
-            inventory.addItem('feather', toWithdraw);
-            withdrew = true;
-            console.log(`Withdrew ${toWithdraw} feathers`);
+        let withdrew = false;
+        
+        for (const supply of suppliesNeeded) {
+            const bankCount = bank.getItemCount(supply.itemId);
+            if (bankCount > 0) {
+                const toWithdraw = Math.min(supply.maxAmount, bankCount);
+                bank.withdrawUpTo(supply.itemId, toWithdraw);
+                inventory.addItem(supply.itemId, toWithdraw);
+                withdrew = true;
+                console.log(`Withdrew ${toWithdraw} ${supply.itemId} for fishing`);
+            }
         }
         
         if (!withdrew) {
@@ -249,5 +263,47 @@ class FishingSkill extends BaseSkill {
         
         ai.clearCooldown();
         ai.executeGoal(goal);
+    }
+    
+    determineNeededSupplies(ai) {
+        const supplies = [];
+        const activities = loadingManager.getData('activities');
+        
+        // If we have a planned activity, get supplies for that
+        if (ai.plannedActivity) {
+            const activityData = activities[ai.plannedActivity];
+            if (activityData && activityData.consumeOnSuccess) {
+                for (const required of activityData.consumeOnSuccess) {
+                    supplies.push({
+                        itemId: required.itemId,
+                        maxAmount: 500 // Reasonable amount to withdraw
+                    });
+                }
+            }
+            return supplies;
+        }
+        
+        // Otherwise, get supplies for best available activities
+        const availableActivities = this.getAvailableActivities();
+        const neededItems = new Set();
+        
+        // Check what supplies our available activities need
+        for (const [id, data] of availableActivities) {
+            if (data.consumeOnSuccess) {
+                for (const required of data.consumeOnSuccess) {
+                    neededItems.add(required.itemId);
+                }
+            }
+        }
+        
+        // Convert to array with reasonable amounts
+        for (const itemId of neededItems) {
+            supplies.push({
+                itemId: itemId,
+                maxAmount: 500
+            });
+        }
+        
+        return supplies;
     }
 }
