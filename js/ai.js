@@ -131,14 +131,37 @@ class AIManager {
         // Only make decisions if cooldown has expired
         if (this.decisionCooldown > 0) return;
 
-        // Make decisions when not busy or inventory full
+        // Make decisions when appropriate
         if (!player.isBusy()) {
             this.makeDecision();
             this.resetDecisionCooldown();
-        } else if (inventory.isFull() && !player.isMoving()) {
+        } else if (this.shouldCheckBanking() && !player.isMoving()) {
             this.makeDecision();
             this.resetDecisionCooldown();
         }
+    }
+
+    shouldCheckBanking() {
+        // Check if the current goal's skill needs banking
+        if (this.currentGoal && this.currentGoal.skill) {
+            const skill = skillRegistry.getSkill(this.currentGoal.skill);
+            if (skill) {
+                return skill.needsBanking(this.currentGoal);
+            }
+        }
+        
+        // Check for item goals that might have a related skill
+        if (this.currentGoal && this.currentGoal.type === 'bank_items') {
+            // Check all skills to see if any handle this item
+            for (const skill of skillRegistry.getAllSkills()) {
+                if (skill.needsBanking && skill.isCookedFood && skill.isCookedFood(this.currentGoal.itemId)) {
+                    return skill.needsBanking(this.currentGoal);
+                }
+            }
+        }
+        
+        // Default: check if inventory is full
+        return inventory.isFull();
     }
 
     makeDecision() {
@@ -150,8 +173,8 @@ class AIManager {
             plannedActivity: this.plannedActivity
         });
         
-        // If inventory is full, go to bank
-        if (inventory.isFull()) {
+        // Check if current goal's skill needs banking
+        if (this.currentGoal && this.needsBankingForGoal(this.currentGoal)) {
             if (this.isMovingToBank()) {
                 console.log('Already moving to bank');
                 return;
@@ -172,6 +195,32 @@ class AIManager {
 
         console.log('Executing goal:', this.currentGoal);
         this.executeGoal(this.currentGoal);
+    }
+
+    needsBankingForGoal(goal) {
+        // Get the skill for this goal
+        let skill = null;
+        
+        if (goal.skill) {
+            skill = skillRegistry.getSkill(goal.skill);
+        } else if (goal.type === 'bank_items') {
+            // Check if any skill handles this item (e.g., cooking handles cooked food)
+            for (const s of skillRegistry.getAllSkills()) {
+                if (s.isCookedFood && s.isCookedFood(goal.itemId)) {
+                    skill = s;
+                    break;
+                }
+                // Could add similar checks for other skills
+            }
+        }
+        
+        // If we found a skill, ask it about banking needs
+        if (skill && skill.needsBanking) {
+            return skill.needsBanking(goal);
+        }
+        
+        // Default behavior: bank if inventory is full
+        return inventory.isFull();
     }
 
     executeGoal(goal) {
@@ -312,6 +361,16 @@ class AIManager {
             if (skill && skill.handleBanking) {
                 skill.handleBanking(this, this.currentGoal);
                 return;
+            }
+        }
+        
+        // Check if it's an item goal handled by a skill
+        if (this.currentGoal && this.currentGoal.type === 'bank_items') {
+            for (const skill of skillRegistry.getAllSkills()) {
+                if (skill.isCookedFood && skill.isCookedFood(this.currentGoal.itemId)) {
+                    skill.handleBanking(this, this.currentGoal);
+                    return;
+                }
             }
         }
         
