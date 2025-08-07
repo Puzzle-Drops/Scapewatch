@@ -4,6 +4,24 @@ class CombatSkill extends BaseSkill {
         this.combatSkills = ['attack', 'strength', 'defence', 'hitpoints'];
     }
     
+    // ==================== BANKING DECISIONS ====================
+    
+    needsBanking(goal) {
+        // Combat banks when inventory is full since loot takes space
+        if (inventory.isFull()) {
+            console.log('Inventory full from combat loot, banking needed');
+            return true;
+        }
+        return false;
+    }
+    
+    canContinueWithInventory(goal) {
+        // Combat can continue as long as inventory isn't full
+        return !inventory.isFull();
+    }
+    
+    // ==================== CORE BEHAVIOR ====================
+    
     processRewards(activityData, level) {
         // Standard reward processing for combat
         const rewards = [];
@@ -31,6 +49,8 @@ class CombatSkill extends BaseSkill {
         return activityData.xpPerAction || 0;
     }
     
+    // ==================== GOAL GENERATION ====================
+    
     generateLevelGoals(currentLevel, priority) {
         const goals = [];
         
@@ -55,6 +75,7 @@ class CombatSkill extends BaseSkill {
     
     generateItemGoals(currentLevel, priority) {
         // Combat doesn't generate item banking goals by default
+        // Could add goals for specific drops in the future
         return [];
     }
     
@@ -70,5 +91,24 @@ class CombatSkill extends BaseSkill {
         const currentLevel = skills.getLevel(activityData.skill);
         
         return currentLevel >= requiredLevel;
+    }
+    
+    // ==================== BANKING ====================
+    
+    handleBanking(ai, goal) {
+        // Combat just deposits everything
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items from combat`);
+        
+        // Update UI
+        if (window.ui) {
+            window.ui.updateSkillsList();
+        }
+        
+        // Continue combat
+        ai.clearCooldown();
+        if (goal) {
+            ai.executeGoal(goal);
+        }
     }
 }
