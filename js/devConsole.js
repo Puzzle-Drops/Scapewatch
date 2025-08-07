@@ -16,6 +16,9 @@ class DevConsole {
             defaultActionDuration: 1.0
         };
         
+        // Store original skill methods for speed modifications
+        this.originalSkillMethods = null;
+        
         // Capture console methods before anything else loads
         this.captureConsole();
         
@@ -82,7 +85,7 @@ class DevConsole {
             },
             actionspeed: {
                 description: 'Set action duration multiplier',
-                usage: 'actionspeed [multiplier] (0.1 = 10x faster, 2 = 2x slower)',
+                usage: 'actionspeed [multiplier] (0.01 = 100x faster, 0.1 = 10x faster, 2 = 2x slower)',
                 fn: (args) => this.cmdActionSpeed(args)
             },
             testmode: {
@@ -662,23 +665,34 @@ class DevConsole {
     cmdActionSpeed(args) {
         if (args.length === 0) {
             this.log(`Current action speed multiplier: ${this.speedModifiers.actionDuration}x`, 'info');
-            this.log(`(0.1 = 10x faster, 1.0 = normal, 2.0 = 2x slower)`, 'info');
+            this.log(`(0.01 = 100x faster, 0.1 = 10x faster, 1.0 = normal, 2.0 = 2x slower)`, 'info');
             return;
         }
         
-        const multiplier = this.parseFloatArg(args[0], 'Multiplier', 0.01, 10);
+        const multiplier = this.parseFloatArg(args[0], 'Multiplier', 0.001, 10);
         if (multiplier === null) return;
         
         this.speedModifiers.actionDuration = multiplier;
         
-        // Hook into skillBehaviors if it exists
-        if (window.skillBehaviors) {
-            // Override the getDuration methods to apply multiplier
-            const originalGetDuration = skillBehaviors.behaviors.default.getDuration;
-            for (const behavior of Object.values(skillBehaviors.behaviors)) {
-                const original = behavior.getDuration;
-                behavior.getDuration = (base, level, data) => {
-                    const duration = original.call(behavior, base, level, data);
+        // Hook into skill registry if it exists
+        if (window.skillRegistry && window.skillRegistry.initialized) {
+            // Store original methods if not already stored
+            if (!this.originalSkillMethods) {
+                this.originalSkillMethods = {};
+            }
+            
+            // Override getDuration methods for all skills
+            const allSkills = skillRegistry.getAllSkills();
+            for (const skill of allSkills) {
+                // Store original method if not already stored
+                if (!this.originalSkillMethods[skill.id]) {
+                    this.originalSkillMethods[skill.id] = skill.getDuration.bind(skill);
+                }
+                
+                // Override with multiplier
+                const originalMethod = this.originalSkillMethods[skill.id];
+                skill.getDuration = (baseDuration, level, activityData) => {
+                    const duration = originalMethod(baseDuration, level, activityData);
                     return duration * window.devConsole.speedModifiers.actionDuration;
                 };
             }
@@ -711,8 +725,8 @@ class DevConsole {
                 player.movementSpeed = 30;
             }
             
-            // Apply action speed
-            this.cmdActionSpeed(['0.1']);
+            // Apply action speed (0.01 = 100x faster)
+            this.cmdActionSpeed(['0.01']);
             
             this.log('Test mode ENABLED', 'success');
             this.log('- Player speed: 30 tiles/sec', 'info');
@@ -729,6 +743,16 @@ class DevConsole {
         
         if (window.player) {
             player.movementSpeed = this.speedModifiers.defaultPlayerSpeed;
+        }
+        
+        // Restore original skill methods if they were overridden
+        if (this.originalSkillMethods && window.skillRegistry) {
+            const allSkills = skillRegistry.getAllSkills();
+            for (const skill of allSkills) {
+                if (this.originalSkillMethods[skill.id]) {
+                    skill.getDuration = this.originalSkillMethods[skill.id];
+                }
+            }
         }
         
         // Reset action speed
