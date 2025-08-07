@@ -5,6 +5,7 @@ class AIManager {
         this.decisionCooldown = 0;
         this.failedNodes = new Set(); // Track nodes we couldn't reach
         this.plannedActivity = null; // Track what activity we plan to do
+        this.unachievableGoals = new Map(); // Track temporarily unachievable goals with retry time
         this.initializeGoals();
     }
 
@@ -52,8 +53,24 @@ class AIManager {
     }
 
     selectNewGoal() {
-        // Find first incomplete goal
+        // Clean up expired unachievable goals (retry after 30 seconds)
+        const now = Date.now();
+        for (const [goalKey, timestamp] of this.unachievableGoals.entries()) {
+            if (now - timestamp > 30000) { // 30 seconds
+                this.unachievableGoals.delete(goalKey);
+                console.log(`Retrying previously unachievable goal: ${goalKey}`);
+            }
+        }
+        
+        // Find first incomplete and achievable goal
         for (const goal of this.goals) {
+            const goalKey = this.getGoalKey(goal);
+            
+            // Skip if marked as unachievable
+            if (this.unachievableGoals.has(goalKey)) {
+                continue;
+            }
+            
             if (!this.isGoalComplete(goal)) {
                 this.currentGoal = goal;
                 
@@ -74,10 +91,24 @@ class AIManager {
             }
         }
 
-        // All goals complete - add new ones
-        console.log('All goals complete, generating new goals');
+        // All goals complete or unachievable - add new ones
+        console.log('All goals complete or unachievable, generating new goals');
         this.generateNewGoals();
         this.selectNewGoal(); // Try selecting again after generating new goals
+    }
+
+    // Generate a unique key for a goal to track it
+    getGoalKey(goal) {
+        switch (goal.type) {
+            case 'skill_level':
+                return `skill_${goal.skill}_${goal.targetLevel}`;
+            case 'bank_items':
+                return `bank_${goal.itemId}_${goal.targetCount}`;
+            case 'complete_quest':
+                return `quest_${goal.questId}`;
+            default:
+                return `unknown_${JSON.stringify(goal)}`;
+        }
     }
 
     isGoalComplete(goal) {
@@ -288,6 +319,8 @@ class AIManager {
         if (viableActivities.length === 0) {
             if (activitiesNeedingItems.length > 0) {
                 console.log(`All activities for ${itemId} require items we don't have. Cannot gather this item.`);
+                // Mark as temporarily unachievable
+                this.markGoalUnachievable(this.currentGoal);
             } else {
                 console.log(`No reachable activities found for item ${itemId}`);
             }
@@ -612,10 +645,21 @@ if (currentNode && currentNode.activities?.includes(activityId)) {
 
     // Skip current goal and move to next
     skipCurrentGoal(reason) {
-        console.log(`Marking ${reason} and skipping`);
+        console.log(`Skipping ${reason}`);
         this.currentGoal = null;
         this.resetPlannedActivity();
+        // Add a small delay before selecting new goal to prevent tight loops
+        this.decisionCooldown = 100; // 100ms cooldown
         this.selectNewGoal();
+    }
+
+    // Mark a goal as temporarily unachievable
+    markGoalUnachievable(goal) {
+        if (!goal) return;
+        
+        const goalKey = this.getGoalKey(goal);
+        this.unachievableGoals.set(goalKey, Date.now());
+        console.log(`Marked goal as temporarily unachievable: ${goalKey}`);
     }
 
     // Clear planned activity with logging
