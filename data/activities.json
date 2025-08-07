@@ -263,6 +263,211 @@
             }
         ]
     },
+    ,
+    "cook_food": {
+        "id": "cook_food",
+        "name": "Cook Food",
+        "skill": "cooking",
+        "requiredLevel": 1,
+        "baseDuration": 2400,
+        "cookingTable": [
+            {
+                "rawItemId": "raw_meat",
+                "cookedItemId": "meat",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 1,
+                "xpPerAction": 30,
+                "chanceScaling": {
+                    "minChance": 0.5039,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 32
+                }
+            },
+            {
+                "rawItemId": "raw_shrimps",
+                "cookedItemId": "shrimps",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 1,
+                "xpPerAction": 30,
+                "chanceScaling": {
+                    "minChance": 0.5039,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 32
+                }
+            },
+            {
+                "rawItemId": "raw_anchovies",
+                "cookedItemId": "anchovies",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 1,
+                "xpPerAction": 30,
+                "chanceScaling": {
+                    "minChance": 0.5039,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 32
+                }
+            },
+            {
+                "rawItemId": "raw_sardine",
+                "cookedItemId": "sardine",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 1,
+                "xpPerAction": 40,
+                "chanceScaling": {
+                    "minChance": 0.4648,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 34
+                }
+            },
+            {
+                "rawItemId": "raw_herring",
+                "cookedItemId": "herring",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 5,
+                "xpPerAction": 50,
+                "chanceScaling": {
+                    "minChance": 0.4844,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 37
+                }
+            },
+            {
+                "rawItemId": "raw_mackerel",
+                "cookedItemId": "mackerel",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 10,
+                "xpPerAction": 60,
+                "chanceScaling": {
+                    "minChance": 0.5156,
+                    "maxChance": 1.0,
+                    "minLevel": 1,
+                    "maxLevel": 41
+                }
+            },
+            {
+                "rawItemId": "raw_trout",
+                "cookedItemId": "trout",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 15,
+                "xpPerAction": 70,
+                "chanceScaling": {
+                    "minChance": 0.5391,
+                    "maxChance": 1.0,
+                    "minLevel": 15,
+                    "maxLevel": 46
+                }
+            },
+            {
+                "rawItemId": "raw_cod",
+                "cookedItemId": "cod",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 18,
+                "xpPerAction": 75,
+                "chanceScaling": {
+                    "minChance": 0.5820,
+                    "maxChance": 1.0,
+                    "minLevel": 18,
+                    "maxLevel": 47
+                }
+            },
+            {
+                "rawItemId": "raw_pike",
+                "cookedItemId": "pike",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 20,
+                "xpPerAction": 80,
+                "chanceScaling": {
+                    "minChance": 0.5625,
+                    "maxChance": 1.0,
+                    "minLevel": 20,
+                    "maxLevel": 50
+                }
+            },
+            {
+                "rawItemId": "raw_salmon",
+                "cookedItemId": "salmon",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 25,
+                "xpPerAction": 90,
+                "chanceScaling": {
+                    "minChance": 0.5781,
+                    "maxChance": 1.0,
+                    "minLevel": 25,
+                    "maxLevel": 55
+                }
+            },
+            {
+                "rawItemId": "raw_tuna",
+                "cookedItemId": "tuna",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 30,
+                "xpPerAction": 100,
+                "chanceScaling": {
+                    "minChance": 0.5938,
+                    "maxChance": 1.0,
+                    "minLevel": 30,
+                    "maxLevel": 59
+                }
+            },
+            {
+                "rawItemId": "raw_lobster",
+                "cookedItemId": "lobster",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 40,
+                "xpPerAction": 120,
+                "chanceScaling": {
+                    "minChance": 0.6094,
+                    "maxChance": 1.0,
+                    "minLevel": 40,
+                    "maxLevel": 70
+                }
+            },
+            {
+                "rawItemId": "raw_bass",
+                "cookedItemId": "bass",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 43,
+                "xpPerAction": 130,
+                "chanceScaling": {
+                    "minChance": 0.6016,
+                    "maxChance": 1.0,
+                    "minLevel": 43,
+                    "maxLevel": 75
+                }
+            },
+            {
+                "rawItemId": "raw_swordfish",
+                "cookedItemId": "swordfish",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 45,
+                "xpPerAction": 140,
+                "chanceScaling": {
+                    "minChance": 0.5547,
+                    "maxChance": 1.0,
+                    "minLevel": 45,
+                    "maxLevel": 80
+                }
+            },
+            {
+                "rawItemId": "raw_shark",
+                "cookedItemId": "shark",
+                "burntItemId": "burnt_food",
+                "requiredLevel": 80,
+                "xpPerAction": 210,
+                "chanceScaling": {
+                    "minChance": 0.6406,
+                    "maxChance": 1.0,
+                    "minLevel": 80,
+                    "maxLevel": 98
+                }
+            }
+        ]
+    },
     "chop_tree": {
         "id": "chop_tree",
         "name": "Chop Tree",
