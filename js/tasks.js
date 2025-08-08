@@ -35,19 +35,20 @@ class TaskManager {
             const task = skill.generateTask();
             
             if (task) {
-                // Set initial progress tracking based on task type
-                if (task.isCookingTask) {
-                    // For cooking tasks, initialize the consumption counter
-                    task.rawFoodConsumed = 0;
-                    task.startingCount = 0; // We track consumption, not bank amount
-                } else {
-                    // For gathering tasks, track items in bank/inventory
-                    task.startingCount = this.getCurrentItemCount(task.itemId);
-                }
-                task.progress = 0;
-                this.tasks.push(task);
-                console.log(`Generated task: ${task.description}`);
-            }
+    // Set initial progress tracking based on task type
+    if (task.isCookingTask) {
+        // For cooking tasks, initialize the consumption counter
+        task.rawFoodConsumed = 0;
+        task.startingCount = 0; // We track consumption, not bank amount
+    } else {
+        // For gathering tasks, DON'T set startingCount yet!
+        // It will be set when the task becomes active
+        task.startingCount = null; // Mark as not yet initialized
+    }
+    task.progress = 0;
+    this.tasks.push(task);
+    console.log(`Generated task: ${task.description}`);
+}
         }
 
         if (this.tasks.length < this.maxTasks) {
@@ -140,7 +141,7 @@ class TaskManager {
         }
     }
 
-    // Update all task progress (called periodically to sync)
+// Update all task progress (called periodically to sync)
 updateAllProgress() {
     let anyComplete = false;
     
@@ -162,6 +163,12 @@ updateAllProgress() {
                     anyComplete = true;
                 }
             } else {
+                // Initialize startingCount if this is the first time this task is active
+                if (task.startingCount === null) {
+                    task.startingCount = this.getCurrentItemCount(task.itemId);
+                    console.log(`Task "${task.description}" now active, starting count: ${task.startingCount}`);
+                }
+                
                 // Update gathering task based on current counts
                 const currentCount = this.getCurrentItemCount(task.itemId);
                 const itemsGained = currentCount - task.startingCount;
@@ -237,16 +244,17 @@ const wasAICurrentTask = window.ai && (oldTask === window.ai.currentTask);
         }
 
         if (newTask) {
-            // Initialize based on task type
-            if (newTask.isCookingTask) {
-                newTask.rawFoodConsumed = 0;
-                newTask.startingCount = 0;
-            } else {
-                newTask.startingCount = this.getCurrentItemCount(newTask.itemId);
-            }
-            newTask.progress = 0;
-            this.tasks[index] = newTask;
-            console.log(`New task: ${newTask.description}`);
+    // Initialize based on task type
+    if (newTask.isCookingTask) {
+        newTask.rawFoodConsumed = 0;
+        newTask.startingCount = 0;
+    } else {
+        // Don't set startingCount yet - will be set when task becomes active
+        newTask.startingCount = null;
+    }
+    newTask.progress = 0;
+    this.tasks[index] = newTask;
+    console.log(`New task: ${newTask.description}`);
             
             // Update UI
             if (window.ui) {
