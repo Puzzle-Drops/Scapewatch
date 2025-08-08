@@ -79,7 +79,7 @@ class TaskManager {
         return count;
     }
 
-    // Update task progress
+    // Update task progress for a specific task
     updateTaskProgress(task) {
         const currentCount = this.getCurrentItemCount(task.itemId);
         const itemsGained = currentCount - task.startingCount;
@@ -91,16 +91,43 @@ class TaskManager {
         }
     }
 
-    // Update all task progress
+    // Update progress for ONLY the first incomplete task that matches the given item
+    updateProgressForItem(itemId) {
+        // Find the first incomplete task for this item
+        for (const task of this.tasks) {
+            if (task.progress < 1 && task.itemId === itemId) {
+                this.updateTaskProgress(task);
+                
+                // Only update ONE task
+                break;
+            }
+        }
+        
+        // Check if all tasks are complete
+        if (this.areAllTasksComplete()) {
+            console.log('All tasks complete! Generating new batch...');
+            this.generateNewTasks();
+        } else if (window.ui) {
+            window.ui.updateTasks();
+        }
+    }
+
+    // Update all task progress (called periodically to sync)
     updateAllProgress() {
         let anyComplete = false;
         
         for (const task of this.tasks) {
             const wasComplete = task.progress >= 1;
-            this.updateTaskProgress(task);
+            const oldProgress = task.progress;
+            
+            // Update based on current counts
+            const currentCount = this.getCurrentItemCount(task.itemId);
+            const itemsGained = currentCount - task.startingCount;
+            task.progress = Math.min(itemsGained / task.targetCount, 1);
             
             if (!wasComplete && task.progress >= 1) {
                 anyComplete = true;
+                this.completeTask(task);
             }
         }
         
@@ -124,7 +151,7 @@ class TaskManager {
         return this.tasks.length > 0 && this.tasks.every(task => task.progress >= 1);
     }
 
-    // Reroll a specific task
+    // Reroll a specific task - now picks a random skill
     rerollTask(index) {
         if (index < 0 || index >= this.tasks.length) {
             console.error('Invalid task index');
@@ -134,24 +161,27 @@ class TaskManager {
         const oldTask = this.tasks[index];
         console.log(`Rerolling task: ${oldTask.description}`);
 
-        // Get the skill that generated this task
-        const skill = window.skillRegistry.getSkill(oldTask.skill);
-        if (!skill || typeof skill.generateTask !== 'function') {
-            console.error(`Cannot reroll task - skill ${oldTask.skill} not found`);
+        const availableSkills = this.getAvailableSkills();
+        if (availableSkills.length === 0) {
+            console.error('No skills available for reroll');
             return;
         }
 
-        // Try to generate a new task
+        // Try to generate a new task from a random skill
         let attempts = 0;
         let newTask = null;
         
-        while (attempts < 10 && !newTask) {
+        while (attempts < 20 && !newTask) {
             attempts++;
+            
+            // Pick a random skill (could be same or different)
+            const skill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
             newTask = skill.generateTask();
             
-            // Make sure it's different from the old task
+            // Make sure it's different from the old task (different item or location)
             if (newTask && newTask.itemId === oldTask.itemId && 
-                newTask.nodeId === oldTask.nodeId) {
+                newTask.nodeId === oldTask.nodeId && 
+                newTask.targetCount === oldTask.targetCount) {
                 newTask = null; // Try again
             }
         }
@@ -166,12 +196,18 @@ class TaskManager {
             if (window.ui) {
                 window.ui.updateTasks();
             }
+            
+            // If this was the current task being worked on, notify AI
+            if (index === 0 && window.ai && window.ai.currentTask === oldTask) {
+                window.ai.currentTask = null;
+                window.ai.decisionCooldown = 0;
+            }
         } else {
             console.error('Failed to generate replacement task');
         }
     }
 
-    // Get next incomplete task for AI
+    // Get next incomplete task for AI (always the first incomplete one)
     getNextTask() {
         for (const task of this.tasks) {
             if (task.progress < 1) {
@@ -179,6 +215,17 @@ class TaskManager {
             }
         }
         return null;
+    }
+
+    // Get the first incomplete task (same as getNextTask but more explicit)
+    getFirstIncompleteTask() {
+        return this.getNextTask();
+    }
+
+    // Check if a given task is the current task (first incomplete)
+    isCurrentTask(task) {
+        const current = this.getFirstIncompleteTask();
+        return current === task;
     }
 
     // Get all tasks
