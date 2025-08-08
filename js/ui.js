@@ -103,8 +103,10 @@ class UIManager {
                 currentState.level = skills.getLevel(goal.skill);
                 currentState.xp = Math.floor(skills.getXp(goal.skill));
                 break;
-            case 'bank_items':
-                currentState.count = bank.getItemCount(goal.itemId);
+            case 'skill_activity':
+                if (goal.targetItem) {
+                    currentState.count = bank.getItemCount(goal.targetItem);
+                }
                 break;
         }
 
@@ -189,8 +191,8 @@ class UIManager {
                 this.displaySkillGoal(goal, goalName, goalProgress);
                 break;
                 
-            case 'bank_items':
-                this.displayBankGoal(goal, goalName, goalProgress);
+            case 'skill_activity':
+                this.displayActivityGoal(goal, goalName, goalProgress);
                 break;
                 
             case 'complete_quest':
@@ -204,28 +206,39 @@ class UIManager {
         }
     }
 
-    displayNoGoal(goalName, goalProgress) {
-        // Check if AI is selecting a new goal
-        if (window.ai && window.ai.goals.length > 0) {
-            // Find next incomplete goal
-            let nextGoal = null;
-            for (const goal of window.ai.goals) {
-                if (!window.ai.isGoalComplete(goal)) {
-                    nextGoal = goal;
-                    break;
-                }
+    displayActivityGoal(goal, goalName, goalProgress) {
+        // Display the description which includes location
+        goalName.textContent = goal.description;
+        
+        if (goal.targetItem && goal.targetCount) {
+            // Item gathering goal - show progress
+            const currentCount = bank.getItemCount(goal.targetItem);
+            
+            // Calculate progress from starting count to target
+            let percentage;
+            if (goal.startingCount !== undefined) {
+                const itemsGained = currentCount - goal.startingCount;
+                const itemsNeeded = goal.targetCount - goal.startingCount;
+                percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
+            } else {
+                // Fallback to old calculation
+                percentage = Math.floor((currentCount / goal.targetCount) * 100);
             }
             
-            if (nextGoal) {
-                goalName.textContent = 'Selecting next goal...';
-                goalProgress.textContent = 'Planning...';
-            } else {
-                goalName.textContent = 'All goals complete!';
-                goalProgress.textContent = 'Generating new goals...';
-            }
+            goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
         } else {
-            goalName.textContent = 'No active goal';
-            goalProgress.textContent = '-';
+            // Training goal - show activity status
+            if (player.currentNode === goal.nodeId) {
+                if (player.currentActivity === goal.activityId) {
+                    goalProgress.textContent = 'In progress...';
+                } else {
+                    goalProgress.textContent = 'Starting activity...';
+                }
+            } else if (player.targetNode === goal.nodeId) {
+                goalProgress.textContent = 'Traveling to location...';
+            } else {
+                goalProgress.textContent = 'Planning route...';
+            }
         }
     }
 
@@ -258,23 +271,29 @@ class UIManager {
         goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
     }
 
-    displayBankGoal(goal, goalName, goalProgress) {
-        const currentCount = bank.getItemCount(goal.itemId);
-        const itemData = loadingManager.getData('items')[goal.itemId];
-        goalName.textContent = `Bank ${goal.targetCount} ${itemData.name}`;
-        
-        // Calculate progress from starting count to target
-        let percentage;
-        if (goal.startingCount !== undefined) {
-            const itemsGained = currentCount - goal.startingCount;
-            const itemsNeeded = goal.targetCount - goal.startingCount;
-            percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
+    displayNoGoal(goalName, goalProgress) {
+        // Check if AI is selecting a new goal
+        if (window.ai && window.ai.goals.length > 0) {
+            // Find next incomplete goal
+            let nextGoal = null;
+            for (const goal of window.ai.goals) {
+                if (!window.ai.isGoalComplete(goal)) {
+                    nextGoal = goal;
+                    break;
+                }
+            }
+            
+            if (nextGoal) {
+                goalName.textContent = 'Selecting next goal...';
+                goalProgress.textContent = 'Planning...';
+            } else {
+                goalName.textContent = 'All goals complete!';
+                goalProgress.textContent = 'Generating new goals...';
+            }
         } else {
-            // Fallback to old calculation
-            percentage = Math.floor((currentCount / goal.targetCount) * 100);
+            goalName.textContent = 'No active goal';
+            goalProgress.textContent = '-';
         }
-        
-        goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
     }
 
     // ==================== SKILLS DISPLAY ====================
