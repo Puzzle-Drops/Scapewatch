@@ -308,7 +308,7 @@ class UIManager {
     }
     
     const text = document.createElement('div');
-    text.style.fontSize = '20px';
+    text.style.fontSize = '34px';
     text.style.fontWeight = 'bold';
     text.style.color = color;
     text.textContent = value;
