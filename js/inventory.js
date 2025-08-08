@@ -55,9 +55,9 @@ class Inventory {
 
         const added = quantity - remaining;
         
-        // Notify UI if items were added
+        // Notify UI if items were added - using new UI system
         if (added > 0 && window.ui) {
-            window.ui.forceInventoryUpdate();
+            window.ui.updateInventory();
         }
 
         return added; // Return amount actually added
@@ -81,9 +81,9 @@ class Inventory {
 
         const removed = quantity - remaining;
         
-        // Notify UI if items were removed
+        // Notify UI if items were removed - using new UI system
         if (removed > 0 && window.ui) {
-            window.ui.forceInventoryUpdate();
+            window.ui.updateInventory();
         }
 
         return removed; // Return amount actually removed
@@ -138,9 +138,9 @@ class Inventory {
     clear() {
         this.initializeSlots();
         
-        // Notify UI
+        // Notify UI - using new UI system
         if (window.ui) {
-            window.ui.forceInventoryUpdate();
+            window.ui.updateInventory();
         }
     }
 }
