@@ -205,17 +205,8 @@ class UIManager {
     // Create tooltip
     const tooltip = this.createSkillTooltip(skill);
     
-    // Add mouse events to position tooltip dynamically
-    skillDiv.addEventListener('mouseenter', (e) => {
-        const rect = skillDiv.getBoundingClientRect();
-        const tooltipHeight = tooltip.offsetHeight || 60; // Estimate if not rendered yet
-        
-        // Position above the skill item, accounting for game scaling
-        const scale = window.scalingSystem ? scalingSystem.getScale() : 1;
-        tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
-        tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
-        tooltip.style.transform = 'translateX(-50%)';
-    });
+    // Tooltip positioning is handled by CSS, no need for dynamic positioning
+    // The tooltip is positioned absolutely relative to the skill item
     
     skillDiv.appendChild(contentDiv);
     skillDiv.appendChild(progressBar);
@@ -327,17 +318,8 @@ class UIManager {
     tooltip.style.textAlign = 'left';
     tooltip.innerHTML = tooltipText;
     
-    // Add mouse events to position tooltip dynamically
-    levelItem.addEventListener('mouseenter', (e) => {
-        const rect = levelItem.getBoundingClientRect();
-        const tooltipHeight = tooltip.offsetHeight || 60;
-        
-        // Position above the level item
-        const scale = window.scalingSystem ? scalingSystem.getScale() : 1;
-        tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
-        tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
-        tooltip.style.transform = 'translateX(-50%)';
-    });
+    // Tooltip positioning is handled by CSS, no need for dynamic positioning
+    // The tooltip is positioned absolutely relative to the level item
     
     levelItem.appendChild(text);
     levelItem.appendChild(tooltip);
