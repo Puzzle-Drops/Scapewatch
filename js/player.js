@@ -215,21 +215,33 @@ if (this.currentActivity) {
     }
 
     moveTo(targetNodeId) {
-        const nodesData = loadingManager.getData('nodes');
-        const node = nodesData[targetNodeId];
-        
-        if (!node) {
-            console.error(`Node ${targetNodeId} not found`);
-            return;
-        }
+    const nodesData = loadingManager.getData('nodes');
+    const node = nodesData[targetNodeId];
+    
+    if (!node) {
+        console.error(`Node ${targetNodeId} not found`);
+        return;
+    }
 
-        if (window.pathfinding) {
-            const path = pathfinding.findPath(
-                this.position.x,
-                this.position.y,
-                node.position.x,
-                node.position.y
-            );
+    // If we're already at the target node, don't move
+    if (this.currentNode === targetNodeId) {
+        console.log(`Already at node ${targetNodeId}`);
+        return;
+    }
+
+    // Clear current node when starting to move away
+    if (this.currentNode && this.currentNode !== targetNodeId) {
+        console.log(`Leaving node ${this.currentNode} to move to ${targetNodeId}`);
+        this.currentNode = null;
+    }
+
+    if (window.pathfinding) {
+        const path = pathfinding.findPath(
+            this.position.x,
+            this.position.y,
+            node.position.x,
+            node.position.y
+        );
 
             if (path && path.length > 0) {
                 if (path.length > 1 && 
@@ -349,12 +361,15 @@ if (this.currentActivity) {
     }
 
     stopActivity() {
-        if (this.currentActivity) {
-            console.log(`Stopped activity: ${this.currentActivity}`);
-        }
+    if (this.currentActivity) {
+        console.log(`Stopped activity: ${this.currentActivity}`);
         this.currentActivity = null;
         this.activityProgress = 0;
+        
+        // Clear the activity start time too
+        this.activityStartTime = 0;
     }
+}
 
     getMovementSpeed() {
         const agilityLevel = skills.getLevel('agility');
