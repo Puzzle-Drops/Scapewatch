@@ -71,6 +71,28 @@ class CookingSkill extends BaseSkill {
         };
     }
     
+    // Update cooking task progress when we consume raw food
+    updateCookingTaskProgress(rawItemId) {
+        // Only update if we have task manager and the current task is for this raw item
+        if (!window.taskManager) return;
+        
+        const currentTask = taskManager.getFirstIncompleteTask();
+        
+        // Only update if the current task is a cooking task for this raw item
+        if (currentTask && currentTask.isCookingTask && currentTask.itemId === rawItemId) {
+            // Increment the consumption counter
+            currentTask.rawFoodConsumed = (currentTask.rawFoodConsumed || 0) + 1;
+            
+            // Calculate and set progress
+            const progress = currentTask.rawFoodConsumed / currentTask.targetCount;
+            
+            console.log(`Cooking progress: ${currentTask.rawFoodConsumed}/${currentTask.targetCount}`);
+            
+            // Use the generic setTaskProgress method
+            taskManager.setTaskProgress(currentTask, progress);
+        }
+    }
+    
     // Get count of raw food we've consumed (inverse of what's available)
     getRawFoodConsumedCount(rawItemId) {
         // This is a bit tricky - we need to track based on some baseline
@@ -312,10 +334,8 @@ class CookingSkill extends BaseSkill {
         // Consume the raw item
         inventory.removeItem(rawItem.rawItemId, 1);
         
-        // Track consumption for cooking tasks - use the task manager's method
-        if (window.taskManager) {
-            taskManager.updateCookingProgress(rawItem.rawItemId);
-        }
+        // Update cooking task progress if applicable
+        this.updateCookingTaskProgress(rawItem.rawItemId);
         
         return true;
     }
