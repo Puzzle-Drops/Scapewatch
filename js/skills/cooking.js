@@ -66,7 +66,8 @@ class CookingSkill extends BaseSkill {
             startingCount: this.getRawFoodConsumedCount(selectedFood.rawItemId), // Track how many we've already used
             progress: 0,
             isCookingTask: true, // Flag to identify cooking tasks
-            cookedItemId: selectedFood.cookedItemId // Store what we're making for reference
+            cookedItemId: selectedFood.cookedItemId, // Store what we're making for reference
+            rawFoodConsumed: 0 // Initialize consumption counter
         };
     }
     
@@ -311,48 +312,12 @@ class CookingSkill extends BaseSkill {
         // Consume the raw item
         inventory.removeItem(rawItem.rawItemId, 1);
         
-        // Track consumption for cooking tasks
-        if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
-            // Update the task progress immediately when we consume the raw item
-            // This ensures we count attempts, not successes
-            const currentTask = window.ai.currentTask;
-            if (currentTask.itemId === rawItem.rawItemId) {
-                // Increment progress for consuming raw food
-                const consumed = this.getRawFoodUsedSoFar(rawItem.rawItemId, currentTask);
-                currentTask.progress = Math.min(consumed / currentTask.targetCount, 1);
-                
-                // Update UI
-                if (window.ui) {
-                    window.ui.updateTasks();
-                }
-                
-                // Check if task is complete
-                if (currentTask.progress >= 1) {
-                    console.log('Cooking task complete!');
-                    if (window.taskManager) {
-                        taskManager.completeTask(currentTask);
-                    }
-                }
-            }
+        // Track consumption for cooking tasks - use the task manager's method
+        if (window.taskManager) {
+            taskManager.updateCookingProgress(rawItem.rawItemId);
         }
         
         return true;
-    }
-    
-    // Calculate how many raw food items we've used for this task
-    getRawFoodUsedSoFar(rawItemId, task) {
-        // We need to track based on the difference from starting amount
-        // This is a simplified approach - in production you'd want better tracking
-        const currentTotal = inventory.getItemCount(rawItemId) + bank.getItemCount(rawItemId);
-        const startingTotal = task.startingCount || 0;
-        
-        // For now, increment a counter on the task itself
-        if (!task.rawFoodConsumed) {
-            task.rawFoodConsumed = 0;
-        }
-        task.rawFoodConsumed++;
-        
-        return task.rawFoodConsumed;
     }
     
     processRewards(activityData, level) {
