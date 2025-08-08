@@ -37,25 +37,34 @@ class AIManager {
     // ==================== DECISION MAKING & EXECUTION ====================
 
     update(deltaTime) {
-        this.decisionCooldown -= deltaTime;
-        
-        // Only make decisions if cooldown has expired
-        if (this.decisionCooldown > 0) return;
+    this.decisionCooldown -= deltaTime;
+    
+    // Only make decisions if cooldown has expired
+    if (this.decisionCooldown > 0) return;
 
-        // Update task progress periodically for sync
-        if (window.taskManager) {
-            taskManager.updateAllProgress();
-        }
-
-        // Make decisions when appropriate
-        if (!player.isBusy()) {
-            this.makeDecision();
-            this.resetDecisionCooldown();
-        } else if (this.shouldCheckBanking() && !player.isMoving()) {
-            this.makeDecision();
-            this.resetDecisionCooldown();
-        }
+    // Update task progress periodically for sync
+    if (window.taskManager) {
+        taskManager.updateAllProgress();
     }
+
+    // Check if current task changed while we were busy
+    if (player.isPerformingActivity() && !this.isCurrentTaskValid()) {
+        console.log('Task changed while performing activity, stopping to re-evaluate');
+        player.stopActivity();
+        this.currentTask = null;
+        this.decisionCooldown = 0;
+        return;
+    }
+
+    // Make decisions when appropriate
+    if (!player.isBusy()) {
+        this.makeDecision();
+        this.resetDecisionCooldown();
+    } else if (this.shouldCheckBanking() && !player.isMoving()) {
+        this.makeDecision();
+        this.resetDecisionCooldown();
+    }
+}
 
     shouldCheckBanking() {
         // Check if inventory is full
