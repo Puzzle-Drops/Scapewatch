@@ -156,8 +156,8 @@ body {
 }
 
 .panel-btn img {
-    width: 24px;
-    height: 24px;
+    width: 36px;
+    height: 36px;
     filter: brightness(0.8);
 }
 
@@ -500,8 +500,8 @@ body {
 }
 
 .shop-item-icon {
-    width: 48px;
-    height: 48px;
+    width: 80px;
+    height: 80px;
 }
 
 .shop-item-name {
