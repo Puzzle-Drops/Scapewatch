@@ -284,10 +284,13 @@ class BaseSkill {
     // Skills can override these methods for custom banking behavior
     
     // Check if we need banking for a specific task
-    needsBankingForTask(task) {
-        // Default: gathering skills don't need special banking
-        return false;
+needsBankingForTask(task) {
+    // Default for gathering skills: bank when inventory is full
+    if (inventory.isFull()) {
+        return true;
     }
+    return false;
+}
     
     // Handle skill-specific banking
     handleBanking(task) {
