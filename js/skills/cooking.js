@@ -298,66 +298,73 @@ class CookingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
-        // If we have a cooking task, prioritize that raw item
-        let rawItem = null;
+    // If we have a cooking task, prioritize that raw item
+    let rawItem = null;
+    
+    if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
+        // Check if we have the task's raw item in inventory
+        const taskRawItemId = window.ai.currentTask.itemId;
+        const level = skills.getLevel('cooking');
         
-        if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
-            // Check if we have the task's raw item in inventory
-            const taskRawItemId = window.ai.currentTask.itemId;
-            const level = skills.getLevel('cooking');
-            
-            // Find the recipe for this raw item
-            const recipe = activityData.cookingTable.find(r => 
-                r.rawItemId === taskRawItemId && 
-                level >= r.requiredLevel
-            );
-            
-            if (recipe && inventory.hasItem(taskRawItemId, 1)) {
-                rawItem = recipe;
-                console.log(`Using ${taskRawItemId} for current cooking task`);
-            }
+        // Find the recipe for this raw item
+        const recipe = activityData.cookingTable.find(r => 
+            r.rawItemId === taskRawItemId && 
+            level >= r.requiredLevel
+        );
+        
+        if (recipe && inventory.hasItem(taskRawItemId, 1)) {
+            rawItem = recipe;
+            console.log(`Selected ${taskRawItemId} for current cooking task`);
         }
-        
-        // If no task item or don't have it, use any available
-        if (!rawItem) {
-            rawItem = this.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking'));
-        }
-        
-        if (!rawItem) {
-            console.log('No raw items to cook');
-            return false;
-        }
-        
-        // Store for processing
-        this.currentRawItem = rawItem;
-        
-        // Consume the raw item
-        inventory.removeItem(rawItem.rawItemId, 1);
-        
-        // Update cooking task progress if applicable
-        this.updateCookingTaskProgress(rawItem.rawItemId);
-        
-        return true;
     }
     
-    processRewards(activityData, level) {
-        if (!this.currentRawItem) {
-            this.lastCookingXp = 0;
-            return [];
-        }
-        
-        // Check success
-        const successChance = this.getChance(this.currentRawItem, level);
-        const success = Math.random() <= successChance;
-        
-        if (success) {
-            this.lastCookingXp = this.currentRawItem.xpPerAction;
-            return [{ itemId: this.currentRawItem.cookedItemId, quantity: 1 }];
-        } else {
-            this.lastCookingXp = 0;
-            return [{ itemId: this.currentRawItem.burntItemId, quantity: 1 }];
-        }
+    // If no task item or don't have it, use any available
+    if (!rawItem) {
+        rawItem = this.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking'));
     }
+    
+    if (!rawItem) {
+        console.log('No raw items to cook');
+        return false;
+    }
+    
+    // Just store what we're going to cook - don't consume yet
+    this.currentRawItem = rawItem;
+    
+    return true;
+}
+    
+    processRewards(activityData, level) {
+    if (!this.currentRawItem) {
+        this.lastCookingXp = 0;
+        return [];
+    }
+    
+    // Double-check we still have the raw item
+    if (!inventory.hasItem(this.currentRawItem.rawItemId, 1)) {
+        console.log('Raw item disappeared during cooking!');
+        this.lastCookingXp = 0;
+        return [];
+    }
+    
+    // NOW consume the raw item
+    inventory.removeItem(this.currentRawItem.rawItemId, 1);
+    
+    // Update cooking task progress if applicable
+    this.updateCookingTaskProgress(this.currentRawItem.rawItemId);
+    
+    // Check success
+    const successChance = this.getChance(this.currentRawItem, level);
+    const success = Math.random() <= successChance;
+    
+    if (success) {
+        this.lastCookingXp = this.currentRawItem.xpPerAction;
+        return [{ itemId: this.currentRawItem.cookedItemId, quantity: 1 }];
+    } else {
+        this.lastCookingXp = 0;
+        return [{ itemId: this.currentRawItem.burntItemId, quantity: 1 }];
+    }
+}
     
     shouldGrantXP(rewards, activityData) {
         return this.lastCookingXp > 0;
