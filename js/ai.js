@@ -122,32 +122,18 @@ class AIManager {
     }
 
     needsBanking() {
-    // Check if inventory is full
-    if (inventory.isFull()) {
-        // For production skills, check if we have materials to continue working
-        if (this.currentTask) {
-            const skill = skillRegistry.getSkill(this.currentTask.skill);
-            if (skill && skill.hasMaterials) {
-                // This is a production skill - check if we can continue
-                if (skill.hasMaterials()) {
-                    // We have materials, don't bank yet
-                    return false;
-                } else {
-                    // No materials left, need to bank
-                    return true;
-                }
-            }
-        }
-        // For gathering skills or unknown tasks, bank when full
-        return true;
-    }
-    
-    // Check if current task needs banking (e.g., needs specific items)
+    // First, let the skill decide if it needs banking for the current task
     if (this.currentTask) {
         const skill = skillRegistry.getSkill(this.currentTask.skill);
-        if (skill && skill.needsBankingForTask(this.currentTask)) {
-            return true;
+        if (skill && skill.needsBankingForTask) {
+            // Skill has specific banking logic - use it
+            return skill.needsBankingForTask(this.currentTask);
         }
+    }
+    
+    // Fallback for skills without specific banking logic (gathering skills)
+    if (inventory.isFull()) {
+        return true;
     }
     
     return false;
