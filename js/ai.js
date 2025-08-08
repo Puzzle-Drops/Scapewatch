@@ -13,11 +13,8 @@ class AIManager {
             return;
         }
 
-        // Update all task progress first
-        taskManager.updateAllProgress();
-
-        // Get next incomplete task
-        this.currentTask = taskManager.getNextTask();
+        // Always get the first incomplete task
+        this.currentTask = taskManager.getFirstIncompleteTask();
         
         if (!this.currentTask) {
             console.log('No incomplete tasks available');
@@ -28,6 +25,15 @@ class AIManager {
         console.log('Selected task:', this.currentTask.description);
     }
 
+    // Check if current task is still valid (first incomplete task)
+    isCurrentTaskValid() {
+        if (!this.currentTask) return false;
+        if (!window.taskManager) return false;
+        
+        const firstIncomplete = taskManager.getFirstIncompleteTask();
+        return this.currentTask === firstIncomplete;
+    }
+
     // ==================== DECISION MAKING & EXECUTION ====================
 
     update(deltaTime) {
@@ -36,7 +42,7 @@ class AIManager {
         // Only make decisions if cooldown has expired
         if (this.decisionCooldown > 0) return;
 
-        // Update task progress
+        // Update task progress periodically for sync
         if (window.taskManager) {
             taskManager.updateAllProgress();
         }
@@ -74,7 +80,13 @@ class AIManager {
             return;
         }
 
-        // Check current task
+        // IMPORTANT: Always verify we're working on the right task
+        if (!this.isCurrentTaskValid()) {
+            console.log('Current task is no longer valid, selecting new task');
+            this.selectNextTask();
+        }
+
+        // Check if we need a new task
         if (!this.currentTask || this.currentTask.progress >= 1) {
             this.selectNextTask();
         }
@@ -123,6 +135,13 @@ class AIManager {
     }
 
     executeTask(task) {
+        // Double-check this is still the right task
+        if (!this.isCurrentTaskValid()) {
+            console.log('Task changed during execution, re-selecting');
+            this.selectNextTask();
+            return;
+        }
+
         // Check if task is valid
         if (!taskManager.isTaskPossible(task)) {
             console.log('Task is impossible, rerolling...');
@@ -242,12 +261,17 @@ class AIManager {
         const deposited = bank.depositAll();
         console.log(`Deposited ${deposited} items`);
         
-        // Update task progress
+        // Update task progress after banking
         if (window.taskManager) {
             taskManager.updateAllProgress();
             if (window.ui) {
                 window.ui.updateTasks();
             }
+        }
+        
+        // Re-validate current task after banking
+        if (!this.isCurrentTaskValid()) {
+            this.selectNextTask();
         }
         
         this.clearCooldown();
@@ -313,6 +337,11 @@ class AIManager {
             }
         }
         
+        // Re-validate current task
+        if (!this.isCurrentTaskValid()) {
+            this.selectNextTask();
+        }
+        
         this.clearCooldown();
         if (this.currentTask) {
             this.executeTask(this.currentTask);
@@ -333,6 +362,11 @@ class AIManager {
             if (window.ui) {
                 window.ui.updateTasks();
             }
+        }
+        
+        // Re-validate current task
+        if (!this.isCurrentTaskValid()) {
+            this.selectNextTask();
         }
         
         this.clearCooldown();
