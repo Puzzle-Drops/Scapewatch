@@ -3,6 +3,55 @@ class WoodcuttingSkill extends BaseSkill {
         super('woodcutting', 'Woodcutting');
     }
     
+    // ==================== GOAL GENERATION OVERRIDE ====================
+    
+    createGoalForActivity(node, activity, priority) {
+        // Get what logs this activity produces
+        const primaryReward = this.getPrimaryReward(activity);
+        if (!primaryReward) {
+            return super.createGoalForActivity(node, activity, priority);
+        }
+        
+        const targetCount = this.determineTargetCount(primaryReward.itemId);
+        const itemData = loadingManager.getData('items')[primaryReward.itemId];
+        
+        return {
+            type: 'skill_activity',
+            skill: this.id,
+            nodeId: node.id,
+            activityId: activity.id,
+            targetItem: primaryReward.itemId,
+            targetCount: targetCount,
+            priority: priority,
+            description: `Chop ${targetCount} ${itemData.name} at ${node.name}`
+        };
+    }
+    
+    getPrimaryReward(activity) {
+        if (activity.rewards && activity.rewards.length > 0) {
+            return activity.rewards[0];
+        }
+        return null;
+    }
+    
+    determineTargetCount(itemId) {
+        const logCounts = {
+            'logs': { min: 50, max: 150 },
+            'oak_logs': { min: 40, max: 120 },
+            'willow_logs': { min: 40, max: 100 },
+            'teak_logs': { min: 25, max: 75 },
+            'maple_logs': { min: 25, max: 60 },
+            'mahogany_logs': { min: 25, max: 60 },
+            'yew_logs': { min: 15, max: 40 },
+            'magic_logs': { min: 10, max: 25 },
+            'redwood_logs': { min: 10, max: 25 }
+        };
+        
+        const counts = logCounts[itemId] || { min: 20, max: 50 };
+        const baseCount = counts.min + Math.random() * (counts.max - counts.min);
+        return Math.round(baseCount / 5) * 5;
+    }
+    
     // ==================== BANKING DECISIONS ====================
     
     needsBanking(goal) {
@@ -52,40 +101,6 @@ class WoodcuttingSkill extends BaseSkill {
         }
         
         return actionsPerHour * xpPerAction * successChance;
-    }
-    
-    // ==================== GOAL GENERATION ====================
-    
-    generateItemGoals(currentLevel, priority) {
-        const goals = [];
-        const logs = [
-            { itemId: 'logs', requiredLevel: 1, minCount: 100, maxCount: 500 },
-            { itemId: 'oak_logs', requiredLevel: 15, minCount: 100, maxCount: 400 },
-            { itemId: 'willow_logs', requiredLevel: 30, minCount: 100, maxCount: 300 },
-            { itemId: 'teak_logs', requiredLevel: 35, minCount: 50, maxCount: 200 },
-            { itemId: 'maple_logs', requiredLevel: 45, minCount: 50, maxCount: 150 },
-            { itemId: 'mahogany_logs', requiredLevel: 50, minCount: 50, maxCount: 150 },
-            { itemId: 'yew_logs', requiredLevel: 60, minCount: 30, maxCount: 100 },
-            { itemId: 'magic_logs', requiredLevel: 75, minCount: 20, maxCount: 50 },
-            { itemId: 'redwood_logs', requiredLevel: 90, minCount: 20, maxCount: 50 }
-        ];
-        
-        for (const log of logs) {
-            if (currentLevel >= log.requiredLevel) {
-                const currentCount = bank.getItemCount(log.itemId);
-                const targetCount = currentCount + 
-                    Math.round((log.minCount + Math.random() * (log.maxCount - log.minCount)) / 10) * 10;
-                
-                goals.push({
-                    type: 'bank_items',
-                    itemId: log.itemId,
-                    targetCount: targetCount,
-                    priority: priority + goals.length
-                });
-            }
-        }
-        
-        return goals;
     }
     
     chooseBestActivity(availableActivities, level) {
