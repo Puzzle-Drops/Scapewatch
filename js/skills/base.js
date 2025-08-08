@@ -4,125 +4,235 @@ class BaseSkill {
         this.name = name;
     }
     
-    // ==================== NEW GOAL GENERATION ====================
+    // ==================== TASK GENERATION ====================
     
-    generateSpecificGoals(count, startPriority) {
-        const goals = [];
-        let priority = startPriority;
+    generateTask() {
+        // Get all possible items this skill can produce at current level
+        const possibleItems = this.getPossibleItems();
+        if (possibleItems.length === 0) {
+            console.log(`No items available for ${this.name} at current level`);
+            return null;
+        }
         
-        // Get all nodes that have activities for this skill
-        const skillNodes = this.getNodesWithSkillActivities();
-        if (skillNodes.length === 0) return goals;
+        // Select an item using weighted distribution
+        const selectedItem = this.selectWeightedItem(possibleItems);
+        if (!selectedItem) {
+            console.log(`Failed to select item for ${this.name}`);
+            return null;
+        }
         
-        for (let i = 0; i < count; i++) {
-            // Randomly decide: level goal (30%) or item goal (70%)
-            if (Math.random() < 0.3 && skills.getLevel(this.id) < 99) {
-                // Generate a level goal
-                const levelGoal = this.createLevelGoal(priority);
-                if (levelGoal) {
-                    goals.push(levelGoal);
-                    priority++;
-                }
-            } else {
-                // Generate a specific activity goal
-                const activityGoal = this.createActivityGoal(skillNodes, priority);
-                if (activityGoal) {
-                    goals.push(activityGoal);
-                    priority++;
+        // Find activities that produce this item
+        const activities = this.findActivitiesForItem(selectedItem.itemId);
+        if (activities.length === 0) {
+            console.log(`No activities found for item ${selectedItem.itemId}`);
+            return null;
+        }
+        
+        // Find viable nodes for these activities
+        const viableNodes = this.findViableNodes(activities);
+        if (viableNodes.length === 0) {
+            console.log(`No viable nodes found for ${selectedItem.itemId}`);
+            return null;
+        }
+        
+        // Randomly select a node and its activity
+        const selected = viableNodes[Math.floor(Math.random() * viableNodes.length)];
+        
+        // Determine target count
+        const targetCount = this.determineTargetCount(selectedItem.itemId);
+        
+        // Create the task
+        const itemData = loadingManager.getData('items')[selectedItem.itemId];
+        const nodeData = nodes.getNode(selected.nodeId);
+        
+        return {
+            skill: this.id,
+            itemId: selectedItem.itemId,
+            targetCount: targetCount,
+            nodeId: selected.nodeId,
+            activityId: selected.activityId,
+            description: `${this.getTaskVerb()} ${targetCount} ${itemData.name} at ${nodeData.name}`,
+            startingCount: 0,
+            progress: 0
+        };
+    }
+    
+    // Get verb for task description (override in subclasses)
+    getTaskVerb() {
+        return 'Gather';
+    }
+    
+    // Get all items this skill can produce at current level
+    getPossibleItems() {
+        const items = [];
+        const activities = loadingManager.getData('activities');
+        const currentLevel = skills.getLevel(this.id);
+        
+        for (const [activityId, activity] of Object.entries(activities)) {
+            if (activity.skill !== this.id) continue;
+            
+            const requiredLevel = activity.requiredLevel || 1;
+            if (currentLevel < requiredLevel) continue;
+            
+            // Get items from this activity
+            const activityItems = this.getItemsFromActivity(activity);
+            for (const item of activityItems) {
+                // Don't add duplicates
+                if (!items.some(i => i.itemId === item.itemId)) {
+                    items.push({
+                        itemId: item.itemId,
+                        requiredLevel: item.requiredLevel || requiredLevel
+                    });
                 }
             }
         }
         
-        return goals;
+        return items;
     }
     
-    createLevelGoal(priority) {
-        const currentLevel = skills.getLevel(this.id);
-        if (currentLevel >= 99) return null;
+    // Extract items from an activity (handles different structures)
+    getItemsFromActivity(activity) {
+        const items = [];
         
-        const targetLevel = this.calculateTargetLevel(currentLevel);
+        // Standard rewards
+        if (activity.rewards) {
+            for (const reward of activity.rewards) {
+                if (reward.itemId && !this.isIgnoredItem(reward.itemId)) {
+                    items.push({
+                        itemId: reward.itemId,
+                        requiredLevel: reward.requiredLevel || activity.requiredLevel || 1
+                    });
+                }
+            }
+        }
         
-        return {
-            type: 'skill_level',
-            skill: this.id,
-            targetLevel: targetLevel,
-            priority: priority,
-            description: `Train ${this.name} to level ${targetLevel}`
-        };
+        // Alternating rewards (mining copper/tin)
+        if (activity.alternatingRewards) {
+            for (const reward of activity.alternatingRewards) {
+                if (reward.itemId && !this.isIgnoredItem(reward.itemId)) {
+                    items.push({
+                        itemId: reward.itemId,
+                        requiredLevel: reward.requiredLevel || activity.requiredLevel || 1
+                    });
+                }
+            }
+        }
+        
+        // Cooking table
+        if (activity.cookingTable) {
+            for (const recipe of activity.cookingTable) {
+                if (recipe.cookedItemId && !this.isIgnoredItem(recipe.cookedItemId)) {
+                    items.push({
+                        itemId: recipe.cookedItemId,
+                        requiredLevel: recipe.requiredLevel || 1
+                    });
+                }
+            }
+        }
+        
+        return items;
     }
     
-    createActivityGoal(skillNodes, priority) {
-        // Pick a random node that has activities for THIS skill
-        const node = skillNodes[Math.floor(Math.random() * skillNodes.length)];
-        
-        // Get activities at this node that are SPECIFICALLY for our skill
-        const nodeActivities = this.getNodeActivitiesForSkill(node);
-        if (nodeActivities.length === 0) return null;
-        
-        // Pick one of the activities that's actually at this node
-        const activity = nodeActivities[Math.floor(Math.random() * nodeActivities.length)];
-        
-        // Verify this makes sense
-        console.log(`Creating goal: ${activity.name} (${activity.id}) at ${node.name} (${node.id}) for ${this.name}`);
-        
-        // Generate goal based on activity
-        return this.createGoalForActivity(node, activity, priority);
+    // Check if an item should be ignored (override in subclasses)
+    isIgnoredItem(itemId) {
+        // Ignore burnt food and gems by default
+        const ignored = ['burnt_food', 'uncut_sapphire', 'uncut_emerald', 'uncut_ruby', 'uncut_diamond'];
+        return ignored.includes(itemId);
     }
     
-    createGoalForActivity(node, activity, priority) {
-        // Default implementation - subclasses should override
-        // This creates a generic training goal
-        return {
-            type: 'skill_activity',
-            skill: this.id,
-            nodeId: node.id,
-            activityId: activity.id,
-            priority: priority,
-            description: `${activity.name} at ${node.name}`
-        };
+    // Select an item using weighted distribution
+    selectWeightedItem(items) {
+        if (items.length === 0) return null;
+        
+        // Sort by required level (highest first)
+        items.sort((a, b) => b.requiredLevel - a.requiredLevel);
+        
+        // Apply weights: 40% highest, 30% second highest, 30% split among rest
+        const weights = [];
+        
+        if (items.length === 1) {
+            weights.push(1.0);
+        } else if (items.length === 2) {
+            weights.push(0.4); // Highest
+            weights.push(0.6); // Rest
+        } else {
+            weights.push(0.4); // Highest
+            weights.push(0.3); // Second highest
+            
+            // Split remaining 30% among the rest
+            const remaining = items.length - 2;
+            const eachWeight = 0.3 / remaining;
+            for (let i = 2; i < items.length; i++) {
+                weights.push(eachWeight);
+            }
+        }
+        
+        // Random selection based on weights
+        const random = Math.random();
+        let cumulative = 0;
+        
+        for (let i = 0; i < items.length; i++) {
+            cumulative += weights[i];
+            if (random < cumulative) {
+                return items[i];
+            }
+        }
+        
+        return items[items.length - 1]; // Fallback
     }
     
-    getNodesWithSkillActivities() {
+    // Find activities that produce a specific item
+    findActivitiesForItem(itemId) {
+        const activities = loadingManager.getData('activities');
+        const matching = [];
+        
+        for (const [activityId, activity] of Object.entries(activities)) {
+            if (activity.skill !== this.id) continue;
+            
+            const items = this.getItemsFromActivity(activity);
+            if (items.some(item => item.itemId === itemId)) {
+                matching.push(activityId);
+            }
+        }
+        
+        return matching;
+    }
+    
+    // Find viable nodes that have any of the given activities
+    findViableNodes(activityIds) {
+        const viableNodes = [];
         const allNodes = nodes.getAllNodes();
-        const skillNodes = [];
         
-        for (const node of Object.values(allNodes)) {
+        for (const [nodeId, node] of Object.entries(allNodes)) {
             if (!node.activities) continue;
             
-            // Check if any of this node's activities are for our skill
-            const hasSkillActivity = node.activities.some(activityId => {
-                const activity = loadingManager.getData('activities')[activityId];
-                return activity && activity.skill === this.id;
-            });
+            // Check if node is walkable
+            if (window.collision && window.collision.initialized) {
+                if (!collision.isWalkable(Math.floor(node.position.x), Math.floor(node.position.y))) {
+                    continue;
+                }
+            }
             
-            if (hasSkillActivity) {
-                skillNodes.push(node);
+            // Check if node has any of our activities
+            for (const activityId of activityIds) {
+                if (node.activities.includes(activityId)) {
+                    viableNodes.push({
+                        nodeId: nodeId,
+                        activityId: activityId
+                    });
+                    break; // Only add once per node
+                }
             }
         }
         
-        return skillNodes;
+        return viableNodes;
     }
     
-    getNodeActivitiesForSkill(node) {
-        const activities = [];
-        const allActivities = loadingManager.getData('activities');
-        
-        for (const activityId of node.activities || []) {
-            const activity = allActivities[activityId];
-            if (activity && activity.skill === this.id && this.canPerformActivity(activityId)) {
-                activities.push({ id: activityId, ...activity });
-            }
-        }
-        
-        return activities;
-    }
-    
-    calculateTargetLevel(currentLevel) {
-        const mod = currentLevel % 10;
-        return Math.min(99,
-            mod <= 2 || mod >= 7 ? Math.ceil(currentLevel / 10) * 10 :
-            currentLevel + (Math.random() < 0.5 ? 5 : 10)
-        );
+    // Determine target count for an item (override in subclasses for custom logic)
+    determineTargetCount(itemId) {
+        // Default: 50-150 items
+        const base = 50 + Math.floor(Math.random() * 100);
+        return Math.round(base / 5) * 5; // Round to nearest 5
     }
     
     // ==================== CORE BEHAVIOR ====================
@@ -154,51 +264,7 @@ class BaseSkill {
         // Override in subclass if needed
     }
     
-    // ==================== BANKING DECISIONS ====================
-    
-    // Check if this skill needs banking given current inventory state
-    needsBanking(goal) {
-        // Default behavior for gathering skills: bank when inventory is full
-        if (inventory.isFull()) {
-            return true;
-        }
-        return false;
-    }
-    
-    // Check if this skill can continue working with current inventory
-    canContinueWithInventory(goal) {
-        // Default: can continue if not full
-        return !inventory.isFull();
-    }
-    
-    // ==================== XP & PROGRESSION ====================
-    
-    calculateXpRate(activityData, level) {
-        const avgDuration = this.getAverageDuration(activityData, level);
-        const actionsPerHour = 3600000 / avgDuration;
-        const xpPerAction = activityData.xpPerAction || 0;
-        return actionsPerHour * xpPerAction;
-    }
-    
-    getAverageDuration(activityData, level) {
-        return this.getDuration(activityData.baseDuration, level, activityData);
-    }
-    
-    chooseBestActivity(availableActivities, level) {
-        // Default: choose highest XP rate
-        let best = null;
-        let bestXpRate = 0;
-        
-        for (const [activityId, activityData] of availableActivities) {
-            const xpRate = this.calculateXpRate(activityData, level);
-            if (xpRate > bestXpRate) {
-                bestXpRate = xpRate;
-                best = activityId;
-            }
-        }
-        
-        return best;
-    }
+    // ==================== UTILITIES ====================
     
     canPerformActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
@@ -213,74 +279,6 @@ class BaseSkill {
     shouldBankItem(itemId) {
         return true; // Default: bank everything
     }
-    
-    // ==================== AI EXECUTION ====================
-    
-    executeGoal(goal, ai) {
-        if (goal.type === 'skill_level') {
-            this.trainSkill(ai);
-        } else if (goal.type === 'skill_activity') {
-            // The AI handles this directly now
-            ai.executeActivityGoal(goal);
-        }
-    }
-    
-    trainSkill(ai) {
-        const activities = this.getAvailableActivities();
-        if (activities.length === 0) {
-            console.log(`No available activities for ${this.id}`);
-            ai.skipCurrentGoal(`${this.id} training impossible`);
-            return;
-        }
-        
-        const bestActivity = this.chooseBestActivity(activities, skills.getLevel(this.id));
-        if (bestActivity) {
-            ai.doActivity(bestActivity);
-        }
-    }
-    
-    getAvailableActivities() {
-        const activities = loadingManager.getData('activities');
-        const available = [];
-        
-        for (const [id, data] of Object.entries(activities)) {
-            if (data.skill === this.id && this.canPerformActivity(id)) {
-                available.push([id, data]);
-            }
-        }
-        
-        return available;
-    }
-    
-    findActivityForItem(itemId) {
-        const activities = this.getAvailableActivities();
-        
-        for (const [activityId, activityData] of activities) {
-            if (activityData.rewards) {
-                for (const reward of activityData.rewards) {
-                    if (reward.itemId === itemId) {
-                        return activityId;
-                    }
-                }
-            }
-        }
-        
-        return null;
-    }
-    
-    // ==================== BANKING ====================
-    
-    handleBanking(ai, goal) {
-        // Default: just deposit all
-        bank.depositAll();
-        ai.clearCooldown();
-    }
-    
-    getItemsToWithdraw(goal) {
-        return []; // Override in subclass if needed
-    }
-    
-    // ==================== UTILITIES ====================
     
     getChance(reward, level) {
         if (Array.isArray(reward.chanceScaling)) {
