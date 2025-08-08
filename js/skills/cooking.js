@@ -5,6 +5,69 @@ class CookingSkill extends BaseSkill {
         this.currentRawItem = null;
     }
     
+    // ==================== GOAL GENERATION OVERRIDE ====================
+    
+    createGoalForActivity(node, activity, priority) {
+        // For cooking, pick a specific food to cook
+        const targetFood = this.pickTargetFood(activity);
+        if (!targetFood) {
+            return super.createGoalForActivity(node, activity, priority);
+        }
+        
+        const targetCount = this.determineTargetCount(targetFood.cookedItemId);
+        const itemData = loadingManager.getData('items')[targetFood.cookedItemId];
+        
+        return {
+            type: 'skill_activity',
+            skill: this.id,
+            nodeId: node.id,
+            activityId: activity.id,
+            targetItem: targetFood.cookedItemId,
+            targetCount: targetCount,
+            priority: priority,
+            description: `Cook ${targetCount} ${itemData.name} at ${node.name}`
+        };
+    }
+    
+    pickTargetFood(activity) {
+        if (!activity.cookingTable) return null;
+        
+        const level = skills.getLevel(this.id);
+        const availableRecipes = activity.cookingTable.filter(r => 
+            level >= r.requiredLevel
+        );
+        
+        if (availableRecipes.length === 0) return null;
+        
+        // Pick based on what raw food we have in bank
+        // For now, just pick a random available recipe
+        return availableRecipes[Math.floor(Math.random() * availableRecipes.length)];
+    }
+    
+    determineTargetCount(itemId) {
+        const foodCounts = {
+            'meat': { min: 25, max: 75 },
+            'shrimps': { min: 25, max: 75 },
+            'sardine': { min: 25, max: 70 },
+            'anchovies': { min: 25, max: 70 },
+            'herring': { min: 25, max: 60 },
+            'mackerel': { min: 20, max: 50 },
+            'trout': { min: 20, max: 45 },
+            'cod': { min: 20, max: 45 },
+            'pike': { min: 15, max: 40 },
+            'salmon': { min: 15, max: 35 },
+            'tuna': { min: 15, max: 30 },
+            'lobster': { min: 10, max: 25 },
+            'bass': { min: 10, max: 20 },
+            'swordfish': { min: 10, max: 20 },
+            'shark': { min: 5, max: 15 }
+        };
+        
+        const counts = foodCounts[itemId] || { min: 15, max: 40 };
+        const baseCount = counts.min + Math.random() * (counts.max - counts.min);
+        return Math.round(baseCount / 5) * 5;
+    }
+    
     // ==================== BANKING DECISIONS ====================
     
     needsBanking(goal) {
@@ -118,45 +181,6 @@ class CookingSkill extends BaseSkill {
         return null;
     }
     
-    // ==================== GOAL GENERATION ====================
-    
-    generateItemGoals(currentLevel, priority) {
-        const goals = [];
-        const cookedFoods = [
-            { itemId: 'meat', requiredLevel: 1, minCount: 50, maxCount: 150 },
-            { itemId: 'shrimps', requiredLevel: 1, minCount: 50, maxCount: 150 },
-            { itemId: 'sardine', requiredLevel: 1, minCount: 50, maxCount: 150 },
-            { itemId: 'herring', requiredLevel: 5, minCount: 50, maxCount: 120 },
-            { itemId: 'mackerel', requiredLevel: 10, minCount: 40, maxCount: 100 },
-            { itemId: 'trout', requiredLevel: 15, minCount: 40, maxCount: 100 },
-            { itemId: 'cod', requiredLevel: 18, minCount: 40, maxCount: 90 },
-            { itemId: 'pike', requiredLevel: 20, minCount: 30, maxCount: 80 },
-            { itemId: 'salmon', requiredLevel: 25, minCount: 30, maxCount: 70 },
-            { itemId: 'tuna', requiredLevel: 30, minCount: 30, maxCount: 60 },
-            { itemId: 'lobster', requiredLevel: 40, minCount: 20, maxCount: 50 },
-            { itemId: 'bass', requiredLevel: 43, minCount: 20, maxCount: 40 },
-            { itemId: 'swordfish', requiredLevel: 45, minCount: 20, maxCount: 40 },
-            { itemId: 'shark', requiredLevel: 80, minCount: 10, maxCount: 30 }
-        ];
-        
-        for (const food of cookedFoods) {
-            if (currentLevel >= food.requiredLevel) {
-                const currentCount = bank.getItemCount(food.itemId);
-                const targetCount = currentCount + 
-                    Math.round((food.minCount + Math.random() * (food.maxCount - food.minCount)) / 10) * 10;
-                
-                goals.push({
-                    type: 'bank_items',
-                    itemId: food.itemId,
-                    targetCount: targetCount,
-                    priority: priority + goals.length
-                });
-            }
-        }
-        
-        return goals;
-    }
-    
     canPerformActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
         if (!activityData || activityData.skill !== this.id) return false;
@@ -173,8 +197,14 @@ class CookingSkill extends BaseSkill {
     executeGoal(goal, ai) {
         if (goal.type === 'skill_level') {
             this.trainCooking(ai);
-        } else if (goal.type === 'bank_items' && this.isCookedFood(goal.itemId)) {
-            this.cookFood(ai, goal.itemId);
+        } else if (goal.type === 'skill_activity') {
+            // Check if we have raw food for this specific cooked food
+            if (goal.targetItem && this.isCookedFood(goal.targetItem)) {
+                this.cookSpecificFood(ai, goal);
+            } else {
+                // Let AI handle the activity goal directly
+                ai.executeActivityGoal(goal);
+            }
         } else {
             // Not a cooking goal, use default
             super.executeGoal(goal, ai);
@@ -192,10 +222,15 @@ class CookingSkill extends BaseSkill {
         this.goToBankForCooking(ai);
     }
     
-    cookFood(ai, targetItemId) {
+    cookSpecificFood(ai, goal) {
         // Check if we have raw food in inventory
         if (this.hasRawFood()) {
-            ai.doActivity('cook_food');
+            // Navigate to the cooking node if needed
+            if (player.currentNode !== goal.nodeId) {
+                player.moveTo(goal.nodeId);
+                return;
+            }
+            ai.doActivity(goal.activityId);
             return;
         }
         
@@ -300,7 +335,11 @@ class CookingSkill extends BaseSkill {
         
         // Now go cook
         ai.clearCooldown();
-        ai.doActivity('cook_food');
+        if (goal && goal.type === 'skill_activity') {
+            ai.executeGoal(goal);
+        } else {
+            ai.doActivity('cook_food');
+        }
     }
     
     isCookedFood(itemId) {
