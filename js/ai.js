@@ -3,6 +3,7 @@ class AIManager {
         this.currentTask = null;
         this.decisionCooldown = 0;
         this.failedNodes = new Set();
+        this.hasBankedForCurrentTask = false; // Track if we've already banked for current task
     }
 
     // ==================== TASK MANAGEMENT ====================
@@ -22,6 +23,8 @@ class AIManager {
             return;
         }
 
+        // Reset banking flag when selecting a new task
+        this.hasBankedForCurrentTask = false;
         console.log('Selected task:', this.currentTask.description);
     }
 
@@ -37,69 +40,70 @@ class AIManager {
     // ==================== DECISION MAKING & EXECUTION ====================
 
     update(deltaTime) {
-    this.decisionCooldown -= deltaTime;
-    
-    // Only make decisions if cooldown has expired
-    if (this.decisionCooldown > 0) return;
+        this.decisionCooldown -= deltaTime;
+        
+        // Only make decisions if cooldown has expired
+        if (this.decisionCooldown > 0) return;
 
-    // Update task progress periodically for sync
-    if (window.taskManager) {
-        taskManager.updateAllProgress();
-    }
+        // Update task progress periodically for sync
+        if (window.taskManager) {
+            taskManager.updateAllProgress();
+        }
 
-    // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
-    // This happens when task is rerolled or becomes invalid while we're moving
-    if (this.currentTask === null && player.isMoving()) {
-        console.log('Task lost while moving, stopping to re-evaluate');
-        // Stop movement immediately
-        player.path = [];
-        player.pathIndex = 0;
-        player.targetPosition = null;
-        player.targetNode = null;
-        player.segmentProgress = 0;
-        // Make a decision immediately
-        this.makeDecision();
-        this.resetDecisionCooldown();
-        return;
-    }
+        // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
+        // This happens when task is rerolled or becomes invalid while we're moving
+        if (this.currentTask === null && player.isMoving()) {
+            console.log('Task lost while moving, stopping to re-evaluate');
+            // Stop movement immediately
+            player.path = [];
+            player.pathIndex = 0;
+            player.targetPosition = null;
+            player.targetNode = null;
+            player.segmentProgress = 0;
+            // Make a decision immediately
+            this.makeDecision();
+            this.resetDecisionCooldown();
+            return;
+        }
 
-    // Check if current task changed while we were busy (moving OR performing activity)
-if (!this.isCurrentTaskValid() && this.currentTask !== null) {
-    // Task was invalidated (rerolled, completed, etc)
-    if (player.isMoving()) {
-        console.log('Task changed while moving, stopping to re-evaluate');
-        // Stop movement
-        player.path = [];
-        player.pathIndex = 0;
-        player.targetPosition = null;
-        player.targetNode = null;
-        player.segmentProgress = 0;
-    }
-    if (player.isPerformingActivity()) {
-        console.log('Task changed while performing activity, stopping to re-evaluate');
-        player.stopActivity();
-    }
-    this.currentTask = null;
-    this.decisionCooldown = 0;
-    // Don't return - let it make a new decision immediately
-}
+        // Check if current task changed while we were busy (moving OR performing activity)
+        if (!this.isCurrentTaskValid() && this.currentTask !== null) {
+            // Task was invalidated (rerolled, completed, etc)
+            if (player.isMoving()) {
+                console.log('Task changed while moving, stopping to re-evaluate');
+                // Stop movement
+                player.path = [];
+                player.pathIndex = 0;
+                player.targetPosition = null;
+                player.targetNode = null;
+                player.segmentProgress = 0;
+            }
+            if (player.isPerformingActivity()) {
+                console.log('Task changed while performing activity, stopping to re-evaluate');
+                player.stopActivity();
+            }
+            this.currentTask = null;
+            this.hasBankedForCurrentTask = false; // Reset banking flag
+            this.decisionCooldown = 0;
+            // Don't return - let it make a new decision immediately
+        }
 
-// Additional check: if we have no task but player is still doing an activity, stop it
-if (this.currentTask === null && player.isPerformingActivity()) {
-    console.log('No current task but still performing activity, stopping');
-    player.stopActivity();
-    this.decisionCooldown = 0;
-}
+        // Additional check: if we have no task but player is still doing an activity, stop it
+        if (this.currentTask === null && player.isPerformingActivity()) {
+            console.log('No current task but still performing activity, stopping');
+            player.stopActivity();
+            this.decisionCooldown = 0;
+        }
 
-    // Make decisions when appropriate
-    if (!player.isBusy()) {
-        this.makeDecision();
-        this.resetDecisionCooldown();
-    } else if (this.shouldCheckBanking() && !player.isMoving()) {
-        this.makeDecision();
-        this.resetDecisionCooldown();
+        // Make decisions when appropriate
+        if (!player.isBusy()) {
+            this.makeDecision();
+            this.resetDecisionCooldown();
+        } else if (this.shouldCheckBanking() && !player.isMoving()) {
+            this.makeDecision();
+            this.resetDecisionCooldown();
+        }
     }
-}
 
     shouldCheckBanking() {
         // Check if inventory is full
@@ -111,7 +115,8 @@ if (this.currentTask === null && player.isPerformingActivity()) {
             isBusy: player.isBusy(),
             inventoryFull: inventory.isFull(),
             currentTask: this.currentTask?.description,
-            currentNode: player.currentNode
+            currentNode: player.currentNode,
+            hasBankedForTask: this.hasBankedForCurrentTask
         });
         
         // Check if we need banking
@@ -145,22 +150,22 @@ if (this.currentTask === null && player.isPerformingActivity()) {
     }
 
     needsBanking() {
-    // First, let the skill decide if it needs banking for the current task
-    if (this.currentTask) {
-        const skill = skillRegistry.getSkill(this.currentTask.skill);
-        if (skill && skill.needsBankingForTask) {
-            // Skill has specific banking logic - use it
-            return skill.needsBankingForTask(this.currentTask);
+        // First, let the skill decide if it needs banking for the current task
+        if (this.currentTask) {
+            const skill = skillRegistry.getSkill(this.currentTask.skill);
+            if (skill && skill.needsBankingForTask) {
+                // Skill has specific banking logic - use it
+                return skill.needsBankingForTask(this.currentTask);
+            }
         }
+        
+        // Fallback for skills without specific banking logic (gathering skills)
+        if (inventory.isFull()) {
+            return true;
+        }
+        
+        return false;
     }
-    
-    // Fallback for skills without specific banking logic (gathering skills)
-    if (inventory.isFull()) {
-        return true;
-    }
-    
-    return false;
-}
 
     hasRawFood() {
         // Delegate to cooking skill
@@ -184,6 +189,7 @@ if (this.currentTask === null && player.isPerformingActivity()) {
                 taskManager.rerollTask(index);
             }
             this.currentTask = null;
+            this.hasBankedForCurrentTask = false;
             return;
         }
         
@@ -196,33 +202,41 @@ if (this.currentTask === null && player.isPerformingActivity()) {
                 taskManager.rerollTask(index);
             }
             this.currentTask = null;
+            this.hasBankedForCurrentTask = false;
+            return;
+        }
+
+        // NEW: Check if skill requires banking before starting the task
+        if (skill && skill.requiresBankingBeforeTask && !this.hasBankedForCurrentTask) {
+            console.log(`${task.skill} requires banking before starting task`);
+            this.goToBank();
             return;
         }
 
         // Check if we're at the right node
-if (player.currentNode !== task.nodeId) {
-    // Double-check we're not already moving to this node
-    if (player.targetNode === task.nodeId && player.isMoving()) {
-        console.log(`Already moving to ${task.nodeId}`);
-        return;
-    }
-    
-    console.log(`Moving to ${task.nodeId} for task`);
-    player.moveTo(task.nodeId);
-    return;
-}
+        if (player.currentNode !== task.nodeId) {
+            // Double-check we're not already moving to this node
+            if (player.targetNode === task.nodeId && player.isMoving()) {
+                console.log(`Already moving to ${task.nodeId}`);
+                return;
+            }
+            
+            console.log(`Moving to ${task.nodeId} for task`);
+            player.moveTo(task.nodeId);
+            return;
+        }
 
-// Verify we're actually at the node (not just have it set incorrectly)
-const node = nodes.getNode(task.nodeId);
-if (node) {
-    const dist = window.distance(player.position.x, player.position.y, node.position.x, node.position.y);
-    if (dist > 2) { // More than 2 tiles away
-        console.log(`currentNode says ${task.nodeId} but player is ${dist} tiles away, clearing and moving`);
-        player.currentNode = null;
-        player.moveTo(task.nodeId);
-        return;
-    }
-}
+        // Verify we're actually at the node (not just have it set incorrectly)
+        const node = nodes.getNode(task.nodeId);
+        if (node) {
+            const dist = window.distance(player.position.x, player.position.y, node.position.x, node.position.y);
+            if (dist > 2) { // More than 2 tiles away
+                console.log(`currentNode says ${task.nodeId} but player is ${dist} tiles away, clearing and moving`);
+                player.currentNode = null;
+                player.moveTo(task.nodeId);
+                return;
+            }
+        }
         
         // Check if we have required items (for fishing bait, etc)
         if (!player.hasRequiredItems(task.activityId)) {
@@ -246,6 +260,7 @@ if (node) {
                     taskManager.rerollTask(index);
                 }
                 this.currentTask = null;
+                this.hasBankedForCurrentTask = false;
                 return;
             }
         }
@@ -321,7 +336,10 @@ if (node) {
             if (skill && skill.handleBanking) {
                 const success = skill.handleBanking(this.currentTask);
                 
-                if (!success) {
+                // Mark that we've banked for this task if successful
+                if (success) {
+                    this.hasBankedForCurrentTask = true;
+                } else {
                     console.log('Banking failed for skill task');
                     // Can't complete task, should reroll
                     const index = taskManager.tasks.indexOf(this.currentTask);
@@ -329,6 +347,7 @@ if (node) {
                         taskManager.rerollTask(index);
                     }
                     this.currentTask = null;
+                    this.hasBankedForCurrentTask = false;
                     return;
                 }
                 
