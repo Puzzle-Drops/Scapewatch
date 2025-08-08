@@ -169,16 +169,22 @@ class Player {
             }
         }
 
-        // Check if the current AI task is complete
-if (window.ai && window.ai.currentTask) {
+// Check if AI still has a valid task for this activity
+if (window.ai) {
+    // If AI has no current task (was rerolled/invalidated), stop activity
+    if (!window.ai.currentTask) {
+        console.log('AI task was invalidated, stopping activity');
+        this.stopActivity();
+        window.ai.decisionCooldown = 0;
+        return;
+    }
+    
     // Check if the task is complete
     if (window.ai.currentTask.progress >= 1) {
         console.log('Task completed after action!');
         this.stopActivity();
-        if (window.ai) {
-            window.ai.decisionCooldown = 0;
-            window.ai.currentTask = null;
-        }
+        window.ai.decisionCooldown = 0;
+        window.ai.currentTask = null;
         return;
     }
     
