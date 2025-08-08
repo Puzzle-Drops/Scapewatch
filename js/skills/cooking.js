@@ -1,7 +1,4 @@
-// Check if we have materials to work with (for production skills)
-    hasMaterials() {
-        return this.hasRawFoodInInventory();
-    }class CookingSkill extends BaseSkill {
+class CookingSkill extends BaseSkill {
     constructor() {
         super('cooking', 'Cooking');
         this.lastCookingXp = 0;
