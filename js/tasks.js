@@ -207,7 +207,9 @@ updateAllProgress() {
         console.log(`Rerolling task: ${oldTask.description}`);
 
         // Check if this was the current task BEFORE rerolling
-        const wasCurrentTask = (oldTask === this.getFirstIncompleteTask());
+// Also check if it was the AI's current task (they should be the same, but let's be explicit)
+const wasCurrentTask = (oldTask === this.getFirstIncompleteTask());
+const wasAICurrentTask = window.ai && (oldTask === window.ai.currentTask);
 
         const availableSkills = this.getAvailableSkills();
         if (availableSkills.length === 0) {
@@ -252,11 +254,11 @@ updateAllProgress() {
             }
             
             // If this was the current task being worked on, notify AI to re-evaluate
-            if (wasCurrentTask && window.ai) {
-                console.log('Current task was rerolled, notifying AI to re-evaluate');
-                window.ai.currentTask = null;
-                window.ai.decisionCooldown = 0;
-            }
+if ((wasCurrentTask || wasAICurrentTask) && window.ai) {
+    console.log('Current task was rerolled, notifying AI to re-evaluate');
+    window.ai.currentTask = null;
+    window.ai.decisionCooldown = 0;
+}
         } else {
             console.error('Failed to generate replacement task');
         }
