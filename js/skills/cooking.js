@@ -1,4 +1,7 @@
-class CookingSkill extends BaseSkill {
+// Check if we have materials to work with (for production skills)
+    hasMaterials() {
+        return this.hasRawFoodInInventory();
+    }class CookingSkill extends BaseSkill {
     constructor() {
         super('cooking', 'Cooking');
         this.lastCookingXp = 0;
@@ -6,6 +9,213 @@ class CookingSkill extends BaseSkill {
     }
     
     // ==================== TASK GENERATION OVERRIDES ====================
+    
+    generateTask() {
+        // Get available raw food from bank + inventory
+        const availableRawFood = this.getAvailableRawFood();
+        
+        if (availableRawFood.length === 0) {
+            console.log('No raw food available for cooking tasks');
+            return null;
+        }
+        
+        // Filter out items that already have cooking tasks (unless we have lots)
+        const filteredFood = this.filterOutExistingTasks(availableRawFood);
+        
+        if (filteredFood.length === 0) {
+            console.log('All available raw food already has tasks');
+            return null;
+        }
+        
+        // Select a raw food item using weighted distribution
+        const selectedFood = this.selectWeightedRawFood(filteredFood);
+        if (!selectedFood) {
+            console.log('Failed to select raw food for cooking');
+            return null;
+        }
+        
+        // Find cooking nodes
+        const cookingNodes = this.findCookingNodes();
+        if (cookingNodes.length === 0) {
+            console.log('No cooking locations available');
+            return null;
+        }
+        
+        // Select a random cooking location
+        const selectedNode = cookingNodes[Math.floor(Math.random() * cookingNodes.length)];
+        
+        // Determine target count (capped by available raw food)
+        const desiredCount = this.determineTargetCount(selectedFood.cookedItemId);
+        const targetCount = Math.min(desiredCount, selectedFood.available);
+        
+        // Don't create tasks for very small amounts
+        if (targetCount < 5) {
+            console.log(`Not enough ${selectedFood.rawItemId} for a task (only ${selectedFood.available} available)`);
+            return null;
+        }
+        
+        // Get item names
+        const rawItemData = loadingManager.getData('items')[selectedFood.rawItemId];
+        const nodeData = nodes.getNode(selectedNode.nodeId);
+        
+        // Create the cooking task - note we track RAW item consumption
+        return {
+            skill: this.id,
+            itemId: selectedFood.rawItemId, // Track RAW item consumption
+            targetCount: targetCount,
+            nodeId: selectedNode.nodeId,
+            activityId: selectedNode.activityId,
+            description: `Cook ${targetCount} ${rawItemData.name} at ${nodeData.name}`,
+            startingCount: this.getRawFoodConsumedCount(selectedFood.rawItemId), // Track how many we've already used
+            progress: 0,
+            isCookingTask: true, // Flag to identify cooking tasks
+            cookedItemId: selectedFood.cookedItemId // Store what we're making for reference
+        };
+    }
+    
+    // Get count of raw food we've consumed (inverse of what's available)
+    getRawFoodConsumedCount(rawItemId) {
+        // This is a bit tricky - we need to track based on some baseline
+        // For now, we'll use 0 as the starting count and track depletion
+        // In a real implementation, we might want to store the initial count
+        return 0;
+    }
+    
+    // Filter out raw food that already has tasks (unless we have plenty)
+    filterOutExistingTasks(availableRawFood) {
+        if (!window.taskManager) return availableRawFood;
+        
+        const filtered = [];
+        const existingTasks = taskManager.getAllTasks();
+        
+        for (const food of availableRawFood) {
+            // Check if there's already a cooking task for this raw item
+            const existingTask = existingTasks.find(task => 
+                task.isCookingTask && 
+                task.itemId === food.rawItemId &&
+                task.progress < 1
+            );
+            
+            if (existingTask) {
+                // Only allow if we have 10x the amount needed for a typical task
+                const typicalTaskSize = this.determineTargetCount(food.cookedItemId);
+                const safeAmount = typicalTaskSize * 10;
+                
+                if (food.available >= safeAmount) {
+                    console.log(`Allowing duplicate task for ${food.rawItemId} - have ${food.available}, safe threshold is ${safeAmount}`);
+                    filtered.push(food);
+                } else {
+                    console.log(`Filtering out ${food.rawItemId} - already has task and only ${food.available} available`);
+                }
+            } else {
+                // No existing task for this item, safe to use
+                filtered.push(food);
+            }
+        }
+        
+        return filtered;
+    }
+    
+    // Get all available raw food items
+    getAvailableRawFood() {
+        const availableFood = [];
+        const activityData = loadingManager.getData('activities')['cook_food'];
+        if (!activityData || !activityData.cookingTable) return availableFood;
+        
+        const cookingLevel = skills.getLevel('cooking');
+        
+        for (const recipe of activityData.cookingTable) {
+            if (cookingLevel < recipe.requiredLevel) continue;
+            
+            // Check how much of this raw food we have
+            const inInventory = inventory.getItemCount(recipe.rawItemId);
+            const inBank = bank.getItemCount(recipe.rawItemId);
+            const total = inInventory + inBank;
+            
+            if (total > 0) {
+                availableFood.push({
+                    rawItemId: recipe.rawItemId,
+                    cookedItemId: recipe.cookedItemId,
+                    available: total,
+                    requiredLevel: recipe.requiredLevel
+                });
+            }
+        }
+        
+        return availableFood;
+    }
+    
+    // Select raw food using weighted distribution (prefer higher level foods)
+    selectWeightedRawFood(availableFood) {
+        if (availableFood.length === 0) return null;
+        
+        // Sort by required level (highest first)
+        availableFood.sort((a, b) => b.requiredLevel - a.requiredLevel);
+        
+        // Apply weights based on level and availability
+        const weights = [];
+        let totalWeight = 0;
+        
+        for (let i = 0; i < availableFood.length; i++) {
+            // Base weight: higher level foods get more weight
+            let weight = 0;
+            if (i === 0) weight = 0.4; // Highest level
+            else if (i === 1) weight = 0.3; // Second highest
+            else weight = 0.3 / (availableFood.length - 2); // Split remaining
+            
+            // Adjust weight based on quantity available (more available = more likely)
+            const quantityMultiplier = Math.min(2.0, 1.0 + (availableFood[i].available / 100));
+            weight *= quantityMultiplier;
+            
+            weights.push(weight);
+            totalWeight += weight;
+        }
+        
+        // Normalize weights
+        for (let i = 0; i < weights.length; i++) {
+            weights[i] /= totalWeight;
+        }
+        
+        // Random selection based on weights
+        const random = Math.random();
+        let cumulative = 0;
+        
+        for (let i = 0; i < availableFood.length; i++) {
+            cumulative += weights[i];
+            if (random < cumulative) {
+                return availableFood[i];
+            }
+        }
+        
+        return availableFood[availableFood.length - 1]; // Fallback
+    }
+    
+    // Find nodes where we can cook
+    findCookingNodes() {
+        const cookingNodes = [];
+        const allNodes = nodes.getAllNodes();
+        
+        for (const [nodeId, node] of Object.entries(allNodes)) {
+            if (!node.activities) continue;
+            
+            // Check if this node has cooking activity
+            if (node.activities.includes('cook_food')) {
+                // Check if node is walkable
+                if (window.collision && window.collision.initialized) {
+                    if (!collision.isWalkable(Math.floor(node.position.x), Math.floor(node.position.y))) {
+                        continue;
+                    }
+                }
+                
+                cookingNodes.push({
+                    nodeId: nodeId,
+                    activityId: 'cook_food'
+                });
+            }
+        }
+        
+        return cookingNodes;
+    }
     
     getTaskVerb() {
         return 'Cook';
@@ -40,17 +250,7 @@ class CookingSkill extends BaseSkill {
         return Math.round(baseCount / 5) * 5;
     }
     
-    // Override generateTask to check if raw materials exist
-    generateTask() {
-        // First check if we can actually cook anything
-        if (!this.hasAccessToRawFood()) {
-            console.log('No raw food available for cooking tasks');
-            return null;
-        }
-        
-        return super.generateTask();
-    }
-    
+    // Check if we still have access to raw food for cooking
     hasAccessToRawFood() {
         const activityData = loadingManager.getData('activities')['cook_food'];
         if (!activityData || !activityData.cookingTable) return false;
@@ -78,8 +278,30 @@ class CookingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
-        // Find what raw item we have in inventory
-        const rawItem = this.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking'));
+        // If we have a cooking task, prioritize that raw item
+        let rawItem = null;
+        
+        if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
+            // Check if we have the task's raw item in inventory
+            const taskRawItemId = window.ai.currentTask.itemId;
+            const level = skills.getLevel('cooking');
+            
+            // Find the recipe for this raw item
+            const recipe = activityData.cookingTable.find(r => 
+                r.rawItemId === taskRawItemId && 
+                level >= r.requiredLevel
+            );
+            
+            if (recipe && inventory.hasItem(taskRawItemId, 1)) {
+                rawItem = recipe;
+                console.log(`Using ${taskRawItemId} for current cooking task`);
+            }
+        }
+        
+        // If no task item or don't have it, use any available
+        if (!rawItem) {
+            rawItem = this.findRawItemToCook(activityData.cookingTable, skills.getLevel('cooking'));
+        }
         
         if (!rawItem) {
             console.log('No raw items to cook');
@@ -92,7 +314,48 @@ class CookingSkill extends BaseSkill {
         // Consume the raw item
         inventory.removeItem(rawItem.rawItemId, 1);
         
+        // Track consumption for cooking tasks
+        if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
+            // Update the task progress immediately when we consume the raw item
+            // This ensures we count attempts, not successes
+            const currentTask = window.ai.currentTask;
+            if (currentTask.itemId === rawItem.rawItemId) {
+                // Increment progress for consuming raw food
+                const consumed = this.getRawFoodUsedSoFar(rawItem.rawItemId, currentTask);
+                currentTask.progress = Math.min(consumed / currentTask.targetCount, 1);
+                
+                // Update UI
+                if (window.ui) {
+                    window.ui.updateTasks();
+                }
+                
+                // Check if task is complete
+                if (currentTask.progress >= 1) {
+                    console.log('Cooking task complete!');
+                    if (window.taskManager) {
+                        taskManager.completeTask(currentTask);
+                    }
+                }
+            }
+        }
+        
         return true;
+    }
+    
+    // Calculate how many raw food items we've used for this task
+    getRawFoodUsedSoFar(rawItemId, task) {
+        // We need to track based on the difference from starting amount
+        // This is a simplified approach - in production you'd want better tracking
+        const currentTotal = inventory.getItemCount(rawItemId) + bank.getItemCount(rawItemId);
+        const startingTotal = task.startingCount || 0;
+        
+        // For now, increment a counter on the task itself
+        if (!task.rawFoodConsumed) {
+            task.rawFoodConsumed = 0;
+        }
+        task.rawFoodConsumed++;
+        
+        return task.rawFoodConsumed;
     }
     
     processRewards(activityData, level) {
@@ -152,5 +415,110 @@ class CookingSkill extends BaseSkill {
     shouldBankItem(itemId) {
         // Don't bank burnt food
         return itemId !== 'burnt_food';
+    }
+    
+    // ==================== BANKING LOGIC ====================
+    
+    // Check if we have any raw food to cook (in inventory)
+    hasRawFoodInInventory() {
+        const activityData = loadingManager.getData('activities')['cook_food'];
+        if (!activityData || !activityData.cookingTable) return false;
+        
+        const cookingLevel = skills.getLevel('cooking');
+        
+        for (const recipe of activityData.cookingTable) {
+            if (cookingLevel >= recipe.requiredLevel && inventory.hasItem(recipe.rawItemId, 1)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // Check if we need to bank for cooking
+    needsBankingForTask(task) {
+        if (!task || !task.isCookingTask) return false;
+        
+        // Need banking if we don't have the specific raw food for our task
+        return !inventory.hasItem(task.itemId, 1);
+    }
+    
+    // Handle banking for cooking tasks
+    handleBanking(task) {
+        // Deposit all first
+        bank.depositAll();
+        console.log('Deposited all items for cooking');
+        
+        let withdrawnAny = false;
+        let totalWithdrawn = 0;
+        
+        // If we have a specific cooking task, prioritize that raw food
+        if (task && task.isCookingTask) {
+            const taskRawItemId = task.itemId;
+            const bankCount = bank.getItemCount(taskRawItemId);
+            const needed = task.targetCount - (task.rawFoodConsumed || 0);
+            
+            if (bankCount > 0 && needed > 0) {
+                const toWithdraw = Math.min(28, Math.min(bankCount, needed));
+                const withdrawn = bank.withdrawUpTo(taskRawItemId, toWithdraw);
+                
+                if (withdrawn > 0) {
+                    inventory.addItem(taskRawItemId, withdrawn);
+                    console.log(`Withdrew ${withdrawn} ${taskRawItemId} for cooking task`);
+                    withdrawnAny = true;
+                    totalWithdrawn += withdrawn;
+                }
+            }
+        }
+        
+        // Fill remaining space with other raw food
+        if (totalWithdrawn < 28) {
+            const activityData = loadingManager.getData('activities')['cook_food'];
+            const cookingLevel = skills.getLevel('cooking');
+            
+            const availableRecipes = activityData.cookingTable
+                .filter(recipe => cookingLevel >= recipe.requiredLevel)
+                .sort((a, b) => b.requiredLevel - a.requiredLevel); // Highest level first
+            
+            for (const recipe of availableRecipes) {
+                // Skip if this was already withdrawn for task
+                if (task && task.isCookingTask && recipe.rawItemId === task.itemId) {
+                    continue;
+                }
+                
+                const bankCount = bank.getItemCount(recipe.rawItemId);
+                if (bankCount > 0) {
+                    const toWithdraw = Math.min(28 - totalWithdrawn, bankCount);
+                    const withdrawn = bank.withdrawUpTo(recipe.rawItemId, toWithdraw);
+                    
+                    if (withdrawn > 0) {
+                        inventory.addItem(recipe.rawItemId, withdrawn);
+                        console.log(`Withdrew ${withdrawn} ${recipe.rawItemId} for general cooking`);
+                        withdrawnAny = true;
+                        totalWithdrawn += withdrawn;
+                        
+                        if (totalWithdrawn >= 28) break;
+                    }
+                }
+            }
+        }
+        
+        return withdrawnAny;
+    }
+    
+    // Check if we can continue with this task
+    canContinueTask(task) {
+        if (!task || !task.isCookingTask) return true;
+        
+        // Check if we have enough raw food remaining
+        const currentRawFood = (inventory.getItemCount(task.itemId) + bank.getItemCount(task.itemId));
+        const remaining = task.targetCount - (task.rawFoodConsumed || 0);
+        
+        return currentRawFood >= remaining;
+    }
+    
+    // Check if we have materials to work with (for production skills)
+    hasMaterials() {
+        return this.hasRawFoodInInventory();
     }
 }
