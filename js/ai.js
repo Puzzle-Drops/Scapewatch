@@ -21,8 +21,8 @@ class AIManager {
         if (goal.type === 'skill_level') {
             goal.startingLevel = skills.getLevel(goal.skill);
             goal.startingXp = skills.getXp(goal.skill);
-        } else if (goal.type === 'bank_items') {
-            goal.startingCount = bank.getItemCount(goal.itemId);
+        } else if (goal.type === 'skill_activity' && goal.targetItem) {
+            goal.startingCount = bank.getItemCount(goal.targetItem);
         }
         
         this.goals.push(goal);
@@ -54,8 +54,8 @@ class AIManager {
                 if (goal.type === 'skill_level') {
                     goal.startingLevel = skills.getLevel(goal.skill);
                     goal.startingXp = skills.getXp(goal.skill);
-                } else if (goal.type === 'bank_items') {
-                    goal.startingCount = bank.getItemCount(goal.itemId);
+                } else if (goal.type === 'skill_activity' && goal.targetItem) {
+                    goal.startingCount = bank.getItemCount(goal.targetItem);
                 }
                 
                 console.log('New goal selected:', goal);
@@ -76,8 +76,8 @@ class AIManager {
         switch (goal.type) {
             case 'skill_level':
                 return `skill_${goal.skill}_${goal.targetLevel}`;
-            case 'bank_items':
-                return `bank_${goal.itemId}_${goal.targetCount}`;
+            case 'skill_activity':
+                return `activity_${goal.nodeId}_${goal.activityId}_${goal.targetItem || 'none'}_${goal.targetCount || 0}`;
             case 'complete_quest':
                 return `quest_${goal.questId}`;
             default:
@@ -90,8 +90,12 @@ class AIManager {
             case 'skill_level':
                 return skills.getLevel(goal.skill) >= goal.targetLevel;
             
-            case 'bank_items':
-                return bank.getItemCount(goal.itemId) >= goal.targetCount;
+            case 'skill_activity':
+                if (goal.targetItem && goal.targetCount) {
+                    return bank.getItemCount(goal.targetItem) >= goal.targetCount;
+                }
+                // If no target item/count, goal is never complete (training goal)
+                return false;
             
             case 'complete_quest':
                 return false; // TODO: Implement
@@ -103,19 +107,57 @@ class AIManager {
 
     generateNewGoals() {
         const baseGoalCount = this.goals.length;
+        let priority = baseGoalCount + 1;
         
-        // Let skill registry generate all goals
-        const newGoals = skillRegistry.generateAllGoals(baseGoalCount);
+        // Decide on skill distribution for this batch of goals
+        const distribution = this.decideGoalDistribution();
         
-        for (const goal of newGoals) {
-            this.addGoal(goal);
+        console.log('Generating goals with distribution:', distribution);
+        
+        // Generate specific goals for each skill
+        for (const [skillId, count] of Object.entries(distribution)) {
+            const skill = skillRegistry.getSkill(skillId);
+            if (!skill) continue;
+            
+            const skillGoals = skill.generateSpecificGoals(count, priority);
+            for (const goal of skillGoals) {
+                this.addGoal(goal);
+                priority++;
+            }
+            
+            console.log(`Generated ${skillGoals.length} goals for ${skillId}`);
         }
         
-        console.log(`Generated ${newGoals.length} new goals`);
+        console.log(`Total goals in queue: ${this.goals.length}`);
         
         if (window.ui) {
             window.ui.forceGoalUpdate();
         }
+    }
+
+    decideGoalDistribution() {
+        // Smart distribution based on current levels and available activities
+        const distribution = {};
+        const allSkills = ['woodcutting', 'mining', 'fishing', 'cooking', 'attack'];
+        
+        // Randomly pick 2-4 skills to focus on
+        const numSkills = 2 + Math.floor(Math.random() * 3); // 2-4 skills
+        const totalGoals = 3 + Math.floor(Math.random() * 5); // 3-7 total goals
+        
+        // Shuffle and pick skills
+        const shuffled = [...allSkills].sort(() => Math.random() - 0.5);
+        const selectedSkills = shuffled.slice(0, numSkills);
+        
+        // Distribute goals among selected skills
+        let remaining = totalGoals;
+        for (let i = 0; i < selectedSkills.length; i++) {
+            const isLast = i === selectedSkills.length - 1;
+            const count = isLast ? remaining : Math.ceil(Math.random() * Math.min(3, remaining));
+            distribution[selectedSkills[i]] = count;
+            remaining -= count;
+        }
+        
+        return distribution;
     }
 
     // ==================== DECISION MAKING & EXECUTION ====================
@@ -142,21 +184,11 @@ class AIManager {
     }
 
     shouldCheckBanking() {
-        // Check if the current goal's skill needs banking
+        // Check if we need banking based on current goal
         if (this.currentGoal && this.currentGoal.skill) {
             const skill = skillRegistry.getSkill(this.currentGoal.skill);
-            if (skill) {
+            if (skill && skill.needsBanking) {
                 return skill.needsBanking(this.currentGoal);
-            }
-        }
-        
-        // Check for item goals that might have a related skill
-        if (this.currentGoal && this.currentGoal.type === 'bank_items') {
-            // Check all skills to see if any handle this item
-            for (const skill of skillRegistry.getAllSkills()) {
-                if (skill.needsBanking && skill.isCookedFood && skill.isCookedFood(this.currentGoal.itemId)) {
-                    return skill.needsBanking(this.currentGoal);
-                }
             }
         }
         
@@ -199,24 +231,11 @@ class AIManager {
 
     needsBankingForGoal(goal) {
         // Get the skill for this goal
-        let skill = null;
-        
         if (goal.skill) {
-            skill = skillRegistry.getSkill(goal.skill);
-        } else if (goal.type === 'bank_items') {
-            // Check if any skill handles this item (e.g., cooking handles cooked food)
-            for (const s of skillRegistry.getAllSkills()) {
-                if (s.isCookedFood && s.isCookedFood(goal.itemId)) {
-                    skill = s;
-                    break;
-                }
-                // Could add similar checks for other skills
+            const skill = skillRegistry.getSkill(goal.skill);
+            if (skill && skill.needsBanking) {
+                return skill.needsBanking(goal);
             }
-        }
-        
-        // If we found a skill, ask it about banking needs
-        if (skill && skill.needsBanking) {
-            return skill.needsBanking(goal);
         }
         
         // Default behavior: bank if inventory is full
@@ -224,40 +243,64 @@ class AIManager {
     }
 
     executeGoal(goal) {
-        // Delegate to skill-specific logic
-        if (goal.skill) {
-            const skill = skillRegistry.getSkill(goal.skill);
-            if (skill) {
-                skill.executeGoal(goal, this);
-                return;
-            }
-        }
-        
-        // Handle item goals that might be from a skill
-        if (goal.type === 'bank_items') {
-            // Check if any skill handles this item
-            for (const skill of skillRegistry.getAllSkills()) {
-                if (skill.executeGoal) {
-                    // Let skill check if it handles this item
-                    const handled = skill.executeGoal(goal, this);
-                    if (handled !== undefined) return;
-                }
-            }
-        }
-        
-        // Fallback for non-skill goals
         switch (goal.type) {
+            case 'skill_level':
+                // Training goal - delegate to skill
+                const levelSkill = skillRegistry.getSkill(goal.skill);
+                if (levelSkill) {
+                    levelSkill.executeGoal(goal, this);
+                }
+                break;
+                
+            case 'skill_activity':
+                // Specific activity goal - much simpler!
+                this.executeActivityGoal(goal);
+                break;
+                
             case 'complete_quest':
                 this.doQuest(goal.questId);
                 break;
+                
             default:
                 console.log('Unknown goal type:', goal.type);
         }
     }
 
+    executeActivityGoal(goal) {
+        // Store the planned activity for banking logic
+        this.plannedActivity = goal.activityId;
+        
+        // Check if we're at the right node
+        if (player.currentNode !== goal.nodeId) {
+            console.log(`Moving to ${goal.nodeId} for ${goal.activityId}`);
+            player.moveTo(goal.nodeId);
+            return;
+        }
+        
+        // Check if we have required items (for fishing bait, etc)
+        if (!player.hasRequiredItems(goal.activityId)) {
+            if (this.hasAccessToRequiredItems(goal.activityId)) {
+                console.log(`Missing required items for ${goal.activityId}, going to bank`);
+                this.goToBankForItems(goal.activityId);
+                return;
+            } else {
+                console.log(`Cannot perform ${goal.activityId} - required items not available`);
+                this.markGoalUnachievable(goal);
+                this.currentGoal = null;
+                this.resetPlannedActivity();
+                return;
+            }
+        }
+        
+        // Start the activity
+        console.log(`Starting activity ${goal.activityId} at ${goal.nodeId}`);
+        player.startActivity(goal.activityId);
+    }
+
     // ==================== ACTIVITY MANAGEMENT ====================
 
     doActivity(activityId) {
+        // This is now mainly used for skill_level goals
         this.plannedActivity = activityId;
         
         // Check if we have required items
@@ -361,16 +404,6 @@ class AIManager {
             if (skill && skill.handleBanking) {
                 skill.handleBanking(this, this.currentGoal);
                 return;
-            }
-        }
-        
-        // Check if it's an item goal handled by a skill
-        if (this.currentGoal && this.currentGoal.type === 'bank_items') {
-            for (const skill of skillRegistry.getAllSkills()) {
-                if (skill.isCookedFood && skill.isCookedFood(this.currentGoal.itemId)) {
-                    skill.handleBanking(this, this.currentGoal);
-                    return;
-                }
             }
         }
         
@@ -546,10 +579,13 @@ class AIManager {
                 const currentLevel = skills.getLevel(this.currentGoal.skill);
                 return `Training ${this.currentGoal.skill} to level ${this.currentGoal.targetLevel} (current: ${currentLevel})`;
             
-            case 'bank_items':
-                const currentCount = bank.getItemCount(this.currentGoal.itemId);
-                const itemData = loadingManager.getData('items')[this.currentGoal.itemId];
-                return `Banking ${itemData.name}: ${currentCount}/${this.currentGoal.targetCount}`;
+            case 'skill_activity':
+                if (this.currentGoal.targetItem && this.currentGoal.targetCount) {
+                    const currentCount = bank.getItemCount(this.currentGoal.targetItem);
+                    return `${this.currentGoal.description}`;
+                } else {
+                    return this.currentGoal.description || 'Training skill';
+                }
             
             default:
                 return 'Working on goal...';
