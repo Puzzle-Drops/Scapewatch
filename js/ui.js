@@ -181,36 +181,48 @@ class UIManager {
     }
 
     createSkillElement(skillId, skill) {
-        const skillDiv = document.createElement('div');
-        skillDiv.className = 'skill-item';
-        
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'skill-content';
-        
-        // Add skill icon
-        const iconElement = this.createSkillIcon(skillId, skill);
-        if (iconElement) {
-            contentDiv.appendChild(iconElement);
-        }
-        
-        // Create level display
-        const levelDiv = document.createElement('div');
-        levelDiv.className = 'skill-level';
-        levelDiv.textContent = skill.level;
-        contentDiv.appendChild(levelDiv);
-        
-        // Create progress bar
-        const progressBar = this.createSkillProgressBar(skill);
-        
-        // Create tooltip
-        const tooltip = this.createSkillTooltip(skill);
-        
-        skillDiv.appendChild(contentDiv);
-        skillDiv.appendChild(progressBar);
-        skillDiv.appendChild(tooltip);
-        
-        return skillDiv;
+    const skillDiv = document.createElement('div');
+    skillDiv.className = 'skill-item';
+    
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'skill-content';
+    
+    // Add skill icon
+    const iconElement = this.createSkillIcon(skillId, skill);
+    if (iconElement) {
+        contentDiv.appendChild(iconElement);
     }
+    
+    // Create level display
+    const levelDiv = document.createElement('div');
+    levelDiv.className = 'skill-level';
+    levelDiv.textContent = skill.level;
+    contentDiv.appendChild(levelDiv);
+    
+    // Create progress bar
+    const progressBar = this.createSkillProgressBar(skill);
+    
+    // Create tooltip
+    const tooltip = this.createSkillTooltip(skill);
+    
+    // Add mouse events to position tooltip dynamically
+    skillDiv.addEventListener('mouseenter', (e) => {
+        const rect = skillDiv.getBoundingClientRect();
+        const tooltipHeight = tooltip.offsetHeight || 60; // Estimate if not rendered yet
+        
+        // Position above the skill item, accounting for game scaling
+        const scale = window.scalingSystem ? scalingSystem.getScale() : 1;
+        tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+        tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+    });
+    
+    skillDiv.appendChild(contentDiv);
+    skillDiv.appendChild(progressBar);
+    skillDiv.appendChild(tooltip);
+    
+    return skillDiv;
+}
 
     createSkillIcon(skillId, skill) {
         const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
@@ -292,34 +304,46 @@ class UIManager {
     }
 
     createLevelItem(iconKey, value, color, tooltipText) {
-        const levelItem = document.createElement('div');
-        levelItem.className = 'level-item';
-        levelItem.style.position = 'relative';
-        
-        const icon = loadingManager.getImage(iconKey);
-        if (icon) {
-            const iconImg = document.createElement('img');
-            iconImg.className = 'level-icon';
-            iconImg.src = icon.src;
-            levelItem.appendChild(iconImg);
-        }
-        
-        const text = document.createElement('div');
-        text.style.fontSize = '20px';
-        text.style.fontWeight = 'bold';
-        text.style.color = color;
-        text.textContent = value;
-        
-        const tooltip = document.createElement('div');
-        tooltip.className = 'skill-tooltip';
-        tooltip.style.textAlign = 'left';
-        tooltip.innerHTML = tooltipText;
-        
-        levelItem.appendChild(text);
-        levelItem.appendChild(tooltip);
-        
-        return levelItem;
+    const levelItem = document.createElement('div');
+    levelItem.className = 'level-item';
+    levelItem.style.position = 'relative';
+    
+    const icon = loadingManager.getImage(iconKey);
+    if (icon) {
+        const iconImg = document.createElement('img');
+        iconImg.className = 'level-icon';
+        iconImg.src = icon.src;
+        levelItem.appendChild(iconImg);
     }
+    
+    const text = document.createElement('div');
+    text.style.fontSize = '20px';
+    text.style.fontWeight = 'bold';
+    text.style.color = color;
+    text.textContent = value;
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'skill-tooltip';
+    tooltip.style.textAlign = 'left';
+    tooltip.innerHTML = tooltipText;
+    
+    // Add mouse events to position tooltip dynamically
+    levelItem.addEventListener('mouseenter', (e) => {
+        const rect = levelItem.getBoundingClientRect();
+        const tooltipHeight = tooltip.offsetHeight || 60;
+        
+        // Position above the level item
+        const scale = window.scalingSystem ? scalingSystem.getScale() : 1;
+        tooltip.style.left = `${rect.left + (rect.width / 2)}px`;
+        tooltip.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        tooltip.style.transform = 'translateX(-50%)';
+    });
+    
+    levelItem.appendChild(text);
+    levelItem.appendChild(tooltip);
+    
+    return levelItem;
+}
 
     calculateTotalExp(allSkills) {
         let totalExp = 0;
