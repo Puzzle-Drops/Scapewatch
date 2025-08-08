@@ -194,8 +194,8 @@
         "name": "West Varrock Mine",
         "type": "skill",
         "position": {
-            "x": 4523,
-            "y": 1588
+            "x": 4311,
+            "y": 1581
         },
         "activities": [
             "mine_copper_tin",
