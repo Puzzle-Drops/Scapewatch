@@ -114,10 +114,10 @@ body {
 /* Single UI Panel (bottom right) */
 .ui-panel {
     position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 350px;
-    height: 480px;
+    bottom: 0px;
+    right: 0px;
+    width: 364px;
+    height: 650px;
     background-color: #2a2a2a;
     border-radius: 8px;
     border: 2px solid #444;
@@ -221,15 +221,15 @@ body {
 /* Inventory Grid */
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    justify-items: anchor-center;
 }
 
 .inventory-slot {
-    width: 42px;
-    height: 42px;
-    background-color: #222;
-    border: 2px solid #444;
+    width: 64px;
+    height: 64px;
+    background-color: #333;
     border-radius: 4px;
     display: flex;
     align-items: center;
