@@ -9,9 +9,9 @@ class Bank {
         }
         this.items[itemId] += quantity;
         
-        // Notify UI
+        // Notify UI - using new UI system
         if (window.ui) {
-            window.ui.forceBankUpdate();
+            window.ui.updateBank();
         }
     }
 
@@ -25,9 +25,9 @@ class Bank {
             delete this.items[itemId];
         }
 
-        // Notify UI
+        // Notify UI - using new UI system
         if (window.ui) {
-            window.ui.forceBankUpdate();
+            window.ui.updateBank();
         }
 
         return quantity;
@@ -47,9 +47,9 @@ class Bank {
             delete this.items[itemId];
         }
 
-        // Notify UI
+        // Notify UI - using new UI system
         if (window.ui) {
-            window.ui.forceBankUpdate();
+            window.ui.updateBank();
         }
 
         return toWithdraw;
