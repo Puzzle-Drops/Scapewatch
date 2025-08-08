@@ -36,24 +36,29 @@ class FishingSkill extends BaseSkill {
     // ==================== BANKING LOGIC ====================
     
     // Check if we need banking for a fishing task
-    needsBankingForTask(task) {
-        if (!task || task.skill !== 'fishing') return false;
-        
-        // Check if the activity requires bait/feathers
-        const activityData = loadingManager.getData('activities')[task.activityId];
-        if (!activityData) return false;
-        
-        if (activityData.consumeOnSuccess) {
-            for (const required of activityData.consumeOnSuccess) {
-                if (!inventory.hasItem(required.itemId, 1)) {
-                    // We need bait/feathers and don't have any
-                    return true;
-                }
+needsBankingForTask(task) {
+    if (!task || task.skill !== 'fishing') return false;
+    
+    // First check if inventory is full
+    if (inventory.isFull()) {
+        return true;
+    }
+    
+    // Then check if the activity requires bait/feathers
+    const activityData = loadingManager.getData('activities')[task.activityId];
+    if (!activityData) return false;
+    
+    if (activityData.consumeOnSuccess) {
+        for (const required of activityData.consumeOnSuccess) {
+            if (!inventory.hasItem(required.itemId, 1)) {
+                // We need bait/feathers and don't have any
+                return true;
             }
         }
-        
-        return false;
     }
+    
+    return false;
+}
     
     // Handle banking for fishing (withdraw bait/feathers)
     handleBanking(task) {
