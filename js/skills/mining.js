@@ -4,6 +4,69 @@ class MiningSkill extends BaseSkill {
         this.alternatingStates = {};
     }
     
+    // ==================== GOAL GENERATION OVERRIDE ====================
+    
+    createGoalForActivity(node, activity, priority) {
+        // Get what this activity produces
+        const primaryReward = this.getPrimaryReward(activity);
+        if (!primaryReward) {
+            // Fallback to generic training goal
+            return super.createGoalForActivity(node, activity, priority);
+        }
+        
+        // Determine target count based on ore type and level
+        const targetCount = this.determineTargetCount(primaryReward.itemId);
+        const itemData = loadingManager.getData('items')[primaryReward.itemId];
+        
+        return {
+            type: 'skill_activity',
+            skill: this.id,
+            nodeId: node.id,
+            activityId: activity.id,
+            targetItem: primaryReward.itemId,
+            targetCount: targetCount,
+            priority: priority,
+            description: `Mine ${targetCount} ${itemData.name} at ${node.name}`
+        };
+    }
+    
+    getPrimaryReward(activity) {
+        // Handle alternating rewards (copper/tin)
+        if (activity.alternatingRewards && activity.alternatingRewards.length > 0) {
+            // Pick one randomly for the goal
+            return activity.alternatingRewards[Math.floor(Math.random() * activity.alternatingRewards.length)];
+        }
+        
+        // Handle standard rewards
+        if (activity.rewards && activity.rewards.length > 0) {
+            return activity.rewards[0]; // Primary ore
+        }
+        
+        return null;
+    }
+    
+    determineTargetCount(itemId) {
+        // Base counts for different ore types
+        const oreCounts = {
+            'copper_ore': { min: 50, max: 150 },
+            'tin_ore': { min: 50, max: 150 },
+            'iron_ore': { min: 40, max: 120 },
+            'silver_ore': { min: 30, max: 80 },
+            'coal': { min: 50, max: 100 },
+            'gold_ore': { min: 25, max: 60 },
+            'mithril_ore': { min: 20, max: 50 },
+            'adamantite_ore': { min: 15, max: 35 },
+            'runite_ore': { min: 10, max: 20 },
+            'amethyst': { min: 10, max: 25 }
+        };
+        
+        const counts = oreCounts[itemId] || { min: 20, max: 50 };
+        const baseCount = counts.min + Math.random() * (counts.max - counts.min);
+        
+        // Round to nearest 5 or 10
+        return Math.round(baseCount / 5) * 5;
+    }
+    
     // ==================== BANKING DECISIONS ====================
     
     needsBanking(goal) {
@@ -129,41 +192,6 @@ class MiningSkill extends BaseSkill {
         }
         
         return actionsPerHour * xpPerAction * successChance;
-    }
-    
-    // ==================== GOAL GENERATION ====================
-    
-    generateItemGoals(currentLevel, priority) {
-        const goals = [];
-        const ores = [
-            { itemId: 'copper_ore', requiredLevel: 1, minCount: 100, maxCount: 300 },
-            { itemId: 'tin_ore', requiredLevel: 1, minCount: 100, maxCount: 300 },
-            { itemId: 'iron_ore', requiredLevel: 15, minCount: 100, maxCount: 250 },
-            { itemId: 'silver_ore', requiredLevel: 20, minCount: 50, maxCount: 150 },
-            { itemId: 'coal', requiredLevel: 30, minCount: 100, maxCount: 200 },
-            { itemId: 'gold_ore', requiredLevel: 40, minCount: 50, maxCount: 100 },
-            { itemId: 'mithril_ore', requiredLevel: 55, minCount: 30, maxCount: 80 },
-            { itemId: 'adamantite_ore', requiredLevel: 70, minCount: 20, maxCount: 50 },
-            { itemId: 'runite_ore', requiredLevel: 85, minCount: 10, maxCount: 30 },
-            { itemId: 'amethyst', requiredLevel: 92, minCount: 10, maxCount: 30 }
-        ];
-        
-        for (const ore of ores) {
-            if (currentLevel >= ore.requiredLevel) {
-                const currentCount = bank.getItemCount(ore.itemId);
-                const targetCount = currentCount + 
-                    Math.round((ore.minCount + Math.random() * (ore.maxCount - ore.minCount)) / 10) * 10;
-                
-                goals.push({
-                    type: 'bank_items',
-                    itemId: ore.itemId,
-                    targetCount: targetCount,
-                    priority: priority + goals.length
-                });
-            }
-        }
-        
-        return goals;
     }
     
     shouldBankItem(itemId) {
