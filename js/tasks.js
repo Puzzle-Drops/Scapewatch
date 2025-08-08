@@ -35,8 +35,15 @@ class TaskManager {
             const task = skill.generateTask();
             
             if (task) {
-                // Set initial progress tracking
-                task.startingCount = this.getCurrentItemCount(task.itemId);
+                // Set initial progress tracking based on task type
+                if (task.isCookingTask) {
+                    // For cooking tasks, initialize the consumption counter
+                    task.rawFoodConsumed = 0;
+                    task.startingCount = 0; // We track consumption, not bank amount
+                } else {
+                    // For gathering tasks, track items in bank/inventory
+                    task.startingCount = this.getCurrentItemCount(task.itemId);
+                }
                 task.progress = 0;
                 this.tasks.push(task);
                 console.log(`Generated task: ${task.description}`);
@@ -81,6 +88,17 @@ class TaskManager {
 
     // Update task progress for a specific task
     updateTaskProgress(task) {
+        // Cooking tasks track consumption, not production
+        if (task.isCookingTask) {
+            // Progress is updated during cooking process itself
+            // Just check if complete
+            if (task.progress >= 1) {
+                this.completeTask(task);
+            }
+            return;
+        }
+        
+        // Normal gathering task - track items gained
         const currentCount = this.getCurrentItemCount(task.itemId);
         const itemsGained = currentCount - task.startingCount;
         task.progress = Math.min(itemsGained / task.targetCount, 1);
@@ -95,7 +113,7 @@ class TaskManager {
     updateProgressForItem(itemId) {
         // Find the first incomplete task for this item
         for (const task of this.tasks) {
-            if (task.progress < 1 && task.itemId === itemId) {
+            if (task.progress < 1 && task.itemId === itemId && !task.isCookingTask) {
                 this.updateTaskProgress(task);
                 
                 // Only update ONE task
@@ -112,6 +130,33 @@ class TaskManager {
         }
     }
 
+    // Update cooking task progress (called when raw food is consumed)
+    updateCookingTaskProgress(rawItemId) {
+        // Find the first incomplete cooking task for this raw item
+        for (const task of this.tasks) {
+            if (task.progress < 1 && task.isCookingTask && task.itemId === rawItemId) {
+                // This is handled in the cooking skill's beforeActivityStart
+                // Just update UI here
+                if (window.ui) {
+                    window.ui.updateTasks();
+                }
+                
+                // Check if complete
+                if (task.progress >= 1) {
+                    this.completeTask(task);
+                    
+                    // Check if all tasks are complete
+                    if (this.areAllTasksComplete()) {
+                        console.log('All tasks complete! Generating new batch...');
+                        this.generateNewTasks();
+                    }
+                }
+                
+                break;
+            }
+        }
+    }
+
     // Update all task progress (called periodically to sync)
     updateAllProgress() {
         let anyComplete = false;
@@ -120,14 +165,23 @@ class TaskManager {
             const wasComplete = task.progress >= 1;
             const oldProgress = task.progress;
             
-            // Update based on current counts
-            const currentCount = this.getCurrentItemCount(task.itemId);
-            const itemsGained = currentCount - task.startingCount;
-            task.progress = Math.min(itemsGained / task.targetCount, 1);
-            
-            if (!wasComplete && task.progress >= 1) {
-                anyComplete = true;
-                this.completeTask(task);
+            if (task.isCookingTask) {
+                // Cooking tasks track their own progress through consumption
+                // Just check if complete
+                if (!wasComplete && task.progress >= 1) {
+                    anyComplete = true;
+                    this.completeTask(task);
+                }
+            } else {
+                // Update gathering tasks based on current counts
+                const currentCount = this.getCurrentItemCount(task.itemId);
+                const itemsGained = currentCount - task.startingCount;
+                task.progress = Math.min(itemsGained / task.targetCount, 1);
+                
+                if (!wasComplete && task.progress >= 1) {
+                    anyComplete = true;
+                    this.completeTask(task);
+                }
             }
         }
         
@@ -187,7 +241,13 @@ class TaskManager {
         }
 
         if (newTask) {
-            newTask.startingCount = this.getCurrentItemCount(newTask.itemId);
+            // Initialize based on task type
+            if (newTask.isCookingTask) {
+                newTask.rawFoodConsumed = 0;
+                newTask.startingCount = 0;
+            } else {
+                newTask.startingCount = this.getCurrentItemCount(newTask.itemId);
+            }
             newTask.progress = 0;
             this.tasks[index] = newTask;
             console.log(`New task: ${newTask.description}`);
@@ -262,6 +322,17 @@ class TaskManager {
         if (!node.activities || !node.activities.includes(task.activityId)) {
             console.error(`Task impossible - activity ${task.activityId} not at node ${task.nodeId}`);
             return false;
+        }
+
+        // For cooking tasks, check if we still have enough raw food
+        if (task.isCookingTask) {
+            const currentRawFood = this.getCurrentItemCount(task.itemId);
+            const remaining = task.targetCount - (task.rawFoodConsumed || 0);
+            
+            if (currentRawFood < remaining) {
+                console.error(`Cooking task impossible - need ${remaining} ${task.itemId}, have ${currentRawFood}`);
+                return false;
+            }
         }
 
         // Check level requirement
