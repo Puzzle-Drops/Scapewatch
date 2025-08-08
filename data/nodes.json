@@ -92,18 +92,6 @@
             "chop_oak"
         ]
     },
-    "lumbridge_goblins": {
-        "id": "lumbridge_goblins",
-        "name": "Goblin Camp",
-        "type": "skill",
-        "position": {
-            "x": 4445,
-            "y": 1849
-        },
-        "activities": [
-            "fight_goblin"
-        ]
-    },
     "west_lumbridge_mine": {
         "id": "west_lumbridge_mine",
         "name": "West Lumbridge Mine",
