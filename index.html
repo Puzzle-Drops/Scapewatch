@@ -34,47 +34,74 @@
                 </div>
             </div>
 
-        
             <!-- Game container -->
             <div id="game-container" class="game-container" style="display: none;">
+                <!-- Full screen map -->
                 <div class="map-container">
                     <canvas id="game-canvas"></canvas>
                 </div>
                 
+                <!-- Single UI Panel in bottom right -->
                 <div class="ui-panel">
-                    <div class="current-activity panel">
-                        <h3>Current Activity</h3>
-                        <p id="activity-name">Idle</p>
-                        <p id="activity-status">Waiting for instructions...</p>
+                    <!-- Panel selector buttons -->
+                    <div class="panel-selector">
+                        <button class="panel-btn active" data-panel="inventory" title="Inventory">
+                            <img src="assets/ui/inventory.png" alt="Inv">
+                        </button>
+                        <button class="panel-btn" data-panel="skills" title="Skills">
+                            <img src="assets/ui/skills.png" alt="Skills">
+                        </button>
+                        <button class="panel-btn" data-panel="tasks" title="Tasks">
+                            <img src="assets/ui/tasks.png" alt="Tasks">
+                        </button>
+                        <button class="panel-btn" data-panel="bank" title="Bank">
+                            <img src="assets/ui/bank.png" alt="Bank">
+                        </button>
+                        <button class="panel-btn" data-panel="shop" title="Shop">
+                            <img src="assets/ui/shop.png" alt="Shop">
+                        </button>
                     </div>
-
-                    <div class="current-goal panel">
-                        <h3>Current Goal</h3>
-                        <p id="goal-name">No active goal</p>
-                        <p id="goal-progress">-</p>
+                    
+                    <!-- Panel content area -->
+                    <div class="panel-content">
+                        <!-- Inventory Panel (default) -->
+                        <div id="inventory-panel" class="panel active">
+                            <div id="inventory-grid" class="inventory-grid"></div>
+                        </div>
+                        
+                        <!-- Skills Panel -->
+                        <div id="skills-panel" class="panel">
+                            <div id="skills-list" class="skills-list"></div>
+                        </div>
+                        
+                        <!-- Tasks Panel -->
+                        <div id="tasks-panel" class="panel">
+                            <div id="tasks-list" class="tasks-list"></div>
+                            <button id="generate-tasks-btn" class="control-btn">Generate New Tasks</button>
+                        </div>
                     </div>
-
-                    <div class="skills-panel panel">
-                        <h3>Skills</h3>
-                        <div id="skills-list" class="skills-list"></div>
-                    </div>
-
-                    <div class="inventory-panel panel">
-                        <h3>Inventory</h3>
-                        <div id="inventory-grid" class="inventory-grid"></div>
-                    </div>
-
-                    <div class="controls panel">
-                        <button id="bank-toggle">View Bank</button>
-                        <button id="pause-toggle">Pause AI</button>
+                    
+                    <!-- Pause button at bottom -->
+                    <div class="panel-controls">
+                        <button id="pause-toggle" class="control-btn">Pause AI</button>
                     </div>
                 </div>
 
+                <!-- Bank Modal -->
                 <div id="bank-modal" class="modal" style="display: none;">
                     <div class="modal-content">
                         <h2>Bank</h2>
                         <div id="bank-grid" class="bank-grid"></div>
                         <button id="close-bank">Close</button>
+                    </div>
+                </div>
+
+                <!-- Shop Modal -->
+                <div id="shop-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <h2>Shop</h2>
+                        <div id="shop-items" class="shop-items"></div>
+                        <button id="close-shop">Close</button>
                     </div>
                 </div>
             </div>
@@ -86,29 +113,31 @@
     <script>
         console.log('Loading scripts...');
     </script>
-    <script src="js/loadingManager.js" onload="console.log('✓ loadingManager.js')" onerror="console.error('✗ loadingManager.js failed')"></script>
-    <script src="js/utils.js" onload="console.log('✓ utils.js')" onerror="console.error('✗ utils.js failed')"></script>
-    <script src="js/scalingSystem.js" onload="console.log('✓ scalingSystem.js')" onerror="console.error('✗ scalingSystem.js failed')"></script>
-    <script src="js/collision.js" onload="console.log('✓ collision.js')" onerror="console.error('✗ collision.js failed')"></script>
-    <script src="js/pathfinding.js" onload="console.log('✓ pathfinding.js')" onerror="console.error('✗ pathfinding.js failed')"></script>
+    <script src="js/loadingManager.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/scalingSystem.js"></script>
+    <script src="js/collision.js"></script>
+    <script src="js/pathfinding.js"></script>
     <!-- Load skill system files -->
-    <script src="js/skills/base.js" onload="console.log('✓ base.js')" onerror="console.error('✗ base.js failed')"></script>
-    <script src="js/skills/woodcutting.js" onload="console.log('✓ woodcutting.js')" onerror="console.error('✗ woodcutting.js failed')"></script>
-    <script src="js/skills/mining.js" onload="console.log('✓ mining.js')" onerror="console.error('✗ mining.js failed')"></script>
-    <script src="js/skills/fishing.js" onload="console.log('✓ fishing.js')" onerror="console.error('✗ fishing.js failed')"></script>
-    <script src="js/skills/cooking.js" onload="console.log('✓ cooking.js')" onerror="console.error('✗ cooking.js failed')"></script>
-    <script src="js/skills/combat.js" onload="console.log('✓ combat.js')" onerror="console.error('✗ combat.js failed')"></script>
-    <script src="js/skillRegistry.js" onload="console.log('✓ skillRegistry.js')" onerror="console.error('✗ skillRegistry.js failed')"></script>
+    <script src="js/skills/base.js"></script>
+    <script src="js/skills/woodcutting.js"></script>
+    <script src="js/skills/mining.js"></script>
+    <script src="js/skills/fishing.js"></script>
+    <script src="js/skills/cooking.js"></script>
+    <script src="js/skills/combat.js"></script>
+    <script src="js/skillRegistry.js"></script>
     <!-- Continue with other scripts -->
-    <script src="js/skills.js" onload="console.log('✓ skills.js')" onerror="console.error('✗ skills.js failed')"></script>
-    <script src="js/inventory.js" onload="console.log('✓ inventory.js')" onerror="console.error('✗ inventory.js failed')"></script>
-    <script src="js/bank.js" onload="console.log('✓ bank.js')" onerror="console.error('✗ bank.js failed')"></script>
-    <script src="js/player.js" onload="console.log('✓ player.js')" onerror="console.error('✗ player.js failed')"></script>
-    <script src="js/nodes.js" onload="console.log('✓ nodes.js')" onerror="console.error('✗ nodes.js failed')"></script>
-    <script src="js/map.js" onload="console.log('✓ map.js')" onerror="console.error('✗ map.js failed')"></script>
-    <script src="js/ui.js" onload="console.log('✓ ui.js')" onerror="console.error('✗ ui.js failed')"></script>
-    <script src="js/ai.js" onload="console.log('✓ ai.js')" onerror="console.error('✗ ai.js failed')"></script>
-    <script src="js/testScenario.js" onload="console.log('✓ testScenario.js')" onerror="console.error('✗ testScenario.js failed')"></script>
-    <script src="js/main.js" onload="console.log('✓ main.js')" onerror="console.error('✗ main.js failed')"></script>
+    <script src="js/skills.js"></script>
+    <script src="js/inventory.js"></script>
+    <script src="js/bank.js"></script>
+    <script src="js/shop.js"></script>
+    <script src="js/tasks.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/nodes.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/testScenario.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
