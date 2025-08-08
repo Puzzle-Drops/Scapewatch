@@ -1,6 +1,7 @@
 class WoodcuttingSkill extends BaseSkill {
     constructor() {
         super('woodcutting', 'Woodcutting');
+        // requiresBankingBeforeTask = false (inherited from BaseSkill)
     }
     
     // ==================== TASK GENERATION OVERRIDES ====================
