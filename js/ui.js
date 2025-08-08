@@ -1,11 +1,9 @@
 class UIManager {
     constructor() {
+        this.currentPanel = 'inventory';
         this.bankOpen = false;
-        this.lastInventoryState = null;
-        this.lastBankState = null;
-        this.lastActivityState = null;
-        this.lastGoalState = null;
-        this.itemOrder = null; // Cache for item order
+        this.itemOrder = null;
+        this.itemOrderMap = {};
         this.initializeUI();
     }
 
@@ -15,291 +13,143 @@ class UIManager {
         // Initialize item order from items.json
         this.initializeItemOrder();
         
-        this.updateSkillsList();
+        // Set up panel switching
+        this.setupPanelButtons();
+        
+        // Set up modal close buttons
+        this.setupModalButtons();
+        
+        // Initial updates
         this.updateInventory();
-        this.updateBank();
-        this.updateActivity();
-        this.updateGoal();
+        this.updateSkillsList();
+        this.updateTasks();
     }
 
     initializeItemOrder() {
-        // Create an array of item IDs in the order they appear in items.json
         const itemsData = loadingManager.getData('items');
         this.itemOrder = Object.keys(itemsData);
         
-        // Create a map for O(1) lookup of item position
         this.itemOrderMap = {};
         this.itemOrder.forEach((itemId, index) => {
             this.itemOrderMap[itemId] = index;
         });
     }
 
-    // ==================== UPDATE CYCLE ====================
-
-    // Called from game loop - only updates if data changed
-    update() {
-        // Activity updates frequently due to progress, but only if actually performing activity
-        if (this.hasActivityChanged()) {
-            this.updateActivity();
-        }
-
-        // Goal only updates when progress changes significantly
-        if (this.hasGoalChanged()) {
-            this.updateGoal();
-        }
-    }
-
-    // Force update specific UI elements when data changes
-    forceInventoryUpdate() {
-        this.updateInventory();
-    }
-
-    forceBankUpdate() {
-        if (this.bankOpen) {
-            this.updateBank();
-        }
-    }
-
-    forceActivityUpdate() {
-        this.updateActivity();
-    }
-
-    forceGoalUpdate() {
-        this.updateGoal();
-    }
-
-    // ==================== STATE CHANGE DETECTION ====================
-
-    hasActivityChanged() {
-        const currentState = {
-            activity: player.currentActivity,
-            moving: player.isMoving(),
-            targetNode: player.targetNode,
-            currentNode: player.currentNode,
-            progress: player.currentActivity ? Math.floor(player.activityProgress * 100) : 0
-        };
-
-        const changed = JSON.stringify(currentState) !== JSON.stringify(this.lastActivityState);
-        this.lastActivityState = currentState;
-        return changed;
-    }
-
-    hasGoalChanged() {
-        if (!window.ai || !window.ai.currentGoal) {
-            const hasGoal = this.lastGoalState !== null;
-            this.lastGoalState = null;
-            return hasGoal;
-        }
-
-        const goal = window.ai.currentGoal;
-        let currentState = {
-            type: goal.type,
-            target: goal.targetLevel || goal.targetCount || goal.questId
-        };
-
-        // Add current progress to state
-        switch (goal.type) {
-            case 'skill_level':
-                currentState.level = skills.getLevel(goal.skill);
-                currentState.xp = Math.floor(skills.getXp(goal.skill));
-                break;
-            case 'skill_activity':
-                if (goal.targetItem) {
-                    currentState.count = bank.getItemCount(goal.targetItem);
-                }
-                break;
-        }
-
-        const changed = JSON.stringify(currentState) !== JSON.stringify(this.lastGoalState);
-        this.lastGoalState = currentState;
-        return changed;
-    }
-
-    // ==================== ACTIVITY & GOAL DISPLAY ====================
-
-    updateActivity() {
-        const activityName = document.getElementById('activity-name');
-        const activityStatus = document.getElementById('activity-status');
-
-        if (player.currentActivity) {
-            this.displayCurrentActivity(activityName, activityStatus);
-        } else if (player.isMoving()) {
-            this.displayMovement(activityName, activityStatus);
-        } else {
-            this.displayIdle(activityName, activityStatus);
-        }
-    }
-
-    displayCurrentActivity(activityName, activityStatus) {
-        const activityData = loadingManager.getData('activities')[player.currentActivity];
-        const currentNode = nodes.getNode(player.currentNode);
+    setupPanelButtons() {
+        const buttons = document.querySelectorAll('.panel-btn');
         
-        // Format activity name with location
-        let displayName = activityData.name;
-        if (currentNode) {
-            displayName = `${activityData.name} at ${currentNode.name}`;
-        }
-        activityName.textContent = displayName;
-
-        // Get skill from registry and calculate XP rate
-        const skill = skillRegistry.getSkill(activityData.skill);
-        let xpPerHour = 0;
-        if (skill) {
-            xpPerHour = Math.floor(
-                skill.calculateXpRate(activityData, skills.getLevel(activityData.skill))
-            );
-        }
-        
-        activityStatus.textContent = `${formatNumber(xpPerHour)} XP/hr`;
-    }
-
-    displayMovement(activityName, activityStatus) {
-        const targetNode = nodes.getNode(player.targetNode);
-        const targetName = targetNode ? targetNode.name : 'Unknown';
-        activityName.textContent = 'Moving';
-        activityStatus.textContent = `To: ${targetName}`;
-    }
-
-    displayIdle(activityName, activityStatus) {
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode) {
-            activityName.textContent = `Idle at ${currentNode.name}`;
-            if (window.ai && window.ai.currentGoal) {
-                activityStatus.textContent = 'Planning next action...';
-            } else {
-                activityStatus.textContent = 'Waiting for AI decision...';
-            }
-        } else {
-            activityName.textContent = 'Idle';
-            activityStatus.textContent = 'Waiting for AI decision...';
-        }
-    }
-
-    updateGoal() {
-        const goalName = document.getElementById('goal-name');
-        const goalProgress = document.getElementById('goal-progress');
-        
-        if (!window.ai || !window.ai.currentGoal) {
-            this.displayNoGoal(goalName, goalProgress);
-            return;
-        }
-
-        const goal = window.ai.currentGoal;
-        
-        switch (goal.type) {
-            case 'skill_level':
-                this.displaySkillGoal(goal, goalName, goalProgress);
-                break;
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const panel = btn.dataset.panel;
                 
-            case 'skill_activity':
-                this.displayActivityGoal(goal, goalName, goalProgress);
-                break;
-                
-            case 'complete_quest':
-                goalName.textContent = `Complete quest: ${goal.questId}`;
-                goalProgress.textContent = 'In progress';
-                break;
-                
-            default:
-                goalName.textContent = 'Unknown goal';
-                goalProgress.textContent = '-';
-        }
-    }
-
-    displayActivityGoal(goal, goalName, goalProgress) {
-        // Display the description which includes location
-        goalName.textContent = goal.description;
-        
-        if (goal.targetItem && goal.targetCount) {
-            // Item gathering goal - show progress
-            const currentCount = bank.getItemCount(goal.targetItem);
-            
-            // Calculate progress from starting count to target
-            let percentage;
-            if (goal.startingCount !== undefined) {
-                const itemsGained = currentCount - goal.startingCount;
-                const itemsNeeded = goal.targetCount - goal.startingCount;
-                percentage = itemsNeeded > 0 ? Math.floor((itemsGained / itemsNeeded) * 100) : 100;
-            } else {
-                // Fallback to old calculation
-                percentage = Math.floor((currentCount / goal.targetCount) * 100);
-            }
-            
-            goalProgress.textContent = `${formatNumber(currentCount)}/${formatNumber(goal.targetCount)} (${percentage}%)`;
-        } else {
-            // Training goal - show activity status
-            if (player.currentNode === goal.nodeId) {
-                if (player.currentActivity === goal.activityId) {
-                    goalProgress.textContent = 'In progress...';
+                if (panel === 'bank') {
+                    this.openBank();
+                } else if (panel === 'shop') {
+                    this.openShop();
                 } else {
-                    goalProgress.textContent = 'Starting activity...';
+                    this.switchPanel(panel);
                 }
-            } else if (player.targetNode === goal.nodeId) {
-                goalProgress.textContent = 'Traveling to location...';
-            } else {
-                goalProgress.textContent = 'Planning route...';
-            }
+            });
+        });
+    }
+
+    setupModalButtons() {
+        // Bank close button
+        const closeBankBtn = document.getElementById('close-bank');
+        if (closeBankBtn) {
+            closeBankBtn.addEventListener('click', () => {
+                this.closeBank();
+            });
+        }
+        
+        // Shop close button
+        const closeShopBtn = document.getElementById('close-shop');
+        if (closeShopBtn) {
+            closeShopBtn.addEventListener('click', () => {
+                this.closeShop();
+            });
+        }
+        
+        // Generate tasks button
+        const generateTasksBtn = document.getElementById('generate-tasks-btn');
+        if (generateTasksBtn) {
+            generateTasksBtn.addEventListener('click', () => {
+                if (window.taskManager) {
+                    taskManager.generateNewTasks();
+                }
+            });
         }
     }
 
-    displaySkillGoal(goal, goalName, goalProgress) {
-        const currentLevel = skills.getLevel(goal.skill);
-        const skillData = loadingManager.getData('skills')[goal.skill];
+    // ==================== PANEL MANAGEMENT ====================
+
+    switchPanel(panelName) {
+        // Update button states
+        document.querySelectorAll('.panel-btn').forEach(btn => {
+            if (btn.dataset.panel === panelName) {
+                btn.classList.add('active');
+            } else if (btn.dataset.panel !== 'bank' && btn.dataset.panel !== 'shop') {
+                btn.classList.remove('active');
+            }
+        });
         
-        // Show starting level if different from current
-        if (goal.startingLevel && goal.startingLevel < goal.targetLevel) {
-            goalName.textContent = `Train ${skillData.name} from ${goal.startingLevel} to ${goal.targetLevel}`;
-        } else {
-            goalName.textContent = `Train ${skillData.name} to ${goal.targetLevel}`;
+        // Update panel visibility
+        document.querySelectorAll('.panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+        
+        const targetPanel = document.getElementById(`${panelName}-panel`);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
         }
         
-        // Calculate XP progress from starting point to target
-        const currentXp = skills.getXp(goal.skill);
-        const targetXp = getXpForLevel(goal.targetLevel);
+        this.currentPanel = panelName;
         
-        let xpProgress;
-        if (goal.startingXp !== undefined) {
-            // Calculate progress from starting XP to target XP
-            const xpGained = currentXp - goal.startingXp;
-            const xpNeeded = targetXp - goal.startingXp;
-            xpProgress = xpNeeded > 0 ? Math.floor((xpGained / xpNeeded) * 100) : 100;
-        } else {
-            // Fallback to old calculation
-            xpProgress = Math.floor((currentXp / targetXp) * 100);
+        // Update panel content
+        switch (panelName) {
+            case 'inventory':
+                this.updateInventory();
+                break;
+            case 'skills':
+                this.updateSkillsList();
+                break;
+            case 'tasks':
+                this.updateTasks();
+                break;
         }
-        
-        goalProgress.textContent = `Level ${currentLevel}/${goal.targetLevel} (${xpProgress}%)`;
     }
 
-    displayNoGoal(goalName, goalProgress) {
-        // Check if AI is selecting a new goal
-        if (window.ai && window.ai.goals.length > 0) {
-            // Find next incomplete goal
-            let nextGoal = null;
-            for (const goal of window.ai.goals) {
-                if (!window.ai.isGoalComplete(goal)) {
-                    nextGoal = goal;
-                    break;
-                }
-            }
-            
-            if (nextGoal) {
-                goalName.textContent = 'Selecting next goal...';
-                goalProgress.textContent = 'Planning...';
+    // ==================== INVENTORY DISPLAY ====================
+
+    updateInventory() {
+        if (this.currentPanel !== 'inventory') return;
+        
+        const inventoryGrid = document.getElementById('inventory-grid');
+        if (!inventoryGrid) return;
+        
+        inventoryGrid.innerHTML = '';
+
+        for (let i = 0; i < inventory.maxSlots; i++) {
+            const slot = inventory.slots[i];
+            if (slot) {
+                const slotDiv = this.createItemSlot(slot.itemId, slot.quantity, 'inventory-slot');
+                inventoryGrid.appendChild(slotDiv);
             } else {
-                goalName.textContent = 'All goals complete!';
-                goalProgress.textContent = 'Generating new goals...';
+                const emptySlot = document.createElement('div');
+                emptySlot.className = 'inventory-slot';
+                inventoryGrid.appendChild(emptySlot);
             }
-        } else {
-            goalName.textContent = 'No active goal';
-            goalProgress.textContent = '-';
         }
     }
 
     // ==================== SKILLS DISPLAY ====================
 
     updateSkillsList() {
+        if (this.currentPanel !== 'skills') return;
+        
         const skillsList = document.getElementById('skills-list');
+        if (!skillsList) return;
+        
         skillsList.innerHTML = '';
 
         const allSkills = skills.getAllSkills();
@@ -334,7 +184,6 @@ class UIManager {
         const skillDiv = document.createElement('div');
         skillDiv.className = 'skill-item';
         
-        // Create content container
         const contentDiv = document.createElement('div');
         contentDiv.className = 'skill-content';
         
@@ -356,7 +205,6 @@ class UIManager {
         // Create tooltip
         const tooltip = this.createSkillTooltip(skill);
         
-        // Assemble skill item
         skillDiv.appendChild(contentDiv);
         skillDiv.appendChild(progressBar);
         skillDiv.appendChild(tooltip);
@@ -372,7 +220,6 @@ class UIManager {
             icon.src = preloadedIcon.src;
             return icon;
         } else {
-            // Fallback text if icon not loaded
             const textDiv = document.createElement('div');
             textDiv.style.fontSize = '12px';
             textDiv.style.fontWeight = 'bold';
@@ -403,7 +250,6 @@ class UIManager {
         const tooltip = document.createElement('div');
         tooltip.className = 'skill-tooltip';
         
-        // Build tooltip content
         let tooltipContent = `${skill.name}<br>Level ${skill.level}<br>`;
         
         if (skill.level < 99) {
@@ -425,7 +271,6 @@ class UIManager {
         const levelDiv = document.createElement('div');
         levelDiv.className = 'level-total';
         
-        // Total level
         const totalLevelItem = this.createLevelItem(
             'skill_skills',
             skills.getTotalLevel(),
@@ -433,7 +278,6 @@ class UIManager {
             `Total Level: ${skills.getTotalLevel()}<br>Total Exp: ${formatNumber(this.calculateTotalExp(allSkills))}`
         );
         
-        // Combat level
         const combatLevelItem = this.createLevelItem(
             'skill_combat',
             skills.getCombatLevel(),
@@ -485,7 +329,210 @@ class UIManager {
         return totalExp;
     }
 
+    // ==================== TASKS DISPLAY ====================
+
+    updateTasks() {
+        if (this.currentPanel !== 'tasks') return;
+        
+        const tasksList = document.getElementById('tasks-list');
+        if (!tasksList || !window.taskManager) return;
+        
+        tasksList.innerHTML = '';
+        
+        const tasks = taskManager.getAllTasks();
+        
+        if (tasks.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.style.textAlign = 'center';
+            emptyDiv.style.color = '#999';
+            emptyDiv.textContent = 'No tasks available. Click button below to generate.';
+            tasksList.appendChild(emptyDiv);
+            return;
+        }
+        
+        tasks.forEach((task, index) => {
+            const taskDiv = this.createTaskElement(task, index);
+            tasksList.appendChild(taskDiv);
+        });
+    }
+
+    createTaskElement(task, index) {
+        const taskDiv = document.createElement('div');
+        taskDiv.className = 'task-item';
+        
+        // Header with description and reroll button
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'task-header';
+        
+        const descDiv = document.createElement('div');
+        descDiv.className = 'task-description';
+        descDiv.textContent = task.description;
+        
+        const rerollBtn = document.createElement('button');
+        rerollBtn.className = 'task-reroll';
+        rerollBtn.textContent = '↻';
+        rerollBtn.title = 'Reroll task';
+        rerollBtn.addEventListener('click', () => {
+            if (window.taskManager) {
+                taskManager.rerollTask(index);
+            }
+        });
+        
+        headerDiv.appendChild(descDiv);
+        headerDiv.appendChild(rerollBtn);
+        
+        // Progress section
+        const progressDiv = document.createElement('div');
+        progressDiv.className = 'task-progress';
+        
+        const progressBar = document.createElement('div');
+        progressBar.className = 'task-progress-bar';
+        
+        const progressFill = document.createElement('div');
+        progressFill.className = 'task-progress-fill';
+        progressFill.style.width = `${task.progress * 100}%`;
+        
+        progressBar.appendChild(progressFill);
+        
+        const countDiv = document.createElement('div');
+        countDiv.className = 'task-count';
+        const current = Math.floor(task.progress * task.targetCount);
+        countDiv.textContent = `${current}/${task.targetCount}`;
+        
+        progressDiv.appendChild(progressBar);
+        progressDiv.appendChild(countDiv);
+        
+        taskDiv.appendChild(headerDiv);
+        taskDiv.appendChild(progressDiv);
+        
+        // Mark complete tasks
+        if (task.progress >= 1) {
+            taskDiv.style.opacity = '0.6';
+            progressFill.style.backgroundColor = '#f39c12';
+        }
+        
+        return taskDiv;
+    }
+
+    // ==================== BANK DISPLAY ====================
+
+    openBank() {
+        this.bankOpen = true;
+        const modal = document.getElementById('bank-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.updateBank();
+        }
+    }
+
+    closeBank() {
+        this.bankOpen = false;
+        const modal = document.getElementById('bank-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    updateBank() {
+        if (!this.bankOpen) return;
+        
+        const bankGrid = document.getElementById('bank-grid');
+        if (!bankGrid) return;
+        
+        bankGrid.innerHTML = '';
+
+        const bankItems = bank.getAllItems();
+        
+        // Sort bank items according to items.json order
+        const sortedItems = Object.entries(bankItems).sort((a, b) => {
+            const indexA = this.itemOrderMap[a[0]] ?? Number.MAX_VALUE;
+            const indexB = this.itemOrderMap[b[0]] ?? Number.MAX_VALUE;
+            return indexA - indexB;
+        });
+
+        for (const [itemId, quantity] of sortedItems) {
+            const slotDiv = this.createItemSlot(itemId, quantity, 'bank-slot');
+            bankGrid.appendChild(slotDiv);
+        }
+    }
+
+    // ==================== SHOP DISPLAY ====================
+
+    openShop() {
+        if (window.shop) {
+            shop.open();
+        }
+    }
+
+    closeShop() {
+        if (window.shop) {
+            shop.close();
+        }
+    }
+
     // ==================== ITEM DISPLAY HELPERS ====================
+
+    createItemSlot(itemId, quantity, slotClass) {
+        const slotDiv = document.createElement('div');
+        slotDiv.className = slotClass;
+        
+        const itemData = loadingManager.getData('items')[itemId];
+        
+        const img = this.createItemImage(itemId, quantity);
+        
+        img.onerror = function() {
+            this.style.display = 'none';
+            const textDiv = document.createElement('div');
+            textDiv.style.fontSize = '12px';
+            textDiv.textContent = itemData.name.substring(0, 3);
+            slotDiv.appendChild(textDiv);
+        };
+        
+        slotDiv.appendChild(img);
+        
+        if (quantity > 1 || slotClass === 'bank-slot') {
+            const countDiv = this.createItemCount(itemId, quantity);
+            slotDiv.appendChild(countDiv);
+        }
+        
+        slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
+        
+        return slotDiv;
+    }
+
+    createItemImage(itemId, quantity) {
+        const img = document.createElement('img');
+        
+        if (itemId === 'coins') {
+            const coinImage = this.getCoinImage(quantity);
+            img.src = `assets/items/${coinImage}.png`;
+        } else {
+            img.src = `assets/items/${itemId}.png`;
+        }
+        
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        
+        return img;
+    }
+
+    createItemCount(itemId, quantity) {
+        const countDiv = document.createElement('div');
+        countDiv.className = 'item-count';
+        
+        if (itemId === 'coins') {
+            const formatted = this.formatCoinCount(quantity);
+            countDiv.textContent = formatted.text;
+            if (formatted.isGreen) {
+                countDiv.style.color = '#2ecc71';
+            }
+        } else {
+            countDiv.textContent = formatNumber(quantity);
+        }
+        
+        return countDiv;
+    }
 
     getCoinImage(quantity) {
         if (quantity >= 10000) return 'coins_10000';
@@ -506,144 +553,5 @@ class UIManager {
             return { text: `${millions}M`, isGreen: true };
         }
         return { text: formatNumber(quantity), isGreen: false };
-    }
-
-    createItemSlot(itemId, quantity, slotClass) {
-        const slotDiv = document.createElement('div');
-        slotDiv.className = slotClass;
-        
-        const itemData = loadingManager.getData('items')[itemId];
-        
-        // Create and setup image
-        const img = this.createItemImage(itemId, quantity);
-        
-        // Handle missing images
-        img.onerror = function() {
-            this.style.display = 'none';
-            const textDiv = document.createElement('div');
-            textDiv.style.fontSize = '12px';
-            textDiv.textContent = itemData.name.substring(0, 3);
-            slotDiv.appendChild(textDiv);
-        };
-        
-        slotDiv.appendChild(img);
-        
-        // Add quantity display if needed
-        if (quantity > 1 || slotClass === 'bank-slot') {
-            const countDiv = this.createItemCount(itemId, quantity);
-            slotDiv.appendChild(countDiv);
-        }
-        
-        slotDiv.title = `${itemData.name} x${formatNumber(quantity)}`;
-        
-        return slotDiv;
-    }
-
-    createItemImage(itemId, quantity) {
-        const img = document.createElement('img');
-        
-        // Special handling for coins
-        if (itemId === 'coins') {
-            const coinImage = this.getCoinImage(quantity);
-            img.src = `assets/items/${coinImage}.png`;
-        } else {
-            img.src = `assets/items/${itemId}.png`;
-        }
-        
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'contain';
-        
-        return img;
-    }
-
-    createItemCount(itemId, quantity) {
-        const countDiv = document.createElement('div');
-        countDiv.className = 'item-count';
-        
-        // Special formatting for coins
-        if (itemId === 'coins') {
-            const formatted = this.formatCoinCount(quantity);
-            countDiv.textContent = formatted.text;
-            if (formatted.isGreen) {
-                countDiv.style.color = '#2ecc71';
-            }
-        } else {
-            countDiv.textContent = formatNumber(quantity);
-        }
-        
-        return countDiv;
-    }
-
-    // ==================== INVENTORY & BANK DISPLAY ====================
-
-    updateInventory() {
-        const inventoryGrid = document.getElementById('inventory-grid');
-        
-        // Store current state for comparison
-        const currentState = JSON.stringify(inventory.slots);
-        if (currentState === this.lastInventoryState) {
-            return; // No changes, skip update
-        }
-        this.lastInventoryState = currentState;
-        
-        inventoryGrid.innerHTML = '';
-
-        for (let i = 0; i < inventory.maxSlots; i++) {
-            const slot = inventory.slots[i];
-            if (slot) {
-                const slotDiv = this.createItemSlot(slot.itemId, slot.quantity, 'inventory-slot');
-                inventoryGrid.appendChild(slotDiv);
-            } else {
-                // Empty slot
-                const emptySlot = document.createElement('div');
-                emptySlot.className = 'inventory-slot';
-                inventoryGrid.appendChild(emptySlot);
-            }
-        }
-    }
-
-    updateBank() {
-        const bankGrid = document.getElementById('bank-grid');
-        
-        // Store current state for comparison
-        const currentState = JSON.stringify(bank.items);
-        if (currentState === this.lastBankState) {
-            return; // No changes, skip update
-        }
-        this.lastBankState = currentState;
-        
-        bankGrid.innerHTML = '';
-
-        const bankItems = bank.getAllItems();
-        
-        // Sort bank items according to items.json order
-        const sortedItems = Object.entries(bankItems).sort((a, b) => {
-            const indexA = this.itemOrderMap[a[0]] ?? Number.MAX_VALUE;
-            const indexB = this.itemOrderMap[b[0]] ?? Number.MAX_VALUE;
-            return indexA - indexB;
-        });
-
-        for (const [itemId, quantity] of sortedItems) {
-            const slotDiv = this.createItemSlot(itemId, quantity, 'bank-slot');
-            bankGrid.appendChild(slotDiv);
-        }
-    }
-
-    toggleBank() {
-        this.bankOpen = !this.bankOpen;
-        const modal = document.getElementById('bank-modal');
-        modal.style.display = this.bankOpen ? 'flex' : 'none';
-        
-        if (this.bankOpen) {
-            this.updateBank();
-        }
-    }
-
-    // ==================== NOTIFICATIONS ====================
-
-    showNotification(message, type = 'info') {
-        console.log(`[${type.toUpperCase()}] ${message}`);
-        // Could add visual notifications here
     }
 }
