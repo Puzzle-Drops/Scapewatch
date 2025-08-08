@@ -417,13 +417,26 @@ class CookingSkill extends BaseSkill {
         return false;
     }
     
-    // Check if we need to bank for cooking
-    needsBankingForTask(task) {
-        if (!task || !task.isCookingTask) return false;
-        
-        // Need banking if we don't have the specific raw food for our task
-        return !inventory.hasItem(task.itemId, 1);
+    // Check if we need banking for a cooking task
+needsBankingForTask(task) {
+    if (!task || task.skill !== 'cooking') return false;
+    
+    // If inventory is full and we have NO raw food, need to bank
+    if (inventory.isFull() && !this.hasRawFoodInInventory()) {
+        return true;
     }
+    
+    // If inventory is not full but we have no raw food for the task, need to bank
+    if (!task.isCookingTask) return false;
+    
+    // Check if we have the specific raw food for our task
+    if (!inventory.hasItem(task.itemId, 1)) {
+        // We don't have the raw food for our task
+        return true;
+    }
+    
+    return false;
+}
     
     // Handle banking for cooking tasks
     handleBanking(task) {
