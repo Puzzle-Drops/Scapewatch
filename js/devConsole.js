@@ -1198,6 +1198,33 @@ class DevConsole {
                         isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
                 }
                 break;
+
+            case 'skill_activity':
+    // Display the description which includes location
+    if (detailed) {
+        this.log(`Type: Skill Activity`, 'info');
+        this.log(`Description: ${goal.description}`, 'info');
+        this.log(`Node: ${goal.nodeId}`, 'info');
+        this.log(`Activity: ${goal.activityId}`, 'info');
+        if (goal.targetItem) {
+            const itemData = loadingManager.getData('items')[goal.targetItem];
+            const currentCount = bank.getItemCount(goal.targetItem);
+            this.log(`Target: ${goal.targetCount} ${itemData.name}`, 'info');
+            this.log(`Current: ${currentCount}`, 'info');
+        }
+        this.log(`Priority: ${goal.priority}`, 'info');
+    } else {
+        // Use the description field which has all the info
+        let progressText = '';
+        if (goal.targetItem && goal.targetCount) {
+            const currentCount = bank.getItemCount(goal.targetItem);
+            const percentage = Math.floor((currentCount / goal.targetCount) * 100);
+            progressText = ` (${currentCount}/${goal.targetCount} - ${percentage}%)`;
+        }
+        this.log(`#${goal.priority}: ${goal.description}${progressText}${status}`, 
+            isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
+    }
+    break;
                 
             default:
                 this.log(`#${goal.priority}: Unknown goal type: ${goal.type}${status}`, 'error');
