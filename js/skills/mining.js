@@ -1,6 +1,7 @@
 class MiningSkill extends BaseSkill {
     constructor() {
         super('mining', 'Mining');
+        // requiresBankingBeforeTask = false (inherited from BaseSkill)
         this.alternatingStates = {};
     }
     
