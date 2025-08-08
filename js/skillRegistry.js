@@ -36,30 +36,6 @@ class SkillRegistry {
         return Object.values(this.skills);
     }
     
-    generateAllGoals(existingGoalCount) {
-        const goals = [];
-        let priority = existingGoalCount + 1;
-        
-        // Get all registered skills
-        const allSkills = this.getAllSkills();
-        
-        for (const skill of allSkills) {
-            const level = skills.getLevel(skill.id);
-            
-            // Generate level goals
-            const levelGoals = skill.generateLevelGoals(level, priority);
-            goals.push(...levelGoals);
-            priority += levelGoals.length;
-            
-            // Generate item goals
-            const itemGoals = skill.generateItemGoals(level, priority);
-            goals.push(...itemGoals);
-            priority += itemGoals.length;
-        }
-        
-        return goals;
-    }
-    
     // Check if an item should be banked
     shouldBankItem(itemId) {
         // Check all skills to see if any don't want this item banked
