@@ -280,6 +280,35 @@ class BaseSkill {
         // Override in subclass if needed
     }
     
+    // ==================== BANKING INTERFACE ====================
+    // Skills can override these methods for custom banking behavior
+    
+    // Check if we need banking for a specific task
+    needsBankingForTask(task) {
+        // Default: gathering skills don't need special banking
+        return false;
+    }
+    
+    // Handle skill-specific banking
+    handleBanking(task) {
+        // Default: just deposit all for gathering skills
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        return true;
+    }
+    
+    // Check if we can continue with a task
+    canContinueTask(task) {
+        // Default: gathering skills can always continue
+        return true;
+    }
+    
+    // Check if we have materials to work with (for production skills)
+    hasMaterials() {
+        // Default: gathering skills always have "materials" (the resource nodes)
+        return true;
+    }
+    
     // ==================== UTILITIES ====================
     
     canPerformActivity(activityId) {
