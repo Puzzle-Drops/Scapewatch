@@ -116,8 +116,8 @@ body {
     position: absolute;
     bottom: 0px;
     right: 0px;
-    width: 380px;
-    height: 660px;
+    width: 400px;
+    height: 780px;
     background-color: #2a2a2a;
     border-radius: 8px;
     border: 2px solid #444;
@@ -184,6 +184,7 @@ body {
     flex: 1;
     padding: 15px;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .panel {
@@ -253,7 +254,7 @@ body {
 .skill-item {
     background-color: #222;
     padding: 8px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 12px;
     cursor: pointer;
     position: relative;
@@ -268,18 +269,17 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .skill-icon {
-    width: 24px;
-    height: 24px;
+    width: 40px;
+    height: 40px;
 }
 
 .skill-level {
     color: #fff;
-    font-weight: bold;
-    font-size: 20px;
+    font-size: 34px;
 }
 
 .skill-tooltip {
@@ -343,8 +343,8 @@ body {
 }
 
 .level-icon {
-    width: 24px;
-    height: 24px;
+    width: 40px;
+    height: 40px;
 }
 
 /* Tasks Panel */
