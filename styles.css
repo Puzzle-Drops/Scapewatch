@@ -116,8 +116,8 @@ body {
     position: absolute;
     bottom: 0px;
     right: 0px;
-    width: 364px;
-    height: 650px;
+    width: 380px;
+    height: 660px;
     background-color: #2a2a2a;
     border-radius: 8px;
     border: 2px solid #444;
@@ -229,7 +229,7 @@ body {
 .inventory-slot {
     width: 64px;
     height: 64px;
-    background-color: #333;
+    background-color: #222;
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -246,7 +246,7 @@ body {
 .skills-list {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 3px;
+    gap: 5px;
 }
 
 .skill-item {
@@ -267,7 +267,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 
 .skill-icon {
@@ -458,15 +458,14 @@ body {
 .bank-grid {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 5px;
+    gap: 12px;
     margin-bottom: 20px;
 }
 
 .bank-slot {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     background-color: #222;
-    border: 2px solid #444;
     border-radius: 4px;
     display: flex;
     align-items: center;
