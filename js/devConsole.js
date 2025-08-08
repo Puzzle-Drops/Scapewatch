@@ -77,7 +77,7 @@ class DevConsole {
                 fn: () => this.cmdResetPlayer()
             },
             
-            // Speed controls (NEW)
+            // Speed controls
             playerspeed: {
                 description: 'Set player movement speed',
                 usage: 'playerspeed [speed] (default: 3 tiles/sec)',
@@ -150,26 +150,43 @@ class DevConsole {
                 fn: (args) => this.cmdGiveAll(args)
             },
             
-            // AI/Goal commands
-            cleargoals: {
-                description: 'Clear all AI goals',
-                usage: 'cleargoals',
-                fn: () => this.cmdClearGoals()
+            // Task commands (NEW - replacing goals)
+            tasks: {
+                description: 'List all current tasks',
+                usage: 'tasks',
+                fn: () => this.cmdListTasks()
             },
-            addgoal: {
-                description: 'Add a goal',
-                usage: 'addgoal <type> <target> <value>',
-                fn: (args) => this.cmdAddGoal(args)
+            completetask: {
+                description: 'Instantly complete a task',
+                usage: 'completetask <index>',
+                fn: (args) => this.cmdCompleteTask(args)
             },
-            goals: {
-                description: 'List all current goals',
-                usage: 'goals',
-                fn: () => this.cmdListGoals()
+            rerolltask: {
+                description: 'Reroll a specific task',
+                usage: 'rerolltask <index>',
+                fn: (args) => this.cmdRerollTask(args)
             },
+            cleartasks: {
+                description: 'Clear all tasks and regenerate',
+                usage: 'cleartasks',
+                fn: () => this.cmdClearTasks()
+            },
+            generatetasks: {
+                description: 'Generate new batch of tasks',
+                usage: 'generatetasks',
+                fn: () => this.cmdGenerateTasks()
+            },
+            
+            // AI commands
             pauseai: {
                 description: 'Toggle AI pause',
                 usage: 'pauseai',
                 fn: () => this.cmdPauseAI()
+            },
+            aistatus: {
+                description: 'Show AI status and current task',
+                usage: 'aistatus',
+                fn: () => this.cmdAIStatus()
             },
             
             // Activity commands
@@ -640,7 +657,7 @@ class DevConsole {
         return matches;
     }
 
-    // ==================== SPEED CONTROL COMMANDS (NEW) ====================
+    // ==================== SPEED CONTROL COMMANDS ====================
 
     cmdPlayerSpeed(args) {
         if (args.length === 0) {
@@ -755,9 +772,6 @@ class DevConsole {
             }
         }
         
-        // Reset action speed
-        this.cmdActionSpeed(['1.0']);
-        
         this.log('All speeds reset to default', 'success');
     }
 
@@ -774,8 +788,28 @@ class DevConsole {
             }
         } else {
             this.log('Available commands:', 'info');
-            for (const [name, cmd] of Object.entries(this.commands)) {
-                this.log(`  ${name} - ${cmd.description}`, 'info');
+            
+            // Group commands by category
+            const categories = {
+                'Console': ['help', 'clear', 'clearconsole', 'clearall'],
+                'Player': ['tp', 'pos', 'resetplayer'],
+                'Speed': ['playerspeed', 'actionspeed', 'testmode', 't', 'resetspeeds', 'r'],
+                'Skills': ['setlevel', 'addxp', 'maxskills'],
+                'Inventory': ['give', 'clearinv'],
+                'Bank': ['bank', 'giveall'],
+                'Tasks': ['tasks', 'completetask', 'rerolltask', 'cleartasks', 'generatetasks'],
+                'AI': ['pauseai', 'aistatus'],
+                'Activity': ['startactivity', 'stopactivity'],
+                'Debug': ['nodes', 'items', 'activities', 'collision', 'nodetext']
+            };
+            
+            for (const [category, cmds] of Object.entries(categories)) {
+                this.log(`--- ${category} ---`, 'info');
+                for (const cmdName of cmds) {
+                    if (this.commands[cmdName]) {
+                        this.log(`  ${cmdName} - ${this.commands[cmdName].description}`, 'info');
+                    }
+                }
             }
         }
     }
@@ -802,39 +836,39 @@ class DevConsole {
         if (!this.requireSystem('Player', 'player')) return;
         
         if (args.length === 2) {
-    // Teleport to coordinates
-    const x = this.parseIntArg(args[0], 'X coordinate');
-    const y = this.parseIntArg(args[1], 'Y coordinate');
-    if (x === null || y === null) return;
-    
-    player.position.x = x;
-    player.position.y = y;
-    player.path = [];
-    player.targetPosition = null;
-    player.targetNode = null;
-    player.currentNode = null;
-    player.stopActivity();
-    
-    this.log(`Teleported to ${x}, ${y}`, 'success');
-} else if (args.length === 1) {
-    // Teleport to node
-    const nodeId = args[0];
-    const node = nodes.getNode(nodeId);
-    
-    if (!node) {
-        this.log(`Node not found: ${nodeId}`, 'error');
-        return;
-    }
-    
-    player.position.x = node.position.x + 0.5;
-    player.position.y = node.position.y + 0.5;
-    player.path = [];
-    player.targetPosition = null;
-    player.targetNode = null;
-    player.currentNode = null;
-    player.stopActivity();
-    
-    this.log(`Teleported to ${node.name}`, 'success');
+            // Teleport to coordinates
+            const x = this.parseIntArg(args[0], 'X coordinate');
+            const y = this.parseIntArg(args[1], 'Y coordinate');
+            if (x === null || y === null) return;
+            
+            player.position.x = x;
+            player.position.y = y;
+            player.path = [];
+            player.targetPosition = null;
+            player.targetNode = null;
+            player.currentNode = null;
+            player.stopActivity();
+            
+            this.log(`Teleported to ${x}, ${y}`, 'success');
+        } else if (args.length === 1) {
+            // Teleport to node
+            const nodeId = args[0];
+            const node = nodes.getNode(nodeId);
+            
+            if (!node) {
+                this.log(`Node not found: ${nodeId}`, 'error');
+                return;
+            }
+            
+            player.position.x = node.position.x + 0.5;
+            player.position.y = node.position.y + 0.5;
+            player.path = [];
+            player.targetPosition = null;
+            player.targetNode = null;
+            player.currentNode = nodeId;
+            player.stopActivity();
+            
+            this.log(`Teleported to ${node.name} (${nodeId})`, 'success');
         } else {
             this.log('Usage: tp <x> <y> or tp <nodeId>', 'error');
         }
@@ -844,7 +878,12 @@ class DevConsole {
         if (!this.requireSystem('Player', 'player')) return;
         
         this.log(`Position: ${Math.round(player.position.x)}, ${Math.round(player.position.y)}`, 'info');
-        this.log(`Current node: ${player.currentNode}`, 'info');
+        if (player.currentNode) {
+            const node = nodes.getNode(player.currentNode);
+            this.log(`Current node: ${player.currentNode} (${node ? node.name : 'unknown'})`, 'info');
+        } else {
+            this.log(`Current node: none`, 'info');
+        }
     }
 
     cmdResetPlayer() {
@@ -963,64 +1002,150 @@ class DevConsole {
         this.log(`Added ${quantity} of each item to bank`, 'success');
     }
 
-    cmdClearGoals() {
-        if (!this.requireSystem('AI', 'ai')) return;
-        
-        ai.goals = [];
-        ai.currentGoal = null;
-        if (window.ui) ui.updateGoal();
-        this.log('All goals cleared', 'success');
-    }
+    // ==================== TASK COMMANDS (NEW) ====================
 
-    cmdAddGoal(args) {
-        if (!this.requireSystem('AI', 'ai')) return;
+    cmdListTasks() {
+        if (!this.requireSystem('Task Manager', 'taskManager')) return;
         
-        if (args.length < 3) {
-            this.log('Usage: addgoal <type> <target> <value>', 'error');
-            this.log('Examples:', 'info');
-            this.log('  addgoal skill woodcutting 60', 'info');
-            this.log('  addgoal item oak_logs 100', 'info');
+        const tasks = taskManager.getAllTasks();
+        
+        if (tasks.length === 0) {
+            this.log('No tasks available', 'info');
             return;
         }
         
-        const type = args[0].toLowerCase();
-        const priority = ai.goals.length + 1;
+        this.log('=== CURRENT TASKS ===', 'info');
         
-        if (type === 'skill') {
-            const skillId = this.validateSkill(args[1]);
-            if (!skillId) return;
+        // Check which task is current (first incomplete)
+        const currentTask = taskManager.getFirstIncompleteTask();
+        
+        tasks.forEach((task, index) => {
+            const isComplete = task.progress >= 1;
+            const isCurrent = task === currentTask;
             
-            const level = this.parseIntArg(args[2], 'Level', 1, 99);
-            if (level === null) return;
+            let status = '';
+            if (isCurrent) status = ' [ACTIVE]';
+            else if (isComplete) status = ' [COMPLETE]';
             
-            ai.addGoal({
-                type: 'skill_level',
-                skill: skillId,
-                targetLevel: level,
-                priority: priority
-            });
+            let progressText = '';
+            if (task.isCookingTask) {
+                // Cooking task - show raw food consumed
+                const consumed = task.rawFoodConsumed || 0;
+                progressText = `${consumed}/${task.targetCount}`;
+            } else {
+                // Gathering task - show items collected
+                const current = Math.floor(task.progress * task.targetCount);
+                progressText = `${current}/${task.targetCount}`;
+            }
             
-            this.log(`Added goal: ${skillId} to level ${level}`, 'success');
-        } else if (type === 'item') {
-            const itemId = this.validateItem(args[1]);
-            if (!itemId) return;
+            const percentage = Math.floor(task.progress * 100);
             
-            const count = this.parseIntArg(args[2], 'Count', 1);
-            if (count === null) return;
-            
-            const items = loadingManager.getData('items');
-            ai.addGoal({
-                type: 'bank_items',
-                itemId: itemId,
-                targetCount: count,
-                priority: priority
-            });
-            
-            this.log(`Added goal: bank ${count} ${items[itemId].name}`, 'success');
-        } else {
-            this.log('Type must be "skill" or "item"', 'error');
+            this.log(
+                `#${index + 1}: ${task.description} - ${progressText} (${percentage}%)${status}`,
+                isComplete ? 'success' : (isCurrent ? 'command' : 'info')
+            );
+        });
+        
+        // Show AI status if available
+        if (window.ai && window.ai.currentTask) {
+            this.log('', 'info');
+            this.log(`AI working on: ${window.ai.currentTask.description}`, 'info');
         }
     }
+
+    cmdCompleteTask(args) {
+        if (!this.requireSystem('Task Manager', 'taskManager')) return;
+        
+        if (args.length !== 1) {
+            this.log('Usage: completetask <index>', 'error');
+            this.log('Example: completetask 1 (completes first task)', 'info');
+            return;
+        }
+        
+        const index = this.parseIntArg(args[0], 'Task index', 1, taskManager.tasks.length);
+        if (index === null) return;
+        
+        const taskIndex = index - 1; // Convert to 0-based index
+        const task = taskManager.tasks[taskIndex];
+        
+        if (!task) {
+            this.log(`Task #${index} not found`, 'error');
+            return;
+        }
+        
+        // For gathering tasks, add items to bank to complete
+        if (!task.isCookingTask) {
+            const currentCount = taskManager.getCurrentItemCount(task.itemId);
+            const needed = task.targetCount - currentCount + (task.startingCount || 0);
+            
+            if (needed > 0) {
+                bank.deposit(task.itemId, needed);
+                this.log(`Added ${needed} ${task.itemId} to bank`, 'info');
+            }
+        } else {
+            // For cooking tasks, just mark as complete
+            task.rawFoodConsumed = task.targetCount;
+        }
+        
+        // Mark task as complete
+        taskManager.setTaskProgress(task, 1);
+        
+        this.log(`Completed task: ${task.description}`, 'success');
+        
+        // Update UI
+        if (window.ui) {
+            window.ui.updateTasks();
+        }
+    }
+
+    cmdRerollTask(args) {
+        if (!this.requireSystem('Task Manager', 'taskManager')) return;
+        
+        if (args.length !== 1) {
+            this.log('Usage: rerolltask <index>', 'error');
+            this.log('Example: rerolltask 1 (rerolls first task)', 'info');
+            return;
+        }
+        
+        const index = this.parseIntArg(args[0], 'Task index', 1, taskManager.tasks.length);
+        if (index === null) return;
+        
+        const taskIndex = index - 1; // Convert to 0-based index
+        const oldTask = taskManager.tasks[taskIndex];
+        
+        if (!oldTask) {
+            this.log(`Task #${index} not found`, 'error');
+            return;
+        }
+        
+        this.log(`Rerolling task: ${oldTask.description}`, 'info');
+        taskManager.rerollTask(taskIndex);
+        
+        const newTask = taskManager.tasks[taskIndex];
+        if (newTask && newTask !== oldTask) {
+            this.log(`New task: ${newTask.description}`, 'success');
+        }
+    }
+
+    cmdClearTasks() {
+        if (!this.requireSystem('Task Manager', 'taskManager')) return;
+        
+        taskManager.clearTasks();
+        this.log('All tasks cleared', 'success');
+        
+        // Generate new tasks
+        taskManager.generateNewTasks();
+        this.log('Generated new batch of tasks', 'success');
+    }
+
+    cmdGenerateTasks() {
+        if (!this.requireSystem('Task Manager', 'taskManager')) return;
+        
+        taskManager.generateNewTasks();
+        this.log('Generated new batch of tasks', 'success');
+    }
+
+    // ==================== AI COMMANDS ====================
 
     cmdPauseAI() {
         if (!this.requireSystem('Game', 'gameState')) return;
@@ -1031,6 +1156,53 @@ class DevConsole {
             pauseBtn.textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
         }
         this.log(`AI ${gameState.paused ? 'paused' : 'resumed'}`, 'success');
+    }
+
+    cmdAIStatus() {
+        if (!this.requireSystem('AI', 'ai')) return;
+        
+        this.log('=== AI STATUS ===', 'info');
+        
+        // Paused state
+        const isPaused = window.gameState ? gameState.paused : false;
+        this.log(`State: ${isPaused ? 'PAUSED' : 'RUNNING'}`, isPaused ? 'error' : 'success');
+        
+        // Current task
+        if (ai.currentTask) {
+            const progress = Math.floor(ai.currentTask.progress * 100);
+            this.log(`Current Task: ${ai.currentTask.description}`, 'info');
+            this.log(`Progress: ${progress}%`, 'info');
+            this.log(`Node: ${ai.currentTask.nodeId}`, 'info');
+            this.log(`Activity: ${ai.currentTask.activityId}`, 'info');
+        } else {
+            this.log('Current Task: None (selecting...)', 'info');
+        }
+        
+        // Player status
+        if (window.player) {
+            this.log('', 'info');
+            this.log('=== PLAYER STATUS ===', 'info');
+            
+            if (player.isMoving()) {
+                this.log('Status: Moving', 'info');
+                if (player.targetNode) {
+                    this.log(`Target: ${player.targetNode}`, 'info');
+                }
+            } else if (player.isPerformingActivity()) {
+                this.log('Status: Performing Activity', 'info');
+                this.log(`Activity: ${player.currentActivity}`, 'info');
+                const progress = Math.floor(player.activityProgress * 100);
+                this.log(`Progress: ${progress}%`, 'info');
+            } else {
+                this.log('Status: Idle', 'info');
+            }
+            
+            this.log(`Current Node: ${player.currentNode || 'none'}`, 'info');
+        }
+        
+        // Decision cooldown
+        this.log('', 'info');
+        this.log(`Decision Cooldown: ${Math.floor(ai.decisionCooldown)}ms`, 'info');
     }
 
     cmdStartActivity(args) {
@@ -1126,111 +1298,7 @@ class DevConsole {
         map.toggleNodeText();
         this.log(`Node text ${map.showNodeText ? 'enabled' : 'disabled'}`, 'success');
     }
-
-    cmdListGoals() {
-        if (!this.requireSystem('AI', 'ai')) return;
-        
-        if (ai.goals.length === 0) {
-            this.log('No goals in queue', 'info');
-            return;
-        }
-        
-        // Show current goal
-        if (ai.currentGoal) {
-            this.log('=== CURRENT GOAL ===', 'info');
-            this.formatGoal(ai.currentGoal, true);
-            this.log('', 'info');
-        } else {
-            this.log('No active goal (selecting...)', 'info');
-            this.log('', 'info');
-        }
-        
-        // Show all goals in queue
-        this.log('=== GOAL QUEUE ===', 'info');
-        for (const goal of ai.goals) {
-            const isComplete = ai.isGoalComplete(goal);
-            const isCurrent = ai.currentGoal === goal;
-            this.formatGoal(goal, false, isComplete, isCurrent);
-        }
-        
-        this.log(`Total goals: ${ai.goals.length}`, 'info');
-    }
-
-    formatGoal(goal, detailed = false, isComplete = false, isCurrent = false) {
-        let status = '';
-        if (isCurrent) status = ' [ACTIVE]';
-        else if (isComplete) status = ' [COMPLETE]';
-        
-        switch (goal.type) {
-            case 'skill_level':
-                const currentLevel = skills.getLevel(goal.skill);
-                const currentXp = Math.floor(skills.getXp(goal.skill));
-                const targetXp = getXpForLevel(goal.targetLevel);
-                const progress = Math.floor((currentXp / targetXp) * 100);
-                
-                if (detailed) {
-                    this.log(`Type: Skill Training`, 'info');
-                    this.log(`Skill: ${goal.skill}`, 'info');
-                    this.log(`Target: Level ${goal.targetLevel}`, 'info');
-                    this.log(`Current: Level ${currentLevel} (${formatNumber(currentXp)} XP)`, 'info');
-                    this.log(`Progress: ${progress}%`, 'info');
-                    this.log(`Priority: ${goal.priority}`, 'info');
-                } else {
-                    this.log(`#${goal.priority}: Train ${goal.skill} to ${goal.targetLevel} (currently ${currentLevel}) - ${progress}%${status}`, 
-                        isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
-                }
-                break;
-                
-            case 'bank_items':
-                const currentCount = bank.getItemCount(goal.itemId);
-                const itemData = loadingManager.getData('items')[goal.itemId];
-                const itemProgress = Math.floor((currentCount / goal.targetCount) * 100);
-                
-                if (detailed) {
-                    this.log(`Type: Item Banking`, 'info');
-                    this.log(`Item: ${itemData.name} (${goal.itemId})`, 'info');
-                    this.log(`Target: ${formatNumber(goal.targetCount)}`, 'info');
-                    this.log(`Current: ${formatNumber(currentCount)}`, 'info');
-                    this.log(`Progress: ${itemProgress}%`, 'info');
-                    this.log(`Priority: ${goal.priority}`, 'info');
-                } else {
-                    this.log(`#${goal.priority}: Bank ${formatNumber(goal.targetCount)} ${itemData.name} (${formatNumber(currentCount)}/${formatNumber(goal.targetCount)}) - ${itemProgress}%${status}`, 
-                        isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
-                }
-                break;
-
-            case 'skill_activity':
-    // Display the description which includes location
-    if (detailed) {
-        this.log(`Type: Skill Activity`, 'info');
-        this.log(`Description: ${goal.description}`, 'info');
-        this.log(`Node: ${goal.nodeId}`, 'info');
-        this.log(`Activity: ${goal.activityId}`, 'info');
-        if (goal.targetItem) {
-            const itemData = loadingManager.getData('items')[goal.targetItem];
-            const currentCount = bank.getItemCount(goal.targetItem);
-            this.log(`Target: ${goal.targetCount} ${itemData.name}`, 'info');
-            this.log(`Current: ${currentCount}`, 'info');
-        }
-        this.log(`Priority: ${goal.priority}`, 'info');
-    } else {
-        // Use the description field which has all the info
-        let progressText = '';
-        if (goal.targetItem && goal.targetCount) {
-            const currentCount = bank.getItemCount(goal.targetItem);
-            const percentage = Math.floor((currentCount / goal.targetCount) * 100);
-            progressText = ` (${currentCount}/${goal.targetCount} - ${percentage}%)`;
-        }
-        this.log(`#${goal.priority}: ${goal.description}${progressText}${status}`, 
-            isComplete ? 'success' : (isCurrent ? 'command' : 'info'));
-    }
-    break;
-                
-            default:
-                this.log(`#${goal.priority}: Unknown goal type: ${goal.type}${status}`, 'error');
-        }
-    }
 }
 
-// Create global instance immediately
+// Create global instance
 window.devConsole = new DevConsole();
