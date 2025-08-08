@@ -157,16 +157,26 @@ class Player {
             window.ui.updateSkillsList();
         }
 
-        // Check if goal is complete
-        if (window.ai && window.ai.currentGoal && window.ai.isGoalComplete(window.ai.currentGoal)) {
-            console.log('Goal completed after action!');
-            this.stopActivity();
-            if (window.ai) {
-                window.ai.decisionCooldown = 0;
-                window.ai.currentGoal = null;
-                window.ai.plannedActivity = null;
+        // Update task progress
+        if (window.taskManager) {
+            taskManager.updateAllProgress();
+            if (window.ui) {
+                window.ui.updateTasks();
             }
-            return;
+        }
+
+        // Check if task is complete
+        if (window.ai && window.ai.currentTask && window.taskManager) {
+            taskManager.updateTaskProgress(window.ai.currentTask);
+            if (window.ai.currentTask.progress >= 1) {
+                console.log('Task completed after action!');
+                this.stopActivity();
+                if (window.ai) {
+                    window.ai.decisionCooldown = 0;
+                    window.ai.currentTask = null;
+                }
+                return;
+            }
         }
 
         // Reset for next action
@@ -208,10 +218,6 @@ class Player {
                 this.stopActivity();
                 
                 console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
-                
-                if (window.ui) {
-                    window.ui.forceActivityUpdate();
-                }
             } else {
                 console.error(`No path found to node ${targetNodeId}`);
                 this.path = [{ x: node.position.x, y: node.position.y }];
@@ -241,10 +247,6 @@ class Player {
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
             }
-            
-            if (window.ui) {
-                window.ui.forceActivityUpdate();
-            }
         }
     }
 
@@ -265,10 +267,6 @@ class Player {
                     
                     if (window.ai) {
                         window.ai.decisionCooldown = 0;
-                    }
-                    
-                    if (window.ui) {
-                        window.ui.forceActivityUpdate();
                     }
                 } else {
                     foundNode = true;
@@ -320,10 +318,6 @@ class Player {
         this.activityStartTime = Date.now();
         
         console.log(`Started activity: ${activityData.name}`);
-        
-        if (window.ui) {
-            window.ui.forceActivityUpdate();
-        }
     }
 
     stopActivity() {
@@ -332,10 +326,6 @@ class Player {
         }
         this.currentActivity = null;
         this.activityProgress = 0;
-        
-        if (window.ui) {
-            window.ui.forceActivityUpdate();
-        }
     }
 
     getMovementSpeed() {
