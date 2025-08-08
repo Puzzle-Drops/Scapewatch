@@ -157,21 +157,11 @@ class Player {
             window.ui.updateSkillsList();
         }
 
-        // IMPORTANT: Update progress ONLY for the current task's item
-        if (window.taskManager && earnedRewards.length > 0) {
-            // Get the first incomplete task to check if we're contributing to it
-            const currentTask = taskManager.getFirstIncompleteTask();
-            
-            // Only update progress if we produced the item for the current task
-            if (currentTask && !currentTask.isCookingTask) {
-                // Cooking tasks handle their own progress tracking during consumption
-                for (const reward of earnedRewards) {
-                    if (reward.itemId === currentTask.itemId) {
-                        // Update progress only for this specific item
-                        taskManager.updateProgressForItem(reward.itemId);
-                        break; // Only update once
-                    }
-                }
+        // Update task progress for items earned (cooking handles its own progress)
+        if (window.taskManager && earnedRewards.length > 0 && !activityData.cookingTable) {
+            // Task manager will check if this contributes to the current task
+            for (const reward of earnedRewards) {
+                taskManager.updateProgressForItem(reward.itemId);
             }
             
             if (window.ui) {
