@@ -45,7 +45,7 @@ class ScalingSystem {
         
         // Make sure the canvas uses the full fixed resolution for the map area
         // The map container is baseWidth minus UI panel width (350px)
-        const mapWidth = this.baseWidth - 350;
+        const mapWidth = this.baseWidth;
         this.mapContainer.style.width = `${mapWidth}px`;
         this.mapContainer.style.height = `${this.baseHeight}px`;
     }
@@ -78,7 +78,7 @@ class ScalingSystem {
     const canvas = document.getElementById('game-canvas');
     if (canvas) {
         // Canvas should fill the map container at our fixed resolution
-        canvas.width = this.baseWidth - 350; // Minus UI panel width
+        canvas.width = this.baseWidth;
         canvas.height = this.baseHeight;
         
         // Reapply no smoothing after canvas resize
