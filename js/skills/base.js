@@ -2,6 +2,7 @@ class BaseSkill {
     constructor(id, name) {
         this.id = id;
         this.name = name;
+        this.requiresBankingBeforeTask = false; // Default: most skills don't need to bank first
     }
     
     // ==================== TASK GENERATION ====================
@@ -284,13 +285,13 @@ class BaseSkill {
     // Skills can override these methods for custom banking behavior
     
     // Check if we need banking for a specific task
-needsBankingForTask(task) {
-    // Default for gathering skills: bank when inventory is full
-    if (inventory.isFull()) {
-        return true;
+    needsBankingForTask(task) {
+        // Default for gathering skills: bank when inventory is full
+        if (inventory.isFull()) {
+            return true;
+        }
+        return false;
     }
-    return false;
-}
     
     // Handle skill-specific banking
     handleBanking(task) {
