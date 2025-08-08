@@ -10,7 +10,6 @@ class SkillRegistry {
         this.register(new MiningSkill());
         this.register(new FishingSkill());
         this.register(new CookingSkill());
-        this.register(new CombatSkill());
         
         this.initialized = true;
         console.log('Skill registry initialized with', Object.keys(this.skills).length, 'skills');
