@@ -77,6 +77,11 @@ class BaseSkill {
             // Get items from this activity
             const activityItems = this.getItemsFromActivity(activity);
             for (const item of activityItems) {
+                // IMPORTANT: Check if we meet the item's specific level requirement
+                if (item.requiredLevel && currentLevel < item.requiredLevel) {
+                    continue; // Skip items we don't have the level for
+                }
+                
                 // Don't add duplicates
                 if (!items.some(i => i.itemId === item.itemId)) {
                     items.push({
@@ -185,12 +190,23 @@ class BaseSkill {
     findActivitiesForItem(itemId) {
         const activities = loadingManager.getData('activities');
         const matching = [];
+        const currentLevel = skills.getLevel(this.id);
         
         for (const [activityId, activity] of Object.entries(activities)) {
             if (activity.skill !== this.id) continue;
             
+            // Check if we can do this activity
+            const requiredLevel = activity.requiredLevel || 1;
+            if (currentLevel < requiredLevel) continue;
+            
             const items = this.getItemsFromActivity(activity);
-            if (items.some(item => item.itemId === itemId)) {
+            // Check if this activity can produce the item AND we have the level for it
+            const canProduceItem = items.some(item => 
+                item.itemId === itemId && 
+                (!item.requiredLevel || currentLevel >= item.requiredLevel)
+            );
+            
+            if (canProduceItem) {
                 matching.push(activityId);
             }
         }
