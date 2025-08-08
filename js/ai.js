@@ -101,37 +101,33 @@ class AIManager {
     }
 
     needsBanking() {
-        // Bank if inventory is full and we're gathering
+        // Check if inventory is full
         if (inventory.isFull()) {
-            // Check if we're doing a production skill that needs raw materials
-            if (this.currentTask && this.currentTask.skill === 'cooking') {
-                // Cooking needs raw food, so banking makes sense
-                return !this.hasRawFood();
+            // For production skills, check if we have materials
+            if (this.currentTask) {
+                const skill = skillRegistry.getSkill(this.currentTask.skill);
+                if (skill && !skill.hasMaterials()) {
+                    return true; // Need to get materials from bank
+                }
             }
-            return true;
+            return true; // Inventory full, need to bank
         }
         
-        // Check if we need supplies for the current task
-        if (this.currentTask && this.currentTask.skill === 'cooking') {
-            return !this.hasRawFood();
+        // Check if current task needs banking
+        if (this.currentTask) {
+            const skill = skillRegistry.getSkill(this.currentTask.skill);
+            if (skill && skill.needsBankingForTask(this.currentTask)) {
+                return true;
+            }
         }
         
         return false;
     }
 
     hasRawFood() {
-        const activityData = loadingManager.getData('activities')['cook_food'];
-        if (!activityData || !activityData.cookingTable) return false;
-        
-        const cookingLevel = skills.getLevel('cooking');
-        
-        for (const recipe of activityData.cookingTable) {
-            if (cookingLevel >= recipe.requiredLevel && inventory.hasItem(recipe.rawItemId, 1)) {
-                return true;
-            }
-        }
-        
-        return false;
+        // Delegate to cooking skill
+        const cookingSkill = skillRegistry.getSkill('cooking');
+        return cookingSkill ? cookingSkill.hasRawFoodInInventory() : false;
     }
 
     executeTask(task) {
@@ -145,6 +141,18 @@ class AIManager {
         // Check if task is valid
         if (!taskManager.isTaskPossible(task)) {
             console.log('Task is impossible, rerolling...');
+            const index = taskManager.tasks.indexOf(task);
+            if (index >= 0) {
+                taskManager.rerollTask(index);
+            }
+            this.currentTask = null;
+            return;
+        }
+        
+        // Check if skill can continue with this task
+        const skill = skillRegistry.getSkill(task.skill);
+        if (skill && !skill.canContinueTask(task)) {
+            console.log(`Skill ${task.skill} cannot continue task, rerolling...`);
             const index = taskManager.tasks.indexOf(task);
             if (index >= 0) {
                 taskManager.rerollTask(index);
@@ -251,10 +259,45 @@ class AIManager {
     }
 
     performBanking() {
-        // Special handling for cooking
-        if (this.currentTask && this.currentTask.skill === 'cooking') {
-            this.handleCookingBanking();
-            return;
+        // Let the skill handle its own banking if it has a current task
+        if (this.currentTask) {
+            const skill = skillRegistry.getSkill(this.currentTask.skill);
+            if (skill && skill.handleBanking) {
+                const success = skill.handleBanking(this.currentTask);
+                
+                if (!success) {
+                    console.log('Banking failed for skill task');
+                    // Can't complete task, should reroll
+                    const index = taskManager.tasks.indexOf(this.currentTask);
+                    if (index >= 0) {
+                        taskManager.rerollTask(index);
+                    }
+                    this.currentTask = null;
+                    return;
+                }
+                
+                // Update task progress after banking
+                if (window.taskManager) {
+                    taskManager.updateAllProgress();
+                    if (window.ui) {
+                        window.ui.updateTasks();
+                    }
+                }
+                
+                // Re-validate current task after banking
+                if (!this.isCurrentTaskValid()) {
+                    this.selectNextTask();
+                }
+                
+                this.clearCooldown();
+                
+                if (this.currentTask && this.currentTask.progress < 1) {
+                    console.log('Continuing task after banking');
+                    this.executeTask(this.currentTask);
+                }
+                
+                return;
+            }
         }
         
         // Default banking - deposit all
@@ -278,72 +321,6 @@ class AIManager {
         
         if (this.currentTask && this.currentTask.progress < 1) {
             console.log('Continuing task after banking');
-            this.executeTask(this.currentTask);
-        }
-    }
-
-    handleCookingBanking() {
-        // Deposit all first
-        bank.depositAll();
-        console.log('Deposited all items for cooking');
-        
-        // Withdraw raw food items
-        const activityData = loadingManager.getData('activities')['cook_food'];
-        const cookingLevel = skills.getLevel('cooking');
-        
-        // Sort recipes by required level (lowest first)
-        const availableRecipes = activityData.cookingTable
-            .filter(recipe => cookingLevel >= recipe.requiredLevel)
-            .sort((a, b) => a.requiredLevel - b.requiredLevel);
-        
-        let withdrawnAny = false;
-        let totalWithdrawn = 0;
-        
-        for (const recipe of availableRecipes) {
-            const bankCount = bank.getItemCount(recipe.rawItemId);
-            if (bankCount > 0) {
-                const toWithdraw = Math.min(28 - totalWithdrawn, bankCount);
-                const withdrawn = bank.withdrawUpTo(recipe.rawItemId, toWithdraw);
-                
-                if (withdrawn > 0) {
-                    inventory.addItem(recipe.rawItemId, withdrawn);
-                    console.log(`Withdrew ${withdrawn} ${recipe.rawItemId}`);
-                    withdrawnAny = true;
-                    totalWithdrawn += withdrawn;
-                    
-                    if (totalWithdrawn >= 28) break;
-                }
-            }
-        }
-        
-        if (!withdrawnAny) {
-            console.log('No raw food to withdraw for cooking');
-            // Can't complete cooking task, should reroll
-            if (this.currentTask) {
-                const index = taskManager.tasks.indexOf(this.currentTask);
-                if (index >= 0) {
-                    taskManager.rerollTask(index);
-                }
-                this.currentTask = null;
-            }
-            return;
-        }
-        
-        // Update task progress and continue
-        if (window.taskManager) {
-            taskManager.updateAllProgress();
-            if (window.ui) {
-                window.ui.updateTasks();
-            }
-        }
-        
-        // Re-validate current task
-        if (!this.isCurrentTaskValid()) {
-            this.selectNextTask();
-        }
-        
-        this.clearCooldown();
-        if (this.currentTask) {
             this.executeTask(this.currentTask);
         }
     }
