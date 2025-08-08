@@ -58,6 +58,13 @@ class TaskManager {
         if (window.ui) {
             window.ui.updateTasks();
         }
+
+        // Notify AI that tasks have changed - it should re-evaluate what it's doing
+        if (window.ai) {
+            console.log('New tasks generated, notifying AI to re-evaluate');
+            window.ai.currentTask = null;
+            window.ai.decisionCooldown = 0;
+        }
     }
 
     // Get all registered skills that can generate tasks
@@ -109,16 +116,14 @@ class TaskManager {
         }
     }
 
-    // Update progress for ONLY the first incomplete task that matches the given item
+    // Update progress for ONLY the first incomplete task if it matches the given item
     updateProgressForItem(itemId) {
-        // Find the first incomplete task for this item
-        for (const task of this.tasks) {
-            if (task.progress < 1 && task.itemId === itemId && !task.isCookingTask) {
-                this.updateTaskProgress(task);
-                
-                // Only update ONE task
-                break;
-            }
+        // Get the first incomplete task overall
+        const currentTask = this.getFirstIncompleteTask();
+        
+        // Only update if the current task matches this item
+        if (currentTask && !currentTask.isCookingTask && currentTask.itemId === itemId) {
+            this.updateTaskProgress(currentTask);
         }
         
         // Check if all tasks are complete
@@ -130,29 +135,35 @@ class TaskManager {
         }
     }
 
-    // Update cooking task progress (called when raw food is consumed)
-    updateCookingTaskProgress(rawItemId) {
-        // Find the first incomplete cooking task for this raw item
-        for (const task of this.tasks) {
-            if (task.progress < 1 && task.isCookingTask && task.itemId === rawItemId) {
-                // This is handled in the cooking skill's beforeActivityStart
-                // Just update UI here
-                if (window.ui) {
-                    window.ui.updateTasks();
-                }
+    // Update cooking progress when raw food is consumed (called by cooking skill)
+    updateCookingProgress(rawItemId) {
+        // Get the first incomplete task overall
+        const currentTask = this.getFirstIncompleteTask();
+        
+        // Only update if the current task is a cooking task for this raw item
+        if (currentTask && currentTask.isCookingTask && currentTask.itemId === rawItemId) {
+            // Increment the consumption counter
+            currentTask.rawFoodConsumed = (currentTask.rawFoodConsumed || 0) + 1;
+            
+            // Update progress based on consumption
+            currentTask.progress = Math.min(currentTask.rawFoodConsumed / currentTask.targetCount, 1);
+            
+            console.log(`Cooking progress: ${currentTask.rawFoodConsumed}/${currentTask.targetCount}`);
+            
+            // Update UI
+            if (window.ui) {
+                window.ui.updateTasks();
+            }
+            
+            // Check if complete
+            if (currentTask.progress >= 1) {
+                this.completeTask(currentTask);
                 
-                // Check if complete
-                if (task.progress >= 1) {
-                    this.completeTask(task);
-                    
-                    // Check if all tasks are complete
-                    if (this.areAllTasksComplete()) {
-                        console.log('All tasks complete! Generating new batch...');
-                        this.generateNewTasks();
-                    }
+                // Check if all tasks are complete
+                if (this.areAllTasksComplete()) {
+                    console.log('All tasks complete! Generating new batch...');
+                    this.generateNewTasks();
                 }
-                
-                break;
             }
         }
     }
@@ -215,6 +226,9 @@ class TaskManager {
         const oldTask = this.tasks[index];
         console.log(`Rerolling task: ${oldTask.description}`);
 
+        // Check if this was the current task BEFORE rerolling
+        const wasCurrentTask = (oldTask === this.getFirstIncompleteTask());
+
         const availableSkills = this.getAvailableSkills();
         if (availableSkills.length === 0) {
             console.error('No skills available for reroll');
@@ -257,8 +271,9 @@ class TaskManager {
                 window.ui.updateTasks();
             }
             
-            // If this was the current task being worked on, notify AI
-            if (index === 0 && window.ai && window.ai.currentTask === oldTask) {
+            // If this was the current task being worked on, notify AI to re-evaluate
+            if (wasCurrentTask && window.ai) {
+                console.log('Current task was rerolled, notifying AI to re-evaluate');
                 window.ai.currentTask = null;
                 window.ai.decisionCooldown = 0;
             }
