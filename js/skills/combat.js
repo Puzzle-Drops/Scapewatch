@@ -4,6 +4,91 @@ class CombatSkill extends BaseSkill {
         this.combatSkills = ['attack', 'strength', 'defence', 'hitpoints'];
     }
     
+    // ==================== GOAL GENERATION OVERRIDE ====================
+    
+    createGoalForActivity(node, activity, priority) {
+        // For combat, we're training, not collecting items usually
+        // But we might want to collect specific drops
+        const drops = this.getValuableDrops(activity);
+        
+        if (drops.length > 0 && Math.random() < 0.3) {
+            // 30% chance to make a loot goal
+            const targetDrop = drops[0];
+            const targetCount = 50 + Math.floor(Math.random() * 100);
+            
+            return {
+                type: 'skill_activity',
+                skill: this.id,
+                nodeId: node.id,
+                activityId: activity.id,
+                targetItem: targetDrop.itemId,
+                targetCount: targetCount,
+                priority: priority,
+                description: `Fight at ${node.name} for ${targetCount} ${targetDrop.itemId}`
+            };
+        } else {
+            // Training goal
+            return {
+                type: 'skill_activity',
+                skill: this.id,
+                nodeId: node.id,
+                activityId: activity.id,
+                priority: priority,
+                description: `Train combat at ${node.name}`
+            };
+        }
+    }
+    
+    getValuableDrops(activity) {
+        if (!activity.rewards) return [];
+        
+        // Filter for non-coin drops
+        return activity.rewards.filter(r => 
+            r.itemId !== 'coins' && r.chance < 0.5
+        );
+    }
+    
+    // Combat generates goals for multiple skills
+    generateSpecificGoals(count, startPriority) {
+        const goals = [];
+        let priority = startPriority;
+        
+        // Get all nodes that have combat activities
+        const skillNodes = this.getNodesWithSkillActivities();
+        if (skillNodes.length === 0) return goals;
+        
+        for (let i = 0; i < count; i++) {
+            // Mix between level goals (40%) and activity goals (60%)
+            if (Math.random() < 0.4) {
+                // Generate a level goal for a combat skill
+                const skillIndex = i % this.combatSkills.length;
+                const targetSkill = this.combatSkills[skillIndex];
+                
+                const currentLevel = skills.getLevel(targetSkill);
+                if (currentLevel < 99) {
+                    const targetLevel = this.calculateTargetLevel(currentLevel);
+                    
+                    goals.push({
+                        type: 'skill_level',
+                        skill: targetSkill,
+                        targetLevel: targetLevel,
+                        priority: priority++,
+                        description: `Train ${targetSkill} to level ${targetLevel}`
+                    });
+                }
+            } else {
+                // Generate a specific activity goal
+                const activityGoal = this.createActivityGoal(skillNodes, priority);
+                if (activityGoal) {
+                    goals.push(activityGoal);
+                    priority++;
+                }
+            }
+        }
+        
+        return goals;
+    }
+    
     // ==================== BANKING DECISIONS ====================
     
     needsBanking(goal) {
@@ -47,36 +132,6 @@ class CombatSkill extends BaseSkill {
     getXpToGrant(rewards, activityData) {
         // Combat grants XP to multiple skills (handled in player.js)
         return activityData.xpPerAction || 0;
-    }
-    
-    // ==================== GOAL GENERATION ====================
-    
-    generateLevelGoals(currentLevel, priority) {
-        const goals = [];
-        
-        // Generate goals for all combat skills
-        for (const skillId of this.combatSkills) {
-            const level = skills.getLevel(skillId);
-            if (level >= 99) continue;
-            
-            const targetLevel = this.calculateTargetLevel(level);
-            if (targetLevel > level) {
-                goals.push({
-                    type: 'skill_level',
-                    skill: skillId,
-                    targetLevel: targetLevel,
-                    priority: priority + goals.length
-                });
-            }
-        }
-        
-        return goals;
-    }
-    
-    generateItemGoals(currentLevel, priority) {
-        // Combat doesn't generate item banking goals by default
-        // Could add goals for specific drops in the future
-        return [];
     }
     
     canPerformActivity(activityId) {
