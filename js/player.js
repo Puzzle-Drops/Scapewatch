@@ -163,7 +163,8 @@ class Player {
             const currentTask = taskManager.getFirstIncompleteTask();
             
             // Only update progress if we produced the item for the current task
-            if (currentTask) {
+            if (currentTask && !currentTask.isCookingTask) {
+                // Cooking tasks handle their own progress tracking during consumption
                 for (const reward of earnedRewards) {
                     if (reward.itemId === currentTask.itemId) {
                         // Update progress only for this specific item
