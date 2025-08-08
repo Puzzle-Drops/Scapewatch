@@ -47,13 +47,25 @@ class AIManager {
         taskManager.updateAllProgress();
     }
 
-    // Check if current task changed while we were busy
-    if (player.isPerformingActivity() && !this.isCurrentTaskValid()) {
-        console.log('Task changed while performing activity, stopping to re-evaluate');
-        player.stopActivity();
+    // Check if current task changed while we were busy (moving OR performing activity)
+    if (!this.isCurrentTaskValid() && this.currentTask !== null) {
+        // Task was invalidated (rerolled, completed, etc)
+        if (player.isMoving()) {
+            console.log('Task changed while moving, stopping to re-evaluate');
+            // Stop movement
+            player.path = [];
+            player.pathIndex = 0;
+            player.targetPosition = null;
+            player.targetNode = null;
+            player.segmentProgress = 0;
+        }
+        if (player.isPerformingActivity()) {
+            console.log('Task changed while performing activity, stopping to re-evaluate');
+            player.stopActivity();
+        }
         this.currentTask = null;
         this.decisionCooldown = 0;
-        return;
+        // Don't return - let it make a new decision immediately
     }
 
     // Make decisions when appropriate
