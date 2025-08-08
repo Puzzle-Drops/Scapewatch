@@ -47,6 +47,22 @@ class AIManager {
         taskManager.updateAllProgress();
     }
 
+    // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
+    // This happens when task is rerolled or becomes invalid while we're moving
+    if (this.currentTask === null && player.isMoving()) {
+        console.log('Task lost while moving, stopping to re-evaluate');
+        // Stop movement immediately
+        player.path = [];
+        player.pathIndex = 0;
+        player.targetPosition = null;
+        player.targetNode = null;
+        player.segmentProgress = 0;
+        // Make a decision immediately
+        this.makeDecision();
+        this.resetDecisionCooldown();
+        return;
+    }
+
     // Check if current task changed while we were busy (moving OR performing activity)
     if (!this.isCurrentTaskValid() && this.currentTask !== null) {
         // Task was invalidated (rerolled, completed, etc)
