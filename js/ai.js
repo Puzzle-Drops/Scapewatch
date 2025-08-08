@@ -200,11 +200,29 @@ if (this.currentTask === null && player.isPerformingActivity()) {
         }
 
         // Check if we're at the right node
-        if (player.currentNode !== task.nodeId) {
-            console.log(`Moving to ${task.nodeId} for task`);
-            player.moveTo(task.nodeId);
-            return;
-        }
+if (player.currentNode !== task.nodeId) {
+    // Double-check we're not already moving to this node
+    if (player.targetNode === task.nodeId && player.isMoving()) {
+        console.log(`Already moving to ${task.nodeId}`);
+        return;
+    }
+    
+    console.log(`Moving to ${task.nodeId} for task`);
+    player.moveTo(task.nodeId);
+    return;
+}
+
+// Verify we're actually at the node (not just have it set incorrectly)
+const node = nodes.getNode(task.nodeId);
+if (node) {
+    const dist = window.distance(player.position.x, player.position.y, node.position.x, node.position.y);
+    if (dist > 2) { // More than 2 tiles away
+        console.log(`currentNode says ${task.nodeId} but player is ${dist} tiles away, clearing and moving`);
+        player.currentNode = null;
+        player.moveTo(task.nodeId);
+        return;
+    }
+}
         
         // Check if we have required items (for fishing bait, etc)
         if (!player.hasRequiredItems(task.activityId)) {
