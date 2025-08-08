@@ -282,10 +282,7 @@ body {
 }
 
 .skill-tooltip {
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    position: fixed;
     background-color: rgba(0, 0, 0, 0.95);
     color: #fff;
     padding: 8px 12px;
@@ -296,8 +293,7 @@ body {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s;
-    margin-bottom: 8px;
-    z-index: 10;
+    z-index: 9999;
     border: 1px solid #444;
     text-align: left;
 }
