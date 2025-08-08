@@ -963,35 +963,6 @@
                 }
             }
         ]
-    },
-    "fight_goblin": {
-        "id": "fight_goblin",
-        "name": "Fight Goblin",
-        "skill": "attack",
-        "requiredLevel": 1,
-        "xpPerAction": 40,
-        "baseDuration": 2400,
-        "additionalXp": [
-            {"skill": "strength", "amount": 40},
-            {"skill": "defence", "amount": 40},
-            {"skill": "hitpoints", "amount": 13}
-        ],
-        "rewards": [
-            {
-                "itemId": "coins",
-                "quantity": 5,
-                "chance": 0.8
-            },
-            {
-                "itemId": "coins",
-                "quantity": 15,
-                "chance": 0.2
-            },
-            {
-                "itemId": "goblin_mail",
-                "quantity": 1,
-                "chance": 0.05
-            }
-        ]
     }
+    
 }
