@@ -4,6 +4,127 @@ class BaseSkill {
         this.name = name;
     }
     
+    // ==================== NEW GOAL GENERATION ====================
+    
+    generateSpecificGoals(count, startPriority) {
+        const goals = [];
+        let priority = startPriority;
+        
+        // Get all nodes that have activities for this skill
+        const skillNodes = this.getNodesWithSkillActivities();
+        if (skillNodes.length === 0) return goals;
+        
+        for (let i = 0; i < count; i++) {
+            // Randomly decide: level goal (30%) or item goal (70%)
+            if (Math.random() < 0.3 && skills.getLevel(this.id) < 99) {
+                // Generate a level goal
+                const levelGoal = this.createLevelGoal(priority);
+                if (levelGoal) {
+                    goals.push(levelGoal);
+                    priority++;
+                }
+            } else {
+                // Generate a specific activity goal
+                const activityGoal = this.createActivityGoal(skillNodes, priority);
+                if (activityGoal) {
+                    goals.push(activityGoal);
+                    priority++;
+                }
+            }
+        }
+        
+        return goals;
+    }
+    
+    createLevelGoal(priority) {
+        const currentLevel = skills.getLevel(this.id);
+        if (currentLevel >= 99) return null;
+        
+        const targetLevel = this.calculateTargetLevel(currentLevel);
+        
+        return {
+            type: 'skill_level',
+            skill: this.id,
+            targetLevel: targetLevel,
+            priority: priority,
+            description: `Train ${this.name} to level ${targetLevel}`
+        };
+    }
+    
+    createActivityGoal(skillNodes, priority) {
+        // Pick a random node that has activities for THIS skill
+        const node = skillNodes[Math.floor(Math.random() * skillNodes.length)];
+        
+        // Get activities at this node that are SPECIFICALLY for our skill
+        const nodeActivities = this.getNodeActivitiesForSkill(node);
+        if (nodeActivities.length === 0) return null;
+        
+        // Pick one of the activities that's actually at this node
+        const activity = nodeActivities[Math.floor(Math.random() * nodeActivities.length)];
+        
+        // Verify this makes sense
+        console.log(`Creating goal: ${activity.name} (${activity.id}) at ${node.name} (${node.id}) for ${this.name}`);
+        
+        // Generate goal based on activity
+        return this.createGoalForActivity(node, activity, priority);
+    }
+    
+    createGoalForActivity(node, activity, priority) {
+        // Default implementation - subclasses should override
+        // This creates a generic training goal
+        return {
+            type: 'skill_activity',
+            skill: this.id,
+            nodeId: node.id,
+            activityId: activity.id,
+            priority: priority,
+            description: `${activity.name} at ${node.name}`
+        };
+    }
+    
+    getNodesWithSkillActivities() {
+        const allNodes = nodes.getAllNodes();
+        const skillNodes = [];
+        
+        for (const node of Object.values(allNodes)) {
+            if (!node.activities) continue;
+            
+            // Check if any of this node's activities are for our skill
+            const hasSkillActivity = node.activities.some(activityId => {
+                const activity = loadingManager.getData('activities')[activityId];
+                return activity && activity.skill === this.id;
+            });
+            
+            if (hasSkillActivity) {
+                skillNodes.push(node);
+            }
+        }
+        
+        return skillNodes;
+    }
+    
+    getNodeActivitiesForSkill(node) {
+        const activities = [];
+        const allActivities = loadingManager.getData('activities');
+        
+        for (const activityId of node.activities || []) {
+            const activity = allActivities[activityId];
+            if (activity && activity.skill === this.id && this.canPerformActivity(activityId)) {
+                activities.push({ id: activityId, ...activity });
+            }
+        }
+        
+        return activities;
+    }
+    
+    calculateTargetLevel(currentLevel) {
+        const mod = currentLevel % 10;
+        return Math.min(99,
+            mod <= 2 || mod >= 7 ? Math.ceil(currentLevel / 10) * 10 :
+            currentLevel + (Math.random() < 0.5 ? 5 : 10)
+        );
+    }
+    
     // ==================== CORE BEHAVIOR ====================
     
     getDuration(baseDuration, level, activityData) {
@@ -89,34 +210,6 @@ class BaseSkill {
         return currentLevel >= requiredLevel;
     }
     
-    // ==================== GOAL GENERATION ====================
-    
-    generateLevelGoals(currentLevel, priority) {
-        if (currentLevel >= 99) return [];
-        
-        const targetLevel = this.calculateTargetLevel(currentLevel);
-        if (targetLevel <= currentLevel) return [];
-        
-        return [{
-            type: 'skill_level',
-            skill: this.id,
-            targetLevel: targetLevel,
-            priority: priority
-        }];
-    }
-    
-    generateItemGoals(currentLevel, priority) {
-        return []; // Override in subclass
-    }
-    
-    calculateTargetLevel(currentLevel) {
-        const mod = currentLevel % 10;
-        return Math.min(99,
-            mod <= 2 || mod >= 7 ? Math.ceil(currentLevel / 10) * 10 :
-            currentLevel + (Math.random() < 0.5 ? 5 : 10)
-        );
-    }
-    
     shouldBankItem(itemId) {
         return true; // Default: bank everything
     }
@@ -126,8 +219,9 @@ class BaseSkill {
     executeGoal(goal, ai) {
         if (goal.type === 'skill_level') {
             this.trainSkill(ai);
-        } else if (goal.type === 'bank_items') {
-            this.gatherItem(goal.itemId, ai);
+        } else if (goal.type === 'skill_activity') {
+            // The AI handles this directly now
+            ai.executeActivityGoal(goal);
         }
     }
     
@@ -142,16 +236,6 @@ class BaseSkill {
         const bestActivity = this.chooseBestActivity(activities, skills.getLevel(this.id));
         if (bestActivity) {
             ai.doActivity(bestActivity);
-        }
-    }
-    
-    gatherItem(itemId, ai) {
-        // Default: find activity that produces this item
-        const activity = this.findActivityForItem(itemId);
-        if (activity) {
-            ai.doActivity(activity);
-        } else {
-            ai.skipCurrentGoal(`Cannot gather ${itemId}`);
         }
     }
     
