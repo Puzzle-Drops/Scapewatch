@@ -141,39 +141,49 @@ class TaskManager {
     }
 
     // Update all task progress (called periodically to sync)
-    updateAllProgress() {
-        let anyComplete = false;
+updateAllProgress() {
+    let anyComplete = false;
+    
+    // Only update the FIRST incomplete task
+    const firstIncomplete = this.getFirstIncompleteTask();
+    
+    for (const task of this.tasks) {
+        const wasComplete = task.progress >= 1;
         
-        for (const task of this.tasks) {
-            const wasComplete = task.progress >= 1;
-            
+        // Skip if this task is already complete
+        if (wasComplete) continue;
+        
+        // Only update progress for the FIRST incomplete task
+        if (task === firstIncomplete) {
             if (task.isCookingTask) {
                 // Cooking tasks manage their own progress through the cooking skill
                 // Just check if complete
-                if (!wasComplete && task.progress >= 1) {
+                if (task.progress >= 1) {
                     anyComplete = true;
                 }
             } else {
-                // Update gathering tasks based on current counts
+                // Update gathering task based on current counts
                 const currentCount = this.getCurrentItemCount(task.itemId);
                 const itemsGained = currentCount - task.startingCount;
                 task.progress = Math.min(itemsGained / task.targetCount, 1);
                 
-                if (!wasComplete && task.progress >= 1) {
+                if (task.progress >= 1) {
                     anyComplete = true;
                     this.completeTask(task);
                 }
             }
         }
-        
-        // Check if all tasks are complete
-        if (this.areAllTasksComplete()) {
-            console.log('All tasks complete! Generating new batch...');
-            this.generateNewTasks();
-        } else if (anyComplete && window.ui) {
-            window.ui.updateTasks();
-        }
+        // For other incomplete tasks, keep their progress as-is (don't update)
     }
+    
+    // Check if all tasks are complete
+    if (this.areAllTasksComplete()) {
+        console.log('All tasks complete! Generating new batch...');
+        this.generateNewTasks();
+    } else if (anyComplete && window.ui) {
+        window.ui.updateTasks();
+    }
+}
 
     // Mark a task as complete
     completeTask(task) {
