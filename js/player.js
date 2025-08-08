@@ -170,36 +170,42 @@ class Player {
         }
 
         // Check if the current AI task is complete
-        if (window.ai && window.ai.currentTask) {
-            // Check if the task is complete
-            if (window.ai.currentTask.progress >= 1) {
-                console.log('Task completed after action!');
-                this.stopActivity();
-                if (window.ai) {
-                    window.ai.decisionCooldown = 0;
-                    window.ai.currentTask = null;
-                }
-                return;
-            }
-            
-            // Also check if this task is no longer the first incomplete task
-            if (window.taskManager) {
-                const firstIncomplete = taskManager.getFirstIncompleteTask();
-                if (window.ai.currentTask !== firstIncomplete) {
-                    console.log('Current task no longer first incomplete, switching tasks');
-                    this.stopActivity();
-                    window.ai.currentTask = null;
-                    window.ai.decisionCooldown = 0;
-                    return;
-                }
-            }
+if (window.ai && window.ai.currentTask) {
+    // Check if the task is complete
+    if (window.ai.currentTask.progress >= 1) {
+        console.log('Task completed after action!');
+        this.stopActivity();
+        if (window.ai) {
+            window.ai.decisionCooldown = 0;
+            window.ai.currentTask = null;
         }
+        return;
+    }
+    
+    // Also check if this task is no longer the first incomplete task
+    if (window.taskManager) {
+        const firstIncomplete = taskManager.getFirstIncompleteTask();
+        if (window.ai.currentTask !== firstIncomplete) {
+            console.log('Current task no longer first incomplete, switching tasks');
+            this.stopActivity();
+            window.ai.currentTask = null;
+            window.ai.decisionCooldown = 0;
+            return;
+        }
+    }
+}
 
-        // Reset for next action
-        if (this.currentActivity) {
-            this.activityProgress = 0;
-            this.activityStartTime = Date.now();
-        }
+// Always let AI re-evaluate between actions to check for task changes
+if (window.ai) {
+    // Give AI a chance to check if it should continue this activity
+    window.ai.decisionCooldown = 0;
+}
+
+// Reset for next action
+if (this.currentActivity) {
+    this.activityProgress = 0;
+    this.activityStartTime = Date.now();
+}
     }
 
     moveTo(targetNodeId) {
