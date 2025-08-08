@@ -33,6 +33,63 @@ class FishingSkill extends BaseSkill {
         return Math.round(baseCount / 5) * 5;
     }
     
+    // ==================== BANKING LOGIC ====================
+    
+    // Check if we need banking for a fishing task
+    needsBankingForTask(task) {
+        if (!task || task.skill !== 'fishing') return false;
+        
+        // Check if the activity requires bait/feathers
+        const activityData = loadingManager.getData('activities')[task.activityId];
+        if (!activityData) return false;
+        
+        if (activityData.consumeOnSuccess) {
+            for (const required of activityData.consumeOnSuccess) {
+                if (!inventory.hasItem(required.itemId, 1)) {
+                    // We need bait/feathers and don't have any
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    // Handle banking for fishing (withdraw bait/feathers)
+    handleBanking(task) {
+        // Deposit all first
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
+        
+        // Check if we need to withdraw bait/feathers
+        if (task && task.activityId) {
+            const activityData = loadingManager.getData('activities')[task.activityId];
+            
+            if (activityData && activityData.consumeOnSuccess) {
+                for (const required of activityData.consumeOnSuccess) {
+                    const itemData = loadingManager.getData('items')[required.itemId];
+                    const bankCount = bank.getItemCount(required.itemId);
+                    
+                    if (bankCount > 0) {
+                        // Withdraw stackable items (all of them) or up to 14 non-stackable
+                        const withdrawAmount = itemData.stackable ? bankCount : Math.min(14, bankCount);
+                        const withdrawn = bank.withdrawUpTo(required.itemId, withdrawAmount);
+                        
+                        if (withdrawn > 0) {
+                            inventory.addItem(required.itemId, withdrawn);
+                            console.log(`Withdrew ${withdrawn} ${itemData.name} for fishing`);
+                        }
+                    } else {
+                        console.log(`No ${itemData.name} in bank for fishing`);
+                        return false; // Can't do this fishing task without required items
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+    
     // ==================== CORE BEHAVIOR ====================
     
     getDuration(baseDuration, level, activityData) {
