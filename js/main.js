@@ -54,7 +54,7 @@ async function init() {
 async function startGame() {
     // Hide loading screen and show game container
     document.getElementById('loading-screen').style.display = 'none';
-    document.getElementById('game-container').style.display = 'flex';
+    document.getElementById('game-container').style.display = 'block';
     
     // Scaling system is already initialized
     scalingSystem.setupInitialScaling();
@@ -73,11 +73,16 @@ async function startGame() {
     window.skills = new SkillsManager();
     window.inventory = new Inventory();
     window.bank = new Bank();
+    window.shop = new ShopSystem();
+    window.taskManager = new TaskManager();
     window.player = new Player();
     window.nodes = new NodeManager();
     window.map = new MapRenderer();
     window.ui = new UIManager();
     window.ai = new AIManager();
+
+    // Initialize task manager
+    taskManager.initialize();
 
     // Run test scenario if enabled
     if (window.testScenario) {
@@ -87,18 +92,10 @@ async function startGame() {
     // Canvas sizing is handled by scalingSystem
     map.render();
 
-    // Set up controls
-    document.getElementById('bank-toggle').addEventListener('click', () => {
-        ui.toggleBank();
-    });
-
+    // Set up pause control
     document.getElementById('pause-toggle').addEventListener('click', () => {
         gameState.paused = !gameState.paused;
         document.getElementById('pause-toggle').textContent = gameState.paused ? 'Resume AI' : 'Pause AI';
-    });
-
-    document.getElementById('close-bank').addEventListener('click', () => {
-        ui.toggleBank();
     });
 
     // Start game loop
@@ -110,7 +107,7 @@ async function startGame() {
 function gameLoop(currentTime) {
     if (!gameState.running) return;
 
-    // Calculate delta time since last frame (no cap needed since we're frame-independent)
+    // Calculate delta time since last frame
     const deltaTime = currentTime - gameState.lastTime;
     gameState.lastTime = currentTime;
     gameState.deltaTime = deltaTime;
@@ -129,8 +126,10 @@ function gameLoop(currentTime) {
         player.update(deltaTime);
     }
 
-    // Update UI
-    ui.update();
+    // Update task progress
+    if (window.taskManager) {
+        taskManager.updateAllProgress();
+    }
 
     // Render the map
     map.render();
