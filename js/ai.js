@@ -122,28 +122,36 @@ class AIManager {
     }
 
     needsBanking() {
-        // Check if inventory is full
-        if (inventory.isFull()) {
-            // For production skills, check if we have materials
-            if (this.currentTask) {
-                const skill = skillRegistry.getSkill(this.currentTask.skill);
-                if (skill && !skill.hasMaterials()) {
-                    return true; // Need to get materials from bank
-                }
-            }
-            return true; // Inventory full, need to bank
-        }
-        
-        // Check if current task needs banking
+    // Check if inventory is full
+    if (inventory.isFull()) {
+        // For production skills, check if we have materials to continue working
         if (this.currentTask) {
             const skill = skillRegistry.getSkill(this.currentTask.skill);
-            if (skill && skill.needsBankingForTask(this.currentTask)) {
-                return true;
+            if (skill && skill.hasMaterials) {
+                // This is a production skill - check if we can continue
+                if (skill.hasMaterials()) {
+                    // We have materials, don't bank yet
+                    return false;
+                } else {
+                    // No materials left, need to bank
+                    return true;
+                }
             }
         }
-        
-        return false;
+        // For gathering skills or unknown tasks, bank when full
+        return true;
     }
+    
+    // Check if current task needs banking (e.g., needs specific items)
+    if (this.currentTask) {
+        const skill = skillRegistry.getSkill(this.currentTask.skill);
+        if (skill && skill.needsBankingForTask(this.currentTask)) {
+            return true;
+        }
+    }
+    
+    return false;
+}
 
     hasRawFood() {
         // Delegate to cooking skill
