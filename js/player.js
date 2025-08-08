@@ -157,17 +157,30 @@ class Player {
             window.ui.updateSkillsList();
         }
 
-        // Update task progress
-        if (window.taskManager) {
-            taskManager.updateAllProgress();
+        // IMPORTANT: Update progress ONLY for the current task's item
+        if (window.taskManager && earnedRewards.length > 0) {
+            // Get the first incomplete task to check if we're contributing to it
+            const currentTask = taskManager.getFirstIncompleteTask();
+            
+            // Only update progress if we produced the item for the current task
+            if (currentTask) {
+                for (const reward of earnedRewards) {
+                    if (reward.itemId === currentTask.itemId) {
+                        // Update progress only for this specific item
+                        taskManager.updateProgressForItem(reward.itemId);
+                        break; // Only update once
+                    }
+                }
+            }
+            
             if (window.ui) {
                 window.ui.updateTasks();
             }
         }
 
-        // Check if task is complete
-        if (window.ai && window.ai.currentTask && window.taskManager) {
-            taskManager.updateTaskProgress(window.ai.currentTask);
+        // Check if the current AI task is complete
+        if (window.ai && window.ai.currentTask) {
+            // Check if the task is complete
             if (window.ai.currentTask.progress >= 1) {
                 console.log('Task completed after action!');
                 this.stopActivity();
@@ -176,6 +189,18 @@ class Player {
                     window.ai.currentTask = null;
                 }
                 return;
+            }
+            
+            // Also check if this task is no longer the first incomplete task
+            if (window.taskManager) {
+                const firstIncomplete = taskManager.getFirstIncompleteTask();
+                if (window.ai.currentTask !== firstIncomplete) {
+                    console.log('Current task no longer first incomplete, switching tasks');
+                    this.stopActivity();
+                    window.ai.currentTask = null;
+                    window.ai.decisionCooldown = 0;
+                    return;
+                }
             }
         }
 
