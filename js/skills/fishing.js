@@ -4,6 +4,122 @@ class FishingSkill extends BaseSkill {
         this.lastCatchXp = 0;
     }
     
+    // ==================== GOAL GENERATION OVERRIDE ====================
+    
+    createGoalForActivity(node, activity, priority) {
+        // For fishing, pick a specific fish to catch from this activity
+        const targetFish = this.pickTargetFish(activity);
+        if (!targetFish) {
+            return super.createGoalForActivity(node, activity, priority);
+        }
+        
+        const targetCount = this.determineTargetCount(targetFish.itemId);
+        const itemData = loadingManager.getData('items')[targetFish.itemId];
+        
+        return {
+            type: 'skill_activity',
+            skill: this.id,
+            nodeId: node.id,
+            activityId: activity.id,
+            targetItem: targetFish.itemId,
+            targetCount: targetCount,
+            priority: priority,
+            description: `Catch ${targetCount} ${itemData.name} at ${node.name}`
+        };
+    }
+    
+    pickTargetFish(activity) {
+        if (!activity.rewards) return null;
+        
+        // Get available fish based on level
+        const level = skills.getLevel(this.id);
+        const availableFish = activity.rewards.filter(r => 
+            !r.requiredLevel || level >= r.requiredLevel
+        );
+        
+        if (availableFish.length === 0) return null;
+        
+        // Pick the highest level fish we can catch (most of the time)
+        // or a random one (sometimes) for variety
+        if (Math.random() < 0.7) {
+            // Pick highest level fish
+            return availableFish.reduce((best, curr) => 
+                (curr.requiredLevel || 1) > (best.requiredLevel || 1) ? curr : best
+            );
+        } else {
+            // Pick random fish
+            return availableFish[Math.floor(Math.random() * availableFish.length)];
+        }
+    }
+    
+    determineTargetCount(itemId) {
+        const fishCounts = {
+            'raw_shrimps': { min: 50, max: 150 },
+            'raw_anchovies': { min: 50, max: 125 },
+            'raw_sardine': { min: 50, max: 125 },
+            'raw_herring': { min: 40, max: 100 },
+            'raw_mackerel': { min: 40, max: 90 },
+            'raw_trout': { min: 35, max: 80 },
+            'raw_cod': { min: 35, max: 75 },
+            'raw_pike': { min: 30, max: 70 },
+            'raw_salmon': { min: 30, max: 60 },
+            'raw_tuna': { min: 25, max: 50 },
+            'raw_lobster': { min: 20, max: 40 },
+            'raw_bass': { min: 20, max: 35 },
+            'raw_swordfish': { min: 15, max: 30 },
+            'raw_shark': { min: 10, max: 20 }
+        };
+        
+        const counts = fishCounts[itemId] || { min: 20, max: 50 };
+        const baseCount = counts.min + Math.random() * (counts.max - counts.min);
+        return Math.round(baseCount / 5) * 5;
+    }
+    
+    // ==================== BANKING DECISIONS ====================
+    
+    needsBanking(goal) {
+        // Check if goal requires supplies we don't have
+        if (goal.type === 'skill_activity' && goal.activityId) {
+            const activityData = loadingManager.getData('activities')[goal.activityId];
+            if (activityData && activityData.consumeOnSuccess) {
+                // Check if we have the required items
+                for (const required of activityData.consumeOnSuccess) {
+                    if (!inventory.hasItem(required.itemId, 1)) {
+                        console.log(`Need ${required.itemId} for ${goal.activityId}, banking needed`);
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Standard banking when inventory is full
+        if (inventory.isFull()) {
+            console.log('Inventory full of fish, banking needed');
+            return true;
+        }
+        
+        return false;
+    }
+    
+    canContinueWithInventory(goal) {
+        // Can continue if we have space and supplies
+        if (inventory.isFull()) return false;
+        
+        // Check for required supplies
+        if (goal.type === 'skill_activity' && goal.activityId) {
+            const activityData = loadingManager.getData('activities')[goal.activityId];
+            if (activityData && activityData.consumeOnSuccess) {
+                for (const required of activityData.consumeOnSuccess) {
+                    if (!inventory.hasItem(required.itemId, 1)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        
+        return true;
+    }
+    
     // ==================== CORE BEHAVIOR ====================
     
     getDuration(baseDuration, level, activityData) {
@@ -80,45 +196,6 @@ class FishingSkill extends BaseSkill {
             }, 0);
     }
     
-    // ==================== GOAL GENERATION ====================
-    
-    generateItemGoals(currentLevel, priority) {
-        const goals = [];
-        const fish = [
-            { itemId: 'raw_shrimps', requiredLevel: 1, minCount: 100, maxCount: 300 },
-            { itemId: 'raw_anchovies', requiredLevel: 15, minCount: 100, maxCount: 250 },
-            { itemId: 'raw_sardine', requiredLevel: 5, minCount: 100, maxCount: 250 },
-            { itemId: 'raw_herring', requiredLevel: 10, minCount: 100, maxCount: 200 },
-            { itemId: 'raw_mackerel', requiredLevel: 16, minCount: 80, maxCount: 180 },
-            { itemId: 'raw_trout', requiredLevel: 20, minCount: 80, maxCount: 150 },
-            { itemId: 'raw_cod', requiredLevel: 23, minCount: 70, maxCount: 140 },
-            { itemId: 'raw_pike', requiredLevel: 25, minCount: 60, maxCount: 120 },
-            { itemId: 'raw_salmon', requiredLevel: 30, minCount: 60, maxCount: 100 },
-            { itemId: 'raw_tuna', requiredLevel: 35, minCount: 50, maxCount: 100 },
-            { itemId: 'raw_lobster', requiredLevel: 40, minCount: 40, maxCount: 80 },
-            { itemId: 'raw_bass', requiredLevel: 46, minCount: 40, maxCount: 70 },
-            { itemId: 'raw_swordfish', requiredLevel: 50, minCount: 30, maxCount: 60 },
-            { itemId: 'raw_shark', requiredLevel: 76, minCount: 20, maxCount: 40 }
-        ];
-        
-        for (const f of fish) {
-            if (currentLevel >= f.requiredLevel) {
-                const currentCount = bank.getItemCount(f.itemId);
-                const targetCount = currentCount + 
-                    Math.round((f.minCount + Math.random() * (f.maxCount - f.minCount)) / 10) * 10;
-                
-                goals.push({
-                    type: 'bank_items',
-                    itemId: f.itemId,
-                    targetCount: targetCount,
-                    priority: priority + goals.length
-                });
-            }
-        }
-        
-        return goals;
-    }
-    
     canPerformActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
         if (!activityData || activityData.skill !== this.id) return false;
@@ -128,10 +205,10 @@ class FishingSkill extends BaseSkill {
         
         if (currentLevel < requiredLevel) return false;
         
-        // Check for required items (bait/feathers)
+        // Check for required items (bait/feathers) in bank or inventory
         if (activityData.consumeOnSuccess) {
             for (const required of activityData.consumeOnSuccess) {
-                const hasInInventory = inventory.hasItem(required.itemId, required.quantity);
+                const hasInInventory = inventory.hasItem(required.itemId, 1);
                 const hasInBank = bank.getItemCount(required.itemId) > 0;
                 if (!hasInInventory && !hasInBank) {
                     return false;
@@ -147,18 +224,13 @@ class FishingSkill extends BaseSkill {
     executeGoal(goal, ai) {
         if (goal.type === 'skill_level') {
             this.trainFishing(ai);
-        } else if (goal.type === 'bank_items') {
-            this.gatherFish(goal.itemId, ai);
+        } else if (goal.type === 'skill_activity') {
+            // The AI handles this directly now
+            ai.executeActivityGoal(goal);
         }
     }
     
     trainFishing(ai) {
-        // Check if we need bait/feathers
-        if (this.needsFishingSupplies(ai)) {
-            this.getFishingSupplies(ai);
-            return;
-        }
-        
         const activities = this.getAvailableActivities();
         if (activities.length === 0) {
             console.log('No fishing activities available');
@@ -168,142 +240,43 @@ class FishingSkill extends BaseSkill {
         
         const bestActivity = this.chooseBestActivity(activities, skills.getLevel(this.id));
         if (bestActivity) {
-            ai.plannedActivity = bestActivity; // Store planned activity for banking
             ai.doActivity(bestActivity);
-        }
-    }
-    
-    gatherFish(itemId, ai) {
-        const activity = this.findActivityForItem(itemId);
-        if (!activity) {
-            console.log(`No fishing activity for ${itemId}`);
-            ai.skipCurrentGoal(`Cannot fish ${itemId}`);
-            return;
-        }
-        
-        // Store planned activity for banking
-        ai.plannedActivity = activity;
-        
-        // Check if this activity needs supplies
-        const activityData = loadingManager.getData('activities')[activity];
-        if (activityData.consumeOnSuccess) {
-            const hasSupplies = activityData.consumeOnSuccess.every(req => 
-                inventory.hasItem(req.itemId, req.quantity)
-            );
-            
-            if (!hasSupplies) {
-                this.getFishingSupplies(ai);
-                return;
-            }
-        }
-        
-        ai.doActivity(activity);
-    }
-    
-    needsFishingSupplies(ai) {
-        // Check if any of our available activities need supplies
-        const activities = this.getAvailableActivities();
-        
-        for (const [id, data] of activities) {
-            if (data.consumeOnSuccess) {
-                for (const required of data.consumeOnSuccess) {
-                    if (!inventory.hasItem(required.itemId, 1)) {
-                        return true;
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-    
-    getFishingSupplies(ai) {
-        // Go to bank to get bait/feathers
-        const currentNode = nodes.getNode(player.currentNode);
-        if (currentNode && currentNode.type === 'bank') {
-            this.handleBanking(ai, ai.currentGoal);
-        } else {
-            ai.goToBank();
         }
     }
     
     // ==================== BANKING ====================
     
     handleBanking(ai, goal) {
-        bank.depositAll();
+        // Deposit all fish first
+        const deposited = bank.depositAll();
+        console.log(`Deposited ${deposited} items`);
         
-        // Determine what supplies we need based on planned activity or best available
-        const suppliesNeeded = this.determineNeededSupplies(ai);
-        
-        if (suppliesNeeded.length === 0) {
-            console.log('No fishing supplies needed');
-            ai.clearCooldown();
-            ai.executeGoal(goal);
-            return;
-        }
-        
-        let withdrew = false;
-        
-        for (const supply of suppliesNeeded) {
-            const bankCount = bank.getItemCount(supply.itemId);
-            if (bankCount > 0) {
-                const toWithdraw = Math.min(supply.maxAmount, bankCount);
-                bank.withdrawUpTo(supply.itemId, toWithdraw);
-                inventory.addItem(supply.itemId, toWithdraw);
-                withdrew = true;
-                console.log(`Withdrew ${toWithdraw} ${supply.itemId} for fishing`);
-            }
-        }
-        
-        if (!withdrew) {
-            console.log('No fishing supplies in bank');
-            ai.skipCurrentGoal('No fishing supplies available');
-            return;
-        }
-        
-        ai.clearCooldown();
-        ai.executeGoal(goal);
-    }
-    
-    determineNeededSupplies(ai) {
-        const supplies = [];
-        const activities = loadingManager.getData('activities');
-        
-        // If we have a planned activity, get supplies for that
-        if (ai.plannedActivity) {
-            const activityData = activities[ai.plannedActivity];
+        // If we have a specific activity goal, get supplies for it
+        if (goal.type === 'skill_activity' && goal.activityId) {
+            const activityData = loadingManager.getData('activities')[goal.activityId];
+            
             if (activityData && activityData.consumeOnSuccess) {
                 for (const required of activityData.consumeOnSuccess) {
-                    supplies.push({
-                        itemId: required.itemId,
-                        maxAmount: 500 // Reasonable amount to withdraw
-                    });
-                }
-            }
-            return supplies;
-        }
-        
-        // Otherwise, get supplies for best available activities
-        const availableActivities = this.getAvailableActivities();
-        const neededItems = new Set();
-        
-        // Check what supplies our available activities need
-        for (const [id, data] of availableActivities) {
-            if (data.consumeOnSuccess) {
-                for (const required of data.consumeOnSuccess) {
-                    neededItems.add(required.itemId);
+                    const bankCount = bank.getItemCount(required.itemId);
+                    if (bankCount > 0) {
+                        const toWithdraw = Math.min(500, bankCount);
+                        bank.withdrawUpTo(required.itemId, toWithdraw);
+                        inventory.addItem(required.itemId, toWithdraw);
+                        console.log(`Withdrew ${toWithdraw} ${required.itemId} for fishing`);
+                    }
                 }
             }
         }
         
-        // Convert to array with reasonable amounts
-        for (const itemId of neededItems) {
-            supplies.push({
-                itemId: itemId,
-                maxAmount: 500
-            });
+        // Update UI
+        if (window.ui) {
+            window.ui.updateSkillsList();
         }
         
-        return supplies;
+        // Continue with goal
+        ai.clearCooldown();
+        if (goal) {
+            ai.executeGoal(goal);
+        }
     }
 }
