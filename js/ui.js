@@ -434,47 +434,51 @@ class UIManager {
             headerDiv.appendChild(rerollBtn);
         }
         
-        // Progress section
-        const progressDiv = document.createElement('div');
-        progressDiv.className = 'task-progress';
-        
-        const progressBar = document.createElement('div');
-        progressBar.className = 'task-progress-bar';
-        
-        const progressFill = document.createElement('div');
-        progressFill.className = 'task-progress-fill';
-        progressFill.style.width = `${task.progress * 100}%`;
-        
-        // Active task gets special color
+        // Only show progress section for the active task (index 0)
         if (index === 0) {
-            progressFill.style.backgroundColor = '#3498db';
-        }
-        
-        progressBar.appendChild(progressFill);
-        
-        const countDiv = document.createElement('div');
-        countDiv.className = 'task-count';
-        
-        // For cooking tasks, show raw food consumed vs target
-        if (task.isCookingTask) {
-            const consumed = task.rawFoodConsumed || 0;
-            countDiv.textContent = `${consumed}/${task.targetCount}`;
+            // Progress section with skill-specific color
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'task-progress';
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'task-progress-bar';
+            
+            const progressFill = document.createElement('div');
+            progressFill.className = 'task-progress-fill';
+            progressFill.style.width = `${task.progress * 100}%`;
+            
+            // Use skill-specific color for the progress bar
+            const skillColor = this.getSkillColor(task.skill);
+            progressFill.style.backgroundColor = skillColor;
+            
+            progressBar.appendChild(progressFill);
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'task-count';
+            
+            // For cooking tasks, show raw food consumed vs target
+            if (task.isCookingTask) {
+                const consumed = task.rawFoodConsumed || 0;
+                countDiv.textContent = `${consumed}/${task.targetCount}`;
+            } else {
+                // For gathering tasks, show items collected
+                const current = Math.floor(task.progress * task.targetCount);
+                countDiv.textContent = `${current}/${task.targetCount}`;
+            }
+            
+            progressDiv.appendChild(progressBar);
+            progressDiv.appendChild(countDiv);
+            
+            taskDiv.appendChild(headerDiv);
+            taskDiv.appendChild(progressDiv);
         } else {
-            // For gathering tasks, show items collected
-            const current = Math.floor(task.progress * task.targetCount);
-            countDiv.textContent = `${current}/${task.targetCount}`;
+            // For non-active tasks, just show the header
+            taskDiv.appendChild(headerDiv);
         }
-        
-        progressDiv.appendChild(progressBar);
-        progressDiv.appendChild(countDiv);
-        
-        taskDiv.appendChild(headerDiv);
-        taskDiv.appendChild(progressDiv);
         
         // Mark complete tasks
         if (task.progress >= 1) {
             taskDiv.style.opacity = '0.6';
-            progressFill.style.backgroundColor = '#f39c12';
         }
         
         return taskDiv;
@@ -491,6 +495,33 @@ class UIManager {
             return icon;
         }
         return null;
+    }
+
+    // Get skill color (matching map.js activity colors)
+    getSkillColor(skillId) {
+        const skillColors = {
+            fishing: '#3498db',      // Blue
+            mining: '#95a5a6',       // Grey/ore color
+            woodcutting: '#27ae60',  // Green
+            cooking: '#e67e22',      // Orange
+            smithing: '#34495e',     // Dark grey
+            crafting: '#9b59b6',     // Purple
+            combat: '#e74c3c',       // Red
+            agility: '#1abc9c',      // Teal
+            thieving: '#2c3e50',     // Dark blue-grey
+            farming: '#16a085',      // Dark green
+            herblore: '#8e44ad',     // Dark purple
+            construction: '#d35400', // Brown
+            firemaking: '#ff6b35',   // Fire orange
+            fletching: '#f1c40f',    // Yellow
+            prayer: '#ecf0f1',       // White
+            magic: '#9b59b6',        // Purple
+            runecraft: '#34495e',    // Dark grey
+            hunter: '#a0522d',       // Brown
+            slayer: '#c0392b'        // Dark red
+        };
+        
+        return skillColors[skillId] || '#f39c12'; // Default orange if skill not found
     }
 
     // ==================== DRAG AND DROP ====================
