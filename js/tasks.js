@@ -216,6 +216,11 @@ class TaskManager {
             
             if (activeTask.progress >= 1) {
                 this.completeCurrentTask();
+            } else {
+                // Just update UI if not complete
+                if (window.ui) {
+                    window.ui.updateTasks();
+                }
             }
         }
     }
