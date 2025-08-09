@@ -404,9 +404,15 @@ class UIManager {
             taskDiv.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         }
         
-        // Header with description and reroll button (only for modifiable tasks)
+        // Header with skill icon, description and reroll button
         const headerDiv = document.createElement('div');
         headerDiv.className = 'task-header';
+        
+        // Add skill icon
+        const skillIcon = this.createTaskSkillIcon(task.skill);
+        if (skillIcon) {
+            headerDiv.appendChild(skillIcon);
+        }
         
         const descDiv = document.createElement('div');
         descDiv.className = 'task-description';
@@ -472,6 +478,19 @@ class UIManager {
         }
         
         return taskDiv;
+    }
+
+    // Create skill icon for task
+    createTaskSkillIcon(skillId) {
+        const skillIcon = loadingManager.getImage(`skill_${skillId}`);
+        if (skillIcon) {
+            const icon = document.createElement('img');
+            icon.className = 'task-skill-icon';
+            icon.src = skillIcon.src;
+            icon.title = skillId.charAt(0).toUpperCase() + skillId.slice(1);
+            return icon;
+        }
+        return null;
     }
 
     // ==================== DRAG AND DROP ====================
