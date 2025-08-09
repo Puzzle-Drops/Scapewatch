@@ -407,6 +407,13 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+    gap: 8px;
+}
+
+.task-skill-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 .task-description {
