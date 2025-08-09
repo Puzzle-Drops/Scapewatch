@@ -2,8 +2,10 @@ class UIManager {
     constructor() {
         this.currentPanel = 'inventory';
         this.bankOpen = false;
+        this.completedTasksOpen = false;
         this.itemOrder = null;
         this.itemOrderMap = {};
+        this.draggedTaskIndex = null;
         this.initializeUI();
     }
 
@@ -70,13 +72,19 @@ class UIManager {
             });
         }
         
-        // Generate tasks button
-        const generateTasksBtn = document.getElementById('generate-tasks-btn');
-        if (generateTasksBtn) {
-            generateTasksBtn.addEventListener('click', () => {
-                if (window.taskManager) {
-                    taskManager.generateNewTasks();
-                }
+        // Completed tasks close button
+        const closeCompletedBtn = document.getElementById('close-completed-tasks');
+        if (closeCompletedBtn) {
+            closeCompletedBtn.addEventListener('click', () => {
+                this.closeCompletedTasks();
+            });
+        }
+        
+        // View completed tasks button
+        const viewCompletedBtn = document.getElementById('view-completed-tasks-btn');
+        if (viewCompletedBtn) {
+            viewCompletedBtn.addEventListener('click', () => {
+                this.openCompletedTasks();
             });
         }
     }
@@ -181,39 +189,36 @@ class UIManager {
     }
 
     createSkillElement(skillId, skill) {
-    const skillDiv = document.createElement('div');
-    skillDiv.className = 'skill-item';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'skill-content';
-    
-    // Add skill icon
-    const iconElement = this.createSkillIcon(skillId, skill);
-    if (iconElement) {
-        contentDiv.appendChild(iconElement);
+        const skillDiv = document.createElement('div');
+        skillDiv.className = 'skill-item';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'skill-content';
+        
+        // Add skill icon
+        const iconElement = this.createSkillIcon(skillId, skill);
+        if (iconElement) {
+            contentDiv.appendChild(iconElement);
+        }
+        
+        // Create level display
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'skill-level';
+        levelDiv.textContent = skill.level;
+        contentDiv.appendChild(levelDiv);
+        
+        // Create progress bar
+        const progressBar = this.createSkillProgressBar(skill);
+        
+        // Create tooltip
+        const tooltip = this.createSkillTooltip(skill);
+        
+        skillDiv.appendChild(contentDiv);
+        skillDiv.appendChild(progressBar);
+        skillDiv.appendChild(tooltip);
+        
+        return skillDiv;
     }
-    
-    // Create level display
-    const levelDiv = document.createElement('div');
-    levelDiv.className = 'skill-level';
-    levelDiv.textContent = skill.level;
-    contentDiv.appendChild(levelDiv);
-    
-    // Create progress bar
-    const progressBar = this.createSkillProgressBar(skill);
-    
-    // Create tooltip
-    const tooltip = this.createSkillTooltip(skill);
-    
-    // Tooltip positioning is handled by CSS, no need for dynamic positioning
-    // The tooltip is positioned absolutely relative to the skill item
-    
-    skillDiv.appendChild(contentDiv);
-    skillDiv.appendChild(progressBar);
-    skillDiv.appendChild(tooltip);
-    
-    return skillDiv;
-}
 
     createSkillIcon(skillId, skill) {
         const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
@@ -295,37 +300,34 @@ class UIManager {
     }
 
     createLevelItem(iconKey, value, color, tooltipText) {
-    const levelItem = document.createElement('div');
-    levelItem.className = 'level-item';
-    levelItem.style.position = 'relative';
-    
-    const icon = loadingManager.getImage(iconKey);
-    if (icon) {
-        const iconImg = document.createElement('img');
-        iconImg.className = 'level-icon';
-        iconImg.src = icon.src;
-        levelItem.appendChild(iconImg);
+        const levelItem = document.createElement('div');
+        levelItem.className = 'level-item';
+        levelItem.style.position = 'relative';
+        
+        const icon = loadingManager.getImage(iconKey);
+        if (icon) {
+            const iconImg = document.createElement('img');
+            iconImg.className = 'level-icon';
+            iconImg.src = icon.src;
+            levelItem.appendChild(iconImg);
+        }
+        
+        const text = document.createElement('div');
+        text.style.fontSize = '34px';
+        text.style.fontWeight = 'bold';
+        text.style.color = color;
+        text.textContent = value;
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'skill-tooltip';
+        tooltip.style.textAlign = 'left';
+        tooltip.innerHTML = tooltipText;
+        
+        levelItem.appendChild(text);
+        levelItem.appendChild(tooltip);
+        
+        return levelItem;
     }
-    
-    const text = document.createElement('div');
-    text.style.fontSize = '34px';
-    text.style.fontWeight = 'bold';
-    text.style.color = color;
-    text.textContent = value;
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'skill-tooltip';
-    tooltip.style.textAlign = 'left';
-    tooltip.innerHTML = tooltipText;
-    
-    // Tooltip positioning is handled by CSS, no need for dynamic positioning
-    // The tooltip is positioned absolutely relative to the level item
-    
-    levelItem.appendChild(text);
-    levelItem.appendChild(tooltip);
-    
-    return levelItem;
-}
 
     calculateTotalExp(allSkills) {
         let totalExp = 0;
@@ -351,12 +353,31 @@ class UIManager {
             const emptyDiv = document.createElement('div');
             emptyDiv.style.textAlign = 'center';
             emptyDiv.style.color = '#999';
-            emptyDiv.textContent = 'No tasks available. Click button below to generate.';
+            emptyDiv.textContent = 'Initializing tasks...';
             tasksList.appendChild(emptyDiv);
             return;
         }
         
+        // Add section headers and tasks
         tasks.forEach((task, index) => {
+            // Add section headers
+            if (index === 0) {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'task-section-header';
+                headerDiv.textContent = 'Current Task';
+                tasksList.appendChild(headerDiv);
+            } else if (index === 1) {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'task-section-header';
+                headerDiv.textContent = 'Next Task';
+                tasksList.appendChild(headerDiv);
+            } else if (index === 2) {
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'task-section-header';
+                headerDiv.textContent = 'Ready Tasks';
+                tasksList.appendChild(headerDiv);
+            }
+            
             const taskDiv = this.createTaskElement(task, index);
             tasksList.appendChild(taskDiv);
         });
@@ -366,7 +387,24 @@ class UIManager {
         const taskDiv = document.createElement('div');
         taskDiv.className = 'task-item';
         
-        // Header with description and reroll button
+        // Mark locked tasks
+        if (index < 2) {
+            taskDiv.classList.add('task-locked');
+        } else {
+            // Make draggable for tasks 3-7 (indices 2-6)
+            taskDiv.draggable = true;
+            taskDiv.dataset.taskIndex = index;
+            
+            // Add drag event listeners
+            taskDiv.addEventListener('dragstart', (e) => this.handleDragStart(e, index));
+            taskDiv.addEventListener('dragover', (e) => this.handleDragOver(e));
+            taskDiv.addEventListener('drop', (e) => this.handleDrop(e, index));
+            taskDiv.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            taskDiv.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+            taskDiv.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        }
+        
+        // Header with description and reroll button (only for modifiable tasks)
         const headerDiv = document.createElement('div');
         headerDiv.className = 'task-header';
         
@@ -374,18 +412,21 @@ class UIManager {
         descDiv.className = 'task-description';
         descDiv.textContent = task.description;
         
-        const rerollBtn = document.createElement('button');
-        rerollBtn.className = 'task-reroll';
-        rerollBtn.textContent = '↻';
-        rerollBtn.title = 'Reroll task';
-        rerollBtn.addEventListener('click', () => {
-            if (window.taskManager) {
-                taskManager.rerollTask(index);
-            }
-        });
-        
         headerDiv.appendChild(descDiv);
-        headerDiv.appendChild(rerollBtn);
+        
+        // Only add reroll button for tasks 3-7
+        if (index >= 2) {
+            const rerollBtn = document.createElement('button');
+            rerollBtn.className = 'task-reroll';
+            rerollBtn.textContent = '↻';
+            rerollBtn.title = 'Reroll task';
+            rerollBtn.addEventListener('click', () => {
+                if (window.taskManager) {
+                    taskManager.rerollTask(index);
+                }
+            });
+            headerDiv.appendChild(rerollBtn);
+        }
         
         // Progress section
         const progressDiv = document.createElement('div');
@@ -397,6 +438,11 @@ class UIManager {
         const progressFill = document.createElement('div');
         progressFill.className = 'task-progress-fill';
         progressFill.style.width = `${task.progress * 100}%`;
+        
+        // Active task gets special color
+        if (index === 0) {
+            progressFill.style.backgroundColor = '#3498db';
+        }
         
         progressBar.appendChild(progressFill);
         
@@ -426,6 +472,149 @@ class UIManager {
         }
         
         return taskDiv;
+    }
+
+    // ==================== DRAG AND DROP ====================
+
+    handleDragStart(e, index) {
+        if (index < 2) return; // Can't drag locked tasks
+        
+        this.draggedTaskIndex = index;
+        e.dataTransfer.effectAllowed = 'move';
+        e.target.classList.add('dragging');
+    }
+
+    handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    handleDragEnter(e) {
+        const taskDiv = e.target.closest('.task-item');
+        if (taskDiv && !taskDiv.classList.contains('task-locked')) {
+            taskDiv.classList.add('drag-over');
+        }
+    }
+
+    handleDragLeave(e) {
+        const taskDiv = e.target.closest('.task-item');
+        if (taskDiv) {
+            taskDiv.classList.remove('drag-over');
+        }
+    }
+
+    handleDrop(e, dropIndex) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        const taskDiv = e.target.closest('.task-item');
+        if (taskDiv) {
+            taskDiv.classList.remove('drag-over');
+        }
+        
+        // Can't drop on locked tasks
+        if (dropIndex < 2) return false;
+        
+        if (this.draggedTaskIndex !== null && this.draggedTaskIndex !== dropIndex) {
+            // Reorder the tasks
+            if (window.taskManager) {
+                taskManager.reorderTasks(this.draggedTaskIndex, dropIndex);
+            }
+        }
+        
+        return false;
+    }
+
+    handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        
+        // Clean up any remaining drag-over classes
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+        
+        this.draggedTaskIndex = null;
+    }
+
+    // ==================== COMPLETED TASKS MODAL ====================
+
+    openCompletedTasks() {
+        this.completedTasksOpen = true;
+        const modal = document.getElementById('completed-tasks-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            this.updateCompletedTasks();
+        }
+    }
+
+    closeCompletedTasks() {
+        this.completedTasksOpen = false;
+        const modal = document.getElementById('completed-tasks-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    updateCompletedTasks() {
+        if (!this.completedTasksOpen) return;
+        
+        const tasksList = document.getElementById('completed-tasks-list');
+        if (!tasksList || !window.taskManager) return;
+        
+        tasksList.innerHTML = '';
+        
+        const completedTasks = taskManager.getCompletedTasks();
+        
+        if (completedTasks.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.style.textAlign = 'center';
+            emptyDiv.style.color = '#999';
+            emptyDiv.textContent = 'No tasks completed yet.';
+            tasksList.appendChild(emptyDiv);
+            return;
+        }
+        
+        // Create numbered list of completed tasks
+        completedTasks.forEach((task, index) => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = 'completed-task-item';
+            
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'completed-task-number';
+            numberSpan.textContent = `${index + 1}.`;
+            
+            const descSpan = document.createElement('span');
+            descSpan.className = 'completed-task-description';
+            descSpan.textContent = task.description;
+            
+            taskDiv.appendChild(numberSpan);
+            taskDiv.appendChild(descSpan);
+            
+            tasksList.appendChild(taskDiv);
+        });
+        
+        // Show stats at the bottom
+        const stats = taskManager.getCompletedTaskStats();
+        if (stats.total > 0) {
+            const statsDiv = document.createElement('div');
+            statsDiv.className = 'completed-tasks-stats';
+            
+            let statsText = `Total: ${stats.total} tasks`;
+            if (Object.keys(stats.bySkill).length > 0) {
+                statsText += ' | By skill: ';
+                const skillStats = Object.entries(stats.bySkill)
+                    .map(([skill, count]) => `${skill}: ${count}`)
+                    .join(', ');
+                statsText += skillStats;
+            }
+            
+            statsDiv.textContent = statsText;
+            tasksList.appendChild(statsDiv);
+        }
     }
 
     // ==================== BANK DISPLAY ====================
