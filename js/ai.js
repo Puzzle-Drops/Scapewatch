@@ -14,12 +14,11 @@ class AIManager {
             return;
         }
 
-        // Always get the first incomplete task
-        this.currentTask = taskManager.getFirstIncompleteTask();
+        // Always work on the first task (active task)
+        this.currentTask = taskManager.getActiveTask();
         
         if (!this.currentTask) {
-            console.log('No incomplete tasks available');
-            // All tasks complete, new batch should be generated automatically
+            console.log('No active task available');
             return;
         }
 
@@ -28,13 +27,13 @@ class AIManager {
         console.log('Selected task:', this.currentTask.description);
     }
 
-    // Check if current task is still valid (first incomplete task)
+    // Check if current task is still the active task
     isCurrentTaskValid() {
         if (!this.currentTask) return false;
         if (!window.taskManager) return false;
         
-        const firstIncomplete = taskManager.getFirstIncompleteTask();
-        return this.currentTask === firstIncomplete;
+        const activeTask = taskManager.getActiveTask();
+        return this.currentTask === activeTask;
     }
 
     // ==================== DECISION MAKING & EXECUTION ====================
@@ -51,7 +50,7 @@ class AIManager {
         }
 
         // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
-        // This happens when task is rerolled or becomes invalid while we're moving
+        // This happens when task is completed while we're moving
         if (this.currentTask === null && player.isMoving()) {
             console.log('Task lost while moving, stopping to re-evaluate');
             // Stop movement immediately
@@ -68,9 +67,9 @@ class AIManager {
 
         // Check if current task changed while we were busy (moving OR performing activity)
         if (!this.isCurrentTaskValid() && this.currentTask !== null) {
-            // Task was invalidated (rerolled, completed, etc)
+            // Task was completed
             if (player.isMoving()) {
-                console.log('Task changed while moving, stopping to re-evaluate');
+                console.log('Task completed while moving, stopping to re-evaluate');
                 // Stop movement
                 player.path = [];
                 player.pathIndex = 0;
@@ -79,7 +78,7 @@ class AIManager {
                 player.segmentProgress = 0;
             }
             if (player.isPerformingActivity()) {
-                console.log('Task changed while performing activity, stopping to re-evaluate');
+                console.log('Task completed while performing activity, stopping to re-evaluate');
                 player.stopActivity();
             }
             this.currentTask = null;
@@ -136,7 +135,7 @@ class AIManager {
         }
 
         // Check if we need a new task
-        if (!this.currentTask || this.currentTask.progress >= 1) {
+        if (!this.currentTask) {
             this.selectNextTask();
         }
 
@@ -183,26 +182,16 @@ class AIManager {
 
         // Check if task is valid
         if (!taskManager.isTaskPossible(task)) {
-            console.log('Task is impossible, rerolling...');
-            const index = taskManager.tasks.indexOf(task);
-            if (index >= 0) {
-                taskManager.rerollTask(index);
-            }
-            this.currentTask = null;
-            this.hasBankedForCurrentTask = false;
+            console.log('Task is impossible, need to handle this gracefully');
+            // For now, just wait - task system should handle regeneration
             return;
         }
         
         // Check if skill can continue with this task
         const skill = skillRegistry.getSkill(task.skill);
         if (skill && !skill.canContinueTask(task)) {
-            console.log(`Skill ${task.skill} cannot continue task, rerolling...`);
-            const index = taskManager.tasks.indexOf(task);
-            if (index >= 0) {
-                taskManager.rerollTask(index);
-            }
-            this.currentTask = null;
-            this.hasBankedForCurrentTask = false;
+            console.log(`Skill ${task.skill} cannot continue task`);
+            // For now, just wait - task system should handle regeneration
             return;
         }
 
@@ -248,19 +237,13 @@ class AIManager {
                 // Check if we can buy the items
                 if (this.canBuyRequiredItems(task.activityId)) {
                     console.log(`Need to buy items for ${task.activityId}`);
-                    // For now, just skip the task
+                    // For now, just skip
                     console.log('Shopping not yet implemented by AI');
                     return;
                 }
                 
                 console.log(`Cannot perform ${task.activityId} - required items not available`);
-                // Reroll the task
-                const index = taskManager.tasks.indexOf(task);
-                if (index >= 0) {
-                    taskManager.rerollTask(index);
-                }
-                this.currentTask = null;
-                this.hasBankedForCurrentTask = false;
+                // Just wait - task system should handle this
                 return;
             }
         }
@@ -341,13 +324,7 @@ class AIManager {
                     this.hasBankedForCurrentTask = true;
                 } else {
                     console.log('Banking failed for skill task');
-                    // Can't complete task, should reroll
-                    const index = taskManager.tasks.indexOf(this.currentTask);
-                    if (index >= 0) {
-                        taskManager.rerollTask(index);
-                    }
-                    this.currentTask = null;
-                    this.hasBankedForCurrentTask = false;
+                    // Can't complete task, just wait
                     return;
                 }
                 
