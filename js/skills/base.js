@@ -3,6 +3,23 @@ class BaseSkill {
         this.id = id;
         this.name = name;
         this.requiresBankingBeforeTask = false; // Default: most skills don't need to bank first
+        this.isProcessingSkill = false; // Default: gathering skills are not processing skills
+    }
+    
+    // ==================== PROCESSING SKILL INTERFACE ====================
+    // These methods provide a generic interface for processing skills
+    // (cooking, smithing, fletching, herblore, crafting, etc.)
+    
+    // Check if we have the specific materials needed for the current task
+    hasMaterialsForCurrentTask() {
+        // Default implementation for gathering skills
+        return true;
+    }
+    
+    // Get information about what materials are needed for the current task
+    getMaterialsNeededForTask(task) {
+        // Default: no materials needed (gathering skills)
+        return null;
     }
     
     // ==================== TASK GENERATION ====================
@@ -286,11 +303,15 @@ class BaseSkill {
     
     // Check if we need banking for a specific task
     needsBankingForTask(task) {
-        // Default for gathering skills: bank when inventory is full
-        if (inventory.isFull()) {
-            return true;
+        // Processing skills should override this to check for materials
+        // Gathering skills just check if inventory is full
+        if (this.isProcessingSkill) {
+            // Processing skill - check if we have materials
+            return !this.hasMaterialsForCurrentTask();
+        } else {
+            // Gathering skill - bank when inventory is full
+            return inventory.isFull();
         }
-        return false;
     }
     
     // Handle skill-specific banking
@@ -303,7 +324,13 @@ class BaseSkill {
     
     // Check if we can continue with a task
     canContinueTask(task) {
-        // Default: gathering skills can always continue
+        // Processing skills should check if they have enough materials
+        // Gathering skills can always continue (unless impossible)
+        if (this.isProcessingSkill) {
+            // Let the processing skill decide
+            return true; // Subclass should override
+        }
+        // Gathering skills can always continue
         return true;
     }
     
