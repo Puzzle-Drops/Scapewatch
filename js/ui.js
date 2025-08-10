@@ -6,7 +6,6 @@ class UIManager {
         this.itemOrder = null;
         this.itemOrderMap = {};
         this.draggedTaskIndex = null;
-        this.draggedElement = null;
         this.initializeUI();
     }
 
@@ -387,7 +386,6 @@ class UIManager {
     createTaskElement(task, index) {
         const taskDiv = document.createElement('div');
         taskDiv.className = 'task-item';
-        taskDiv.dataset.taskIndex = index;
         
         // Mark locked tasks
         if (index < 2) {
@@ -395,7 +393,16 @@ class UIManager {
         } else {
             // Make draggable for tasks 3-7 (indices 2-6)
             taskDiv.draggable = true;
+            taskDiv.dataset.taskIndex = index;
             taskDiv.classList.add('task-draggable');
+            
+            // Add drag event listeners
+            taskDiv.addEventListener('dragstart', (e) => this.handleDragStart(e, index));
+            taskDiv.addEventListener('dragover', (e) => this.handleDragOver(e));
+            taskDiv.addEventListener('drop', (e) => this.handleDrop(e, index));
+            taskDiv.addEventListener('dragend', (e) => this.handleDragEnd(e));
+            taskDiv.addEventListener('dragenter', (e) => this.handleDragEnter(e));
+            taskDiv.addEventListener('dragleave', (e) => this.handleDragLeave(e));
         }
         
         // Header with skill icon, description and reroll button
@@ -420,6 +427,13 @@ class UIManager {
             rerollBtn.className = 'task-reroll';
             rerollBtn.textContent = '↻';
             rerollBtn.title = 'Reroll task';
+            rerollBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent drag from initiating
+                console.log(`Rerolling task at index ${index}`);
+                if (window.taskManager) {
+                    taskManager.rerollTask(index);
+                }
+            });
             headerDiv.appendChild(rerollBtn);
         }
         
@@ -514,101 +528,58 @@ class UIManager {
     }
 
     // ==================== DRAG AND DROP ====================
-    
-    setupTaskDragAndDrop() {
-        // Remove any existing listeners first
-        const tasksList = document.getElementById('tasks-list');
-        if (!tasksList) return;
-        
-        // Use event delegation on the parent container
-        tasksList.addEventListener('dragstart', (e) => {
-            const taskItem = e.target.closest('.task-draggable');
-            if (taskItem) {
-                const index = parseInt(taskItem.dataset.taskIndex);
-                this.handleDragStart(e, index, taskItem);
-            }
-        });
-        
-        tasksList.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-        });
-        
-        tasksList.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const taskItem = e.target.closest('.task-draggable');
-            if (taskItem && this.draggedTaskIndex !== null) {
-                const dropIndex = parseInt(taskItem.dataset.taskIndex);
-                this.handleDrop(e, dropIndex);
-            }
-        });
-        
-        tasksList.addEventListener('dragend', (e) => {
-            this.handleDragEnd(e);
-        });
-        
-        tasksList.addEventListener('dragenter', (e) => {
-            const taskItem = e.target.closest('.task-draggable');
-            if (taskItem && this.draggedTaskIndex !== null) {
-                const index = parseInt(taskItem.dataset.taskIndex);
-                if (index !== this.draggedTaskIndex) {
-                    taskItem.classList.add('drag-over');
-                }
-            }
-        });
-        
-        tasksList.addEventListener('dragleave', (e) => {
-            const taskItem = e.target.closest('.task-draggable');
-            if (taskItem) {
-                // Check if we're really leaving the task item
-                const rect = taskItem.getBoundingClientRect();
-                if (e.clientX < rect.left || e.clientX > rect.right || 
-                    e.clientY < rect.top || e.clientY > rect.bottom) {
-                    taskItem.classList.remove('drag-over');
-                }
-            }
-        });
-        
-        // Setup reroll button clicks separately
-        tasksList.addEventListener('click', (e) => {
-            if (e.target.classList.contains('task-reroll')) {
-                const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
-                    const index = parseInt(taskItem.dataset.taskIndex);
-                    console.log(`Rerolling task at index ${index}`);
-                    if (window.taskManager) {
-                        taskManager.rerollTask(index);
-                    }
-                }
-            }
-        });
-    }
 
-    handleDragStart(e, index, element) {
+    handleDragStart(e, index) {
         if (index < 2) {
             e.preventDefault();
-            return;
+            return; // Can't drag locked tasks
         }
         
         this.draggedTaskIndex = index;
-        this.draggedElement = element;
         e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', index.toString());
+        e.dataTransfer.setData('text/html', e.target.innerHTML); // Firefox needs this
         
-        element.classList.add('dragging');
+        // Use currentTarget instead of target to ensure we get the task div
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.add('dragging');
+        
         console.log(`Started dragging task at index ${index}`);
     }
 
+    handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    handleDragEnter(e) {
+        const taskDiv = e.currentTarget;
+        if (taskDiv.classList.contains('task-draggable') && !taskDiv.classList.contains('dragging')) {
+            taskDiv.classList.add('drag-over');
+        }
+    }
+
+    handleDragLeave(e) {
+        const taskDiv = e.currentTarget;
+        // Only remove if we're actually leaving the element
+        if (!taskDiv.contains(e.relatedTarget)) {
+            taskDiv.classList.remove('drag-over');
+        }
+    }
+
     handleDrop(e, dropIndex) {
-        e.stopPropagation();
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        e.preventDefault();
         
-        // Remove drag-over class from all elements
-        document.querySelectorAll('.task-item').forEach(item => {
-            item.classList.remove('drag-over');
-        });
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.remove('drag-over');
         
         // Can't drop on locked tasks
-        if (dropIndex < 2 || this.draggedTaskIndex < 2) {
+        if (dropIndex < 2) {
             console.log('Cannot drop on locked task');
             return false;
         }
@@ -618,9 +589,8 @@ class UIManager {
             // Reorder the tasks
             if (window.taskManager) {
                 const success = taskManager.reorderTasks(this.draggedTaskIndex, dropIndex);
-                if (success) {
-                    // Update the display after successful reorder
-                    this.updateTasks();
+                if (!success) {
+                    console.log('Reorder failed');
                 }
             }
         }
@@ -629,17 +599,15 @@ class UIManager {
     }
 
     handleDragEnd(e) {
-        // Clean up
-        if (this.draggedElement) {
-            this.draggedElement.classList.remove('dragging');
-        }
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.remove('dragging');
         
+        // Clean up any remaining drag-over classes
         document.querySelectorAll('.task-item').forEach(item => {
             item.classList.remove('drag-over');
         });
         
         this.draggedTaskIndex = null;
-        this.draggedElement = null;
         console.log('Drag ended');
     }
 
@@ -861,51 +829,3 @@ class UIManager {
         return { text: formatNumber(quantity), isGreen: false };
     }
 }
-
-// Override updateTasks to setup drag and drop after creating elements
-UIManager.prototype.updateTasks = function() {
-    if (this.currentPanel !== 'tasks') return;
-    
-    const tasksList = document.getElementById('tasks-list');
-    if (!tasksList || !window.taskManager) return;
-    
-    tasksList.innerHTML = '';
-    
-    const tasks = taskManager.getAllTasks();
-    
-    if (tasks.length === 0) {
-        const emptyDiv = document.createElement('div');
-        emptyDiv.style.textAlign = 'center';
-        emptyDiv.style.color = '#999';
-        emptyDiv.textContent = 'Initializing tasks...';
-        tasksList.appendChild(emptyDiv);
-        return;
-    }
-    
-    // Add section headers and tasks
-    tasks.forEach((task, index) => {
-        // Add section headers
-        if (index === 0) {
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'task-section-header';
-            headerDiv.textContent = 'Current Task';
-            tasksList.appendChild(headerDiv);
-        } else if (index === 1) {
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'task-section-header';
-            headerDiv.textContent = 'Next Task';
-            tasksList.appendChild(headerDiv);
-        } else if (index === 2) {
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'task-section-header';
-            headerDiv.textContent = 'Ready Tasks';
-            tasksList.appendChild(headerDiv);
-        }
-        
-        const taskDiv = this.createTaskElement(task, index);
-        tasksList.appendChild(taskDiv);
-    });
-    
-    // Setup drag and drop after elements are created
-    this.setupTaskDragAndDrop();
-};
