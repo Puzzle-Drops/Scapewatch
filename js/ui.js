@@ -5,7 +5,6 @@ class UIManager {
         this.completedTasksOpen = false;
         this.itemOrder = null;
         this.itemOrderMap = {};
-        this.draggedTaskIndex = null;
         this.initializeUI();
     }
 
@@ -464,10 +463,6 @@ class UIManager {
             taskDiv.classList.add('next-task');
         } else {
             taskDiv.classList.add('pool-task');
-            // Make pool tasks draggable
-            taskDiv.draggable = true;
-            taskDiv.dataset.taskIndex = index;
-            this.setupDragHandlers(taskDiv);
         }
         
         // Main content container
@@ -535,21 +530,69 @@ class UIManager {
         contentDiv.appendChild(iconDiv);
         contentDiv.appendChild(detailsDiv);
         
-        // Only add reroll button for pool tasks (indices 2-6)
+        taskDiv.appendChild(contentDiv);
+        
+        // Add controls for pool tasks (indices 2-6)
         if (index >= 2) {
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'task-controls';
+            
+            // Up arrow (except for first pool task)
+            if (index > 2) {
+                const upBtn = document.createElement('button');
+                upBtn.className = 'task-move-btn';
+                upBtn.textContent = '↑';
+                upBtn.title = 'Move up';
+                upBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.taskManager) {
+                        taskManager.reorderPoolTasks(index, index - 1);
+                    }
+                });
+                controlsDiv.appendChild(upBtn);
+            } else {
+                // Add invisible placeholder for alignment
+                const placeholder = document.createElement('div');
+                placeholder.className = 'task-move-placeholder';
+                controlsDiv.appendChild(placeholder);
+            }
+            
+            // Down arrow (except for last pool task)
+            const tasks = taskManager.getAllTasks();
+            if (index < tasks.length - 1) {
+                const downBtn = document.createElement('button');
+                downBtn.className = 'task-move-btn';
+                downBtn.textContent = '↓';
+                downBtn.title = 'Move down';
+                downBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.taskManager) {
+                        taskManager.reorderPoolTasks(index, index + 1);
+                    }
+                });
+                controlsDiv.appendChild(downBtn);
+            } else {
+                // Add invisible placeholder for alignment
+                const placeholder = document.createElement('div');
+                placeholder.className = 'task-move-placeholder';
+                controlsDiv.appendChild(placeholder);
+            }
+            
+            // Reroll button
             const rerollBtn = document.createElement('button');
             rerollBtn.className = 'task-reroll';
             rerollBtn.textContent = '↻';
             rerollBtn.title = 'Reroll task';
-            rerollBtn.addEventListener('click', () => {
+            rerollBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (window.taskManager) {
                     taskManager.rerollTask(index);
                 }
             });
-            contentDiv.appendChild(rerollBtn);
+            controlsDiv.appendChild(rerollBtn);
+            
+            taskDiv.appendChild(controlsDiv);
         }
-        
-        taskDiv.appendChild(contentDiv);
         
         // Mark complete tasks
         if (task.progress >= 1) {
@@ -557,46 +600,6 @@ class UIManager {
         }
         
         return taskDiv;
-    }
-
-    setupDragHandlers(taskElement) {
-        taskElement.addEventListener('dragstart', (e) => {
-            this.draggedTaskIndex = parseInt(taskElement.dataset.taskIndex);
-            taskElement.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        });
-        
-        taskElement.addEventListener('dragend', (e) => {
-            taskElement.classList.remove('dragging');
-            this.draggedTaskIndex = null;
-        });
-        
-        taskElement.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            
-            const targetIndex = parseInt(taskElement.dataset.taskIndex);
-            if (this.draggedTaskIndex !== null && targetIndex >= 2) {
-                taskElement.classList.add('drag-over');
-            }
-        });
-        
-        taskElement.addEventListener('dragleave', (e) => {
-            taskElement.classList.remove('drag-over');
-        });
-        
-        taskElement.addEventListener('drop', (e) => {
-            e.preventDefault();
-            taskElement.classList.remove('drag-over');
-            
-            const targetIndex = parseInt(taskElement.dataset.taskIndex);
-            if (this.draggedTaskIndex !== null && targetIndex >= 2 && this.draggedTaskIndex >= 2) {
-                // Reorder the tasks
-                if (window.taskManager) {
-                    taskManager.reorderPoolTasks(this.draggedTaskIndex, targetIndex);
-                }
-            }
-        });
     }
 
     // ==================== COMPLETED TASKS DISPLAY ====================
