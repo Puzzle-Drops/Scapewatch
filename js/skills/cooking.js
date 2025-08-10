@@ -6,6 +6,12 @@ class CookingSkill extends BaseSkill {
         this.currentRawItem = null;
         this.hasBankedForTask = false; // Track if we've banked for current cooking task
         this.currentTaskId = null; // Track which task we've banked for
+        
+        // NEW: State tracking to prevent duplicate cooking starts
+        this.isCooking = false;
+        this.cookingTaskId = null;
+        this.cookingItemId = null;
+        this.cookingStartTime = 0;
     }
     
     // ==================== TASK GENERATION OVERRIDES ====================
@@ -301,6 +307,28 @@ class CookingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
+        // NEW: Check if we're already cooking
+        if (this.isCooking) {
+            const currentTime = Date.now();
+            const timeCooking = currentTime - this.cookingStartTime;
+            
+            // If we're in the middle of cooking (within the 2400ms window), reject the new start
+            if (timeCooking < 2400) {
+                // Check if it's the same task and item
+                if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
+                    const taskId = `${window.ai.currentTask.itemId}_${window.ai.currentTask.targetCount}`;
+                    if (this.cookingTaskId === taskId && this.cookingItemId === window.ai.currentTask.itemId) {
+                        console.log(`Already cooking ${this.cookingItemId} for this task, rejecting duplicate start`);
+                        return false; // Reject the duplicate start
+                    }
+                }
+            } else {
+                // Been cooking too long, something went wrong, reset
+                console.log('Cooking took too long, resetting state');
+                this.clearCookingState();
+            }
+        }
+        
         // If we have a cooking task, we MUST cook that specific item
         let rawItem = null;
         
@@ -321,6 +349,7 @@ class CookingSkill extends BaseSkill {
             } else {
                 // We have a cooking task but don't have the required raw food
                 console.log(`Cannot cook - need ${taskRawItemId} for task but don't have it`);
+                this.clearCookingState(); // Clear state when we can't cook
                 return false; // IMPORTANT: Don't fall back to other items
             }
         } else {
@@ -330,16 +359,32 @@ class CookingSkill extends BaseSkill {
         
         if (!rawItem) {
             console.log('No raw items to cook');
+            this.clearCookingState(); // Clear state when we can't cook
             return false;
         }
         
-        // Just store what we're going to cook - don't consume yet
+        // Store what we're going to cook
         this.currentRawItem = rawItem;
+        
+        // NEW: Set cooking state
+        this.isCooking = true;
+        this.cookingStartTime = Date.now();
+        this.cookingItemId = rawItem.rawItemId;
+        if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
+            this.cookingTaskId = `${window.ai.currentTask.itemId}_${window.ai.currentTask.targetCount}`;
+        } else {
+            this.cookingTaskId = null;
+        }
+        
+        console.log(`Starting to cook ${this.cookingItemId}`);
         
         return true;
     }
     
     processRewards(activityData, level) {
+        // Clear cooking state when processing rewards (cooking is complete)
+        this.clearCookingState();
+        
         if (!this.currentRawItem) {
             this.lastCookingXp = 0;
             return [];
@@ -416,6 +461,14 @@ class CookingSkill extends BaseSkill {
         // Check if this is a different task than what we banked for
         const taskId = task ? `${task.itemId}_${task.targetCount}_${task.nodeId}` : null;
         return taskId !== this.currentTaskId;
+    }
+    
+    // NEW: Clear cooking state
+    clearCookingState() {
+        this.isCooking = false;
+        this.cookingTaskId = null;
+        this.cookingItemId = null;
+        this.cookingStartTime = 0;
     }
     
     // ==================== BANKING LOGIC ====================
@@ -505,6 +558,7 @@ class CookingSkill extends BaseSkill {
             // Reset banking flag when task becomes impossible
             this.hasBankedForTask = false;
             this.currentTaskId = null;
+            this.clearCookingState(); // NEW: Clear cooking state
             return false;
         }
         
@@ -513,6 +567,9 @@ class CookingSkill extends BaseSkill {
     
     // Called when activity completes to potentially reset state
     onActivityComplete(activityData) {
+        // NEW: Clear cooking state when activity completes
+        this.clearCookingState();
+        
         // Check if task is complete
         if (window.ai && window.ai.currentTask && window.ai.currentTask.isCookingTask) {
             if (window.ai.currentTask.progress >= 1) {
@@ -527,5 +584,11 @@ class CookingSkill extends BaseSkill {
     // Check if we have materials to work with (for production skills)
     hasMaterials() {
         return this.hasRawFoodInInventory();
+    }
+    
+    // NEW: Called when activity is stopped (interrupted)
+    onActivityStopped() {
+        console.log('Cooking activity was stopped, clearing state');
+        this.clearCookingState();
     }
 }
