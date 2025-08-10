@@ -76,24 +76,28 @@ class FishingSkill extends BaseSkill {
                     const itemData = loadingManager.getData('items')[required.itemId];
                     const bankCount = bank.getItemCount(required.itemId);
                     
-                    if (bankCount > 0) {
-                        // Withdraw stackable items (all of them) or up to 14 non-stackable
-                        const withdrawAmount = itemData.stackable ? bankCount : Math.min(14, bankCount);
-                        const withdrawn = bank.withdrawUpTo(required.itemId, withdrawAmount);
-                        
-                        if (withdrawn > 0) {
-                            inventory.addItem(required.itemId, withdrawn);
-                            console.log(`Withdrew ${withdrawn} ${itemData.name} for fishing`);
-                        }
-                    } else {
+                    if (bankCount === 0) {  // THIS CHECK IS IMPORTANT
                         console.log(`No ${itemData.name} in bank for fishing`);
-                        return false; // Can't do this fishing task without required items
+                        return false; // MUST RETURN FALSE HERE - Task is impossible
+                    }
+                    
+                    // Withdraw stackable items (all of them) or up to 14 non-stackable
+                    const withdrawAmount = itemData.stackable ? bankCount : Math.min(14, bankCount);
+                    const withdrawn = bank.withdrawUpTo(required.itemId, withdrawAmount);
+                    
+                    if (withdrawn > 0) {
+                        inventory.addItem(required.itemId, withdrawn);
+                        console.log(`Withdrew ${withdrawn} ${itemData.name} for fishing`);
+                    } else {
+                        // Failed to withdraw even though bank said it had some
+                        console.log(`Failed to withdraw ${itemData.name} for fishing`);
+                        return false; // RETURN FALSE ON WITHDRAWAL FAILURE - Task is impossible
                     }
                 }
             }
         }
         
-        return true;
+        return true; // Success - we have everything we need
     }
     
     // ==================== CORE BEHAVIOR ====================
