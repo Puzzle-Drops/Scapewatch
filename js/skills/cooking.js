@@ -76,15 +76,23 @@ class CookingSkill extends BaseSkill {
     
     // Update cooking task progress when we consume raw food
     updateCookingTaskProgress(rawItemId) {
-        // Only update if we have task manager and the active task is for this raw item
+        // Only update if we have task manager and the current task is for this raw item
         if (!window.taskManager) return;
         
-        const activeTask = taskManager.getActiveTask();
+        const currentTask = taskManager.getFirstIncompleteTask();
         
-        // Only update if the active task is a cooking task for this raw item
-        if (activeTask && activeTask.isCookingTask && activeTask.itemId === rawItemId) {
-            // Call the task manager's update method
-            taskManager.updateCookingTaskProgress(rawItemId);
+        // Only update if the current task is a cooking task for this raw item
+        if (currentTask && currentTask.isCookingTask && currentTask.itemId === rawItemId) {
+            // Increment the consumption counter
+            currentTask.rawFoodConsumed = (currentTask.rawFoodConsumed || 0) + 1;
+            
+            // Calculate and set progress
+            const progress = currentTask.rawFoodConsumed / currentTask.targetCount;
+            
+            console.log(`Cooking progress: ${currentTask.rawFoodConsumed}/${currentTask.targetCount}`);
+            
+            // Use the generic setTaskProgress method
+            taskManager.setTaskProgress(currentTask, progress);
         }
     }
     
