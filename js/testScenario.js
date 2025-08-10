@@ -23,20 +23,21 @@ class TestScenario {
         // Add some items to inventory for testing
         //this.populateInventory();
 
-        // Set up test goals
-        //this.setupTestGoals();
+        // Set up specific test tasks
+        this.setupTestTasks();
 
-bank.deposit ('fishing_bait', 1000);
-bank.deposit ('feather', 1000);
+        // Add bait and feathers for fishing activities that need them
+        bank.deposit('fishing_bait', 1000);
+        bank.deposit('feather', 1000);
 
         console.log('Test scenario complete!');
     }
 
     setPlayerPosition() {
-        // Start at East Varrock Mine instead of Lumbridge
-        player.position.x = 4408;
-        player.position.y = 1820;
-        player.currentNode = 'east_varrock_mine';
+        // Start at Lumbridge Bank for easy access
+        player.position.x = 4361;
+        player.position.y = 1903;
+        player.currentNode = 'lumbridge_bank';
         
         // Update camera to match
         if (window.map) {
@@ -91,7 +92,7 @@ bank.deposit ('feather', 1000);
     populateBank() {
         const allItems = loadingManager.getData('items');
         
-        bank.deposit ('coins', 9999000);
+        bank.deposit('coins', 9999000);
         
         // Add 1000 of each item to bank
         for (const [itemId, itemData] of Object.entries(allItems)) {
@@ -104,47 +105,83 @@ bank.deposit ('feather', 1000);
     populateInventory() {
         // Add some common items to inventory for testing
         inventory.addItem('coins', 5);
-
         inventory.addItem('raw_shrimps', 26);
         
         console.log('Added test items to inventory');
     }
 
-    setupTestGoals() {
-        // Clear existing goals
-        ai.goals = [];
-        ai.currentGoal = null;
+    setupTestTasks() {
+        // Clear existing tasks first
+        if (window.taskManager) {
+            taskManager.clearTasks();
+            
+            // Manually create specific test tasks
+            
+            // Task 1: Catch 50 raw shrimps
+            const fishingTask = {
+                skill: 'fishing',
+                itemId: 'raw_shrimps',
+                targetCount: 50,
+                nodeId: 'lumbridge_fishing',
+                activityId: 'small_fishing_net',
+                description: 'Catch 50 Raw shrimps at River Lum',
+                startingCount: this.getCurrentItemCount('raw_shrimps'),
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 2: Cook 44 raw shrimps
+            const cookingTask = {
+                skill: 'cooking',
+                itemId: 'raw_shrimps', // Raw item being consumed
+                targetCount: 44,
+                nodeId: 'lumbridge_kitchen',
+                activityId: 'cook_food',
+                description: 'Cook 44 Raw shrimps at Lumbridge Kitchen',
+                startingCount: 0,
+                progress: 0,
+                isCookingTask: true,
+                cookedItemId: 'shrimps',
+                rawFoodConsumed: 0
+            };
+            
+            
+            // Set up the task structure
+            taskManager.currentTask = fishingTask;
+            taskManager.nextTask = cookingTask;
+            
+            console.log('Set up test tasks:');
+            console.log('Current:', fishingTask.description);
+            console.log('Next:', cookingTask.description);
+            taskManager.tasks.forEach((task, index) => {
+                console.log(`Task ${index + 1}:`, task.description);
+            });
+            
+            // Update UI to show the new tasks
+            if (window.ui) {
+                window.ui.updateTasks();
+            }
+            
+            // Notify AI to start working on the current task
+            if (window.ai) {
+                window.ai.currentTask = null;
+                window.ai.decisionCooldown = 0;
+            }
+        }
+    }
+
+    getCurrentItemCount(itemId) {
+        let count = 0;
         
-        // Add some test goals
-        ai.addGoal({
-            type: 'skill_level',
-            skill: 'fishing',
-            targetLevel: 60,
-            priority: 1
-        });
+        if (window.inventory) {
+            count += inventory.getItemCount(itemId);
+        }
         
-        ai.addGoal({
-            type: 'bank_items',
-            itemId: 'iron_ore',
-            targetCount: 500,
-            priority: 2
-        });
+        if (window.bank) {
+            count += bank.getItemCount(itemId);
+        }
         
-        ai.addGoal({
-            type: 'skill_level',
-            skill: 'woodcutting',
-            targetLevel: 60,
-            priority: 3
-        });
-        
-        ai.addGoal({
-            type: 'bank_items',
-            itemId: 'willow_logs',
-            targetCount: 250,
-            priority: 4
-        });
-        
-        console.log('Set up test goals');
+        return count;
     }
 
     // Utility methods that can be called from dev console
@@ -175,6 +212,42 @@ bank.deposit ('feather', 1000);
         player.targetNode = null;
         
         console.log('Reset player to Lumbridge bank');
+    }
+
+    // Method to quickly set up fishing -> cooking test
+    setupFishingCookingTest() {
+        // Clear bank and inventory first
+        inventory.clear();
+        
+        // Give player some raw shrimps to start cooking task testing
+        bank.deposit('raw_shrimps', 100);
+        
+        // Give bait for other fishing activities
+        bank.deposit('fishing_bait', 1000);
+        bank.deposit('feather', 1000);
+        
+        // Set up the specific test tasks
+        this.setupTestTasks();
+        
+        console.log('Set up fishing -> cooking test scenario');
+    }
+
+    // Method to test task completion
+    completeCurrentTask() {
+        if (window.taskManager && taskManager.currentTask) {
+            // For gathering tasks, add items to complete
+            if (!taskManager.currentTask.isCookingTask) {
+                const needed = taskManager.currentTask.targetCount;
+                bank.deposit(taskManager.currentTask.itemId, needed);
+                taskManager.updateTaskProgress(taskManager.currentTask);
+            } else {
+                // For cooking tasks, set the consumption counter
+                taskManager.currentTask.rawFoodConsumed = taskManager.currentTask.targetCount;
+                taskManager.setTaskProgress(taskManager.currentTask, 1);
+            }
+            
+            console.log('Completed current task:', taskManager.currentTask.description);
+        }
     }
 }
 
