@@ -2,6 +2,7 @@ class CookingSkill extends BaseSkill {
     constructor() {
         super('cooking', 'Cooking');
         this.requiresBankingBeforeTask = true; // Cooking ALWAYS banks before starting a task
+        this.isProcessingSkill = true;
         this.lastCookingXp = 0;
         this.currentRawItem = null;
         this.hasBankedForTask = false; // Track if we've banked for current cooking task
