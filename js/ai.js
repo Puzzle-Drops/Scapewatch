@@ -103,10 +103,15 @@ class AIManager {
         }
     }
 
-    shouldCheckBanking() {
-        // Check if inventory is full
-        return inventory.isFull();
+shouldCheckBanking() {
+    // Don't check banking if we're actively cooking
+    if (player.currentActivity === 'cook_food') {
+        return false;
     }
+    
+    // Check if inventory is full
+    return inventory.isFull();
+}
 
     makeDecision() {
         console.log('AI making decision...', {
