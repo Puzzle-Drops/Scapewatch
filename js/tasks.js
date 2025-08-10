@@ -197,6 +197,23 @@ class TaskManager {
         }
     }
 
+    // Skip the current task when it's impossible
+    skipCurrentTask() {
+        if (!this.currentTask) return;
+        
+        console.log(`Skipping impossible task: ${this.currentTask.description}`);
+        
+        // Mark as skipped (not completed)
+        this.currentTask.progress = -1; // -1 indicates skipped
+        this.currentTask.skippedAt = Date.now();
+        
+        // Could track skipped tasks if desired
+        // this.skippedTasks.push(this.currentTask);
+        
+        // Promote the next task (same as when completing a task)
+        this.promoteNextTask();
+    }
+
     // Move next task to current, and first regular task to next
     promoteNextTask() {
         this.currentTask = this.nextTask;
@@ -324,6 +341,11 @@ class TaskManager {
         if (window.ui) {
             window.ui.updateTasks();
         }
+    }
+
+    // Generate new batch of tasks
+    generateNewTasks() {
+        this.generateInitialTasks();
     }
 
     // Check if a task is valid/possible
