@@ -245,15 +245,22 @@ class TaskManager {
         this.updateActiveTaskProgress();
     }
 
-    // Reroll a task (only positions 2-6 can be rerolled)
+    // Reroll a task (only positions 3-7 can be rerolled, indices 2-6)
     rerollTask(index) {
-        if (index < 2 || index >= this.tasks.length) {
-            console.error('Only tasks 3-7 can be rerolled');
+        // Validate index - must be between 2 and 6 (positions 3-7)
+        if (index < 2 || index > 6) {
+            console.error(`Cannot reroll task at index ${index}. Only tasks 3-7 (indices 2-6) can be rerolled`);
+            return;
+        }
+        
+        // Also check that the index is within our tasks array
+        if (index >= this.tasks.length) {
+            console.error(`Task index ${index} out of bounds (have ${this.tasks.length} tasks)`);
             return;
         }
 
         const oldTask = this.tasks[index];
-        console.log(`Rerolling task: ${oldTask.description}`);
+        console.log(`Rerolling task at index ${index}: ${oldTask.description}`);
 
         const availableSkills = this.getAvailableSkills();
         if (availableSkills.length === 0) {
@@ -291,7 +298,7 @@ class TaskManager {
             }
             newTask.progress = 0;
             this.tasks[index] = newTask;
-            console.log(`New task: ${newTask.description}`);
+            console.log(`Rerolled to new task: ${newTask.description}`);
             
             // Update UI
             if (window.ui) {
@@ -302,15 +309,24 @@ class TaskManager {
         }
     }
 
-    // Reorder tasks (only positions 2-6 can be reordered among themselves)
+    // Reorder tasks (only positions 3-7 can be reordered among themselves, indices 2-6)
     reorderTasks(fromIndex, toIndex) {
         // Validate that both indices are in the modifiable range
         if (fromIndex < 2 || fromIndex > 6 || toIndex < 2 || toIndex > 6) {
-            console.error('Can only reorder tasks 3-7');
+            console.error(`Cannot reorder tasks from index ${fromIndex} to ${toIndex}. Can only reorder tasks 3-7 (indices 2-6)`);
             return false;
         }
         
-        if (fromIndex === toIndex) return false;
+        // Also check that indices are within our tasks array
+        if (fromIndex >= this.tasks.length || toIndex >= this.tasks.length) {
+            console.error(`Task indices out of bounds (have ${this.tasks.length} tasks)`);
+            return false;
+        }
+        
+        if (fromIndex === toIndex) {
+            console.log('Source and destination are the same, no reorder needed');
+            return false;
+        }
         
         // Remove task from old position
         const [movedTask] = this.tasks.splice(fromIndex, 1);
@@ -318,7 +334,7 @@ class TaskManager {
         // Insert at new position
         this.tasks.splice(toIndex, 0, movedTask);
         
-        console.log(`Reordered task from position ${fromIndex + 1} to ${toIndex + 1}`);
+        console.log(`Successfully reordered task from position ${fromIndex + 1} to ${toIndex + 1}`);
         
         // Update UI
         if (window.ui) {
@@ -337,8 +353,18 @@ class TaskManager {
     getNextTask() {
         return this.tasks[1] || null;
     }
+    
+    // Get first incomplete task (for AI)
+    getFirstIncompleteTask() {
+        for (const task of this.tasks) {
+            if (task.progress < 1) {
+                return task;
+            }
+        }
+        return null;
+    }
 
-    // Get modifiable tasks (positions 2-6)
+    // Get modifiable tasks (positions 3-7, indices 2-6)
     getModifiableTasks() {
         return this.tasks.slice(2, 7);
     }
@@ -400,6 +426,25 @@ class TaskManager {
         }
 
         return true;
+    }
+    
+    // Clear all tasks and regenerate
+    clearTasks() {
+        this.tasks = [];
+        console.log('Cleared all tasks');
+    }
+    
+    // Generate new batch of tasks
+    generateNewTasks() {
+        this.generateInitialTasks();
+    }
+    
+    // Set task progress (for dev console)
+    setTaskProgress(task, progress) {
+        task.progress = Math.min(1, Math.max(0, progress));
+        if (task.progress >= 1 && task === this.tasks[0]) {
+            this.completeCurrentTask();
+        }
     }
 
     // Clear completed tasks (for debugging or reset)
