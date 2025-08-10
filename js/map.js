@@ -16,29 +16,6 @@ class MapRenderer {
         this.showCollisionDebug = false; // Flag for showing collision areas
         this.mapCache = null; // Cached map canvas
         this.initMapCache();
-        
-        // Skill colors for activity indicator
-        this.skillColors = {
-            fishing: '#3498db',      // Blue
-            mining: '#95a5a6',       // Grey/ore color
-            woodcutting: '#27ae60',  // Green
-            cooking: '#e67e22',      // Orange
-            smithing: '#34495e',     // Dark grey
-            crafting: '#9b59b6',     // Purple
-            combat: '#e74c3c',       // Red
-            agility: '#1abc9c',      // Teal
-            thieving: '#2c3e50',     // Dark blue-grey
-            farming: '#16a085',      // Dark green
-            herblore: '#8e44ad',     // Dark purple
-            construction: '#d35400', // Brown
-            firemaking: '#ff6b35',   // Fire orange
-            fletching: '#f1c40f',    // Yellow
-            prayer: '#ecf0f1',       // White
-            magic: '#9b59b6',        // Purple
-            runecraft: '#34495e',    // Dark grey
-            hunter: '#a0522d',       // Brown
-            slayer: '#c0392b'        // Dark red
-        };
     }
 
     // Add this new method right after the constructor
@@ -237,19 +214,11 @@ class MapRenderer {
         this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
 
-        // Activity indicator with skill-based color
+        // Activity indicator
         if (player.currentActivity) {
-            // Get the skill for this activity
-            const activityData = loadingManager.getData('activities')[player.currentActivity];
-            let activityColor = '#f39c12'; // Default orange
-            
-            if (activityData && activityData.skill) {
-                activityColor = this.skillColors[activityData.skill] || '#f39c12';
-            }
-            
             this.ctx.beginPath();
             this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = activityColor;
+            this.ctx.strokeStyle = '#f39c12';
             this.ctx.lineWidth = 0.4;  // reduced from 2
             this.ctx.stroke();
         }

@@ -169,79 +169,79 @@ class Player {
             }
         }
 
-        // Check if AI still has a valid task for this activity
-        if (window.ai) {
-            // If AI has no current task (was completed), stop activity
-            if (!window.ai.currentTask) {
-                console.log('AI task was completed, stopping activity');
-                this.stopActivity();
-                window.ai.decisionCooldown = 0;
-                return;
-            }
-            
-            // Check if the task is complete
-            if (window.ai.currentTask.progress >= 1) {
-                console.log('Task completed after action!');
-                this.stopActivity();
-                window.ai.decisionCooldown = 0;
-                window.ai.currentTask = null;
-                return;
-            }
-            
-            // Also check if this task is no longer the active task
-            if (window.taskManager) {
-                const activeTask = taskManager.getActiveTask();
-                if (window.ai.currentTask !== activeTask) {
-                    console.log('Current task no longer active, switching tasks');
-                    this.stopActivity();
-                    window.ai.currentTask = null;
-                    window.ai.decisionCooldown = 0;
-                    return;
-                }
-            }
-        }
-
-        // Always let AI re-evaluate between actions to check for task changes
-        if (window.ai) {
-            // Give AI a chance to check if it should continue this activity
+// Check if AI still has a valid task for this activity
+if (window.ai) {
+    // If AI has no current task (was rerolled/invalidated), stop activity
+    if (!window.ai.currentTask) {
+        console.log('AI task was invalidated, stopping activity');
+        this.stopActivity();
+        window.ai.decisionCooldown = 0;
+        return;
+    }
+    
+    // Check if the task is complete
+    if (window.ai.currentTask.progress >= 1) {
+        console.log('Task completed after action!');
+        this.stopActivity();
+        window.ai.decisionCooldown = 0;
+        window.ai.currentTask = null;
+        return;
+    }
+    
+    // Also check if this task is no longer the first incomplete task
+    if (window.taskManager) {
+        const firstIncomplete = taskManager.getFirstIncompleteTask();
+        if (window.ai.currentTask !== firstIncomplete) {
+            console.log('Current task no longer first incomplete, switching tasks');
+            this.stopActivity();
+            window.ai.currentTask = null;
             window.ai.decisionCooldown = 0;
+            return;
         }
+    }
+}
 
-        // Reset for next action
-        if (this.currentActivity) {
-            this.activityProgress = 0;
-            this.activityStartTime = Date.now();
-        }
+// Always let AI re-evaluate between actions to check for task changes
+if (window.ai) {
+    // Give AI a chance to check if it should continue this activity
+    window.ai.decisionCooldown = 0;
+}
+
+// Reset for next action
+if (this.currentActivity) {
+    this.activityProgress = 0;
+    this.activityStartTime = Date.now();
+}
     }
 
     moveTo(targetNodeId) {
-        const nodesData = loadingManager.getData('nodes');
-        const node = nodesData[targetNodeId];
-        
-        if (!node) {
-            console.error(`Node ${targetNodeId} not found`);
-            return;
-        }
+    const nodesData = loadingManager.getData('nodes');
+    const node = nodesData[targetNodeId];
+    
+    if (!node) {
+        console.error(`Node ${targetNodeId} not found`);
+        return;
+    }
 
-        // If we're already at the target node, don't move
-        if (this.currentNode === targetNodeId) {
-            console.log(`Already at node ${targetNodeId}`);
-            return;
-        }
+    // If we're already at the target node, don't move
+    if (this.currentNode === targetNodeId) {
+        console.log(`Already at node ${targetNodeId}`);
+        return;
+    }
 
-        // Clear current node when starting to move away
-        if (this.currentNode && this.currentNode !== targetNodeId) {
-            console.log(`Leaving node ${this.currentNode} to move to ${targetNodeId}`);
-            this.currentNode = null;
-        }
+    // Clear current node when starting to move away
+    if (this.currentNode && this.currentNode !== targetNodeId) {
+        console.log(`Leaving node ${this.currentNode} to move to ${targetNodeId}`);
+        this.currentNode = null;
+    }
 
-        if (window.pathfinding) {
-            const path = pathfinding.findPath(
-                this.position.x,
-                this.position.y,
-                node.position.x,
-                node.position.y
-            );
+    if (window.pathfinding) {
+        const path = pathfinding.findPath(
+            this.position.x,
+            this.position.y,
+            node.position.x,
+            node.position.y
+        );
 
             if (path && path.length > 0) {
                 if (path.length > 1 && 
@@ -361,15 +361,15 @@ class Player {
     }
 
     stopActivity() {
-        if (this.currentActivity) {
-            console.log(`Stopped activity: ${this.currentActivity}`);
-            this.currentActivity = null;
-            this.activityProgress = 0;
-            
-            // Clear the activity start time too
-            this.activityStartTime = 0;
-        }
+    if (this.currentActivity) {
+        console.log(`Stopped activity: ${this.currentActivity}`);
+        this.currentActivity = null;
+        this.activityProgress = 0;
+        
+        // Clear the activity start time too
+        this.activityStartTime = 0;
     }
+}
 
     getMovementSpeed() {
         const agilityLevel = skills.getLevel('agility');
