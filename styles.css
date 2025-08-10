@@ -1,3 +1,32 @@
+/* CSS Variables for Skill Colors */
+:root {
+    --skill-mining: #808080;
+    --skill-fishing: #5DADE2;
+    --skill-woodcutting: #27AE60;
+    --skill-cooking: #8E44AD;
+    --skill-default: #f39c12;
+    
+    /* Additional skill colors */
+    --skill-attack: #C0392B;
+    --skill-strength: #E74C3C;
+    --skill-defence: #3498DB;
+    --skill-magic: #2E86AB;
+    --skill-ranged: #16A085;
+    --skill-prayer: #F4D03F;
+    --skill-runecraft: #5B2C6F;
+    --skill-construction: #A04000;
+    --skill-agility: #2E4053;
+    --skill-herblore: #239B56;
+    --skill-thieving: #884EA0;
+    --skill-crafting: #935116;
+    --skill-fletching: #0E6655;
+    --skill-slayer: #641E16;
+    --skill-hunter: #5D4E37;
+    --skill-smithing: #515A5A;
+    --skill-firemaking: #DC7633;
+    --skill-farming: #1E8449;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -347,31 +376,93 @@ body {
     height: 40px;
 }
 
-/* Tasks Panel */
+/* Tasks Panel - NEW STYLES */
 .tasks-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
+}
+
+.task-section {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #333;
+}
+
+.task-section-header {
+    font-size: 14px;
+    font-weight: bold;
+    color: #f39c12;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.regular-tasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .task-item {
     background-color: #222;
-    padding: 12px;
+    padding: 10px;
     border-radius: 6px;
     border: 1px solid #444;
+    transition: all 0.3s ease;
+}
+
+.task-item:hover {
+    background-color: #2a2a2a;
+}
+
+.task-complete {
+    opacity: 0.6;
+}
+
+.task-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.task-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #333;
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.task-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.task-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .task-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
 }
 
 .task-description {
-    font-size: 14px;
+    font-size: 13px;
     color: #fff;
     flex: 1;
+    line-height: 1.3;
 }
 
 .task-reroll {
@@ -380,8 +471,9 @@ body {
     color: #fff;
     border: none;
     border-radius: 3px;
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .task-reroll:hover {
@@ -396,23 +488,85 @@ body {
 
 .task-progress-bar {
     flex: 1;
-    height: 20px;
+    height: 16px;
     background-color: #111;
-    border-radius: 10px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
 .task-progress-fill {
     height: 100%;
-    background-color: #27ae60;
     transition: width 0.3s ease;
 }
+
+/* Skill-specific progress bar colors */
+.task-progress-fill.skill-mining { background-color: var(--skill-mining); }
+.task-progress-fill.skill-fishing { background-color: var(--skill-fishing); }
+.task-progress-fill.skill-woodcutting { background-color: var(--skill-woodcutting); }
+.task-progress-fill.skill-cooking { background-color: var(--skill-cooking); }
+/* Default for other skills */
+.task-progress-fill { background-color: var(--skill-default); }
 
 .task-count {
     font-size: 12px;
     color: #aaa;
-    min-width: 60px;
+    min-width: 50px;
     text-align: right;
+}
+
+/* Completed Tasks Modal */
+.completed-tasks-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.completed-tasks-empty {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+    font-size: 16px;
+}
+
+.completed-task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #222;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border: 1px solid #444;
+}
+
+.completed-task-number {
+    font-size: 14px;
+    font-weight: bold;
+    color: #f39c12;
+    min-width: 30px;
+}
+
+.completed-task-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #333;
+    border-radius: 4px;
+    padding: 3px;
+}
+
+.completed-task-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.completed-task-description {
+    flex: 1;
+    font-size: 13px;
+    color: #fff;
 }
 
 /* Item count displays */
@@ -550,7 +704,7 @@ body {
     cursor: not-allowed;
 }
 
-#close-bank, #close-shop {
+#close-bank, #close-shop, #close-completed-tasks {
     width: 100%;
     padding: 10px;
     background-color: #e74c3c;
@@ -562,7 +716,7 @@ body {
     cursor: pointer;
 }
 
-#close-bank:hover, #close-shop:hover {
+#close-bank:hover, #close-shop:hover, #close-completed-tasks:hover {
     background-color: #c0392b;
 }
 
