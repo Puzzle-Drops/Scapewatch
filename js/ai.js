@@ -14,27 +14,26 @@ class AIManager {
             return;
         }
 
-        // Always get the first incomplete task
-        this.currentTask = taskManager.getFirstIncompleteTask();
+        // Always work on the current task from task manager
+        this.currentTask = taskManager.currentTask;
         
         if (!this.currentTask) {
-            console.log('No incomplete tasks available');
-            // All tasks complete, new batch should be generated automatically
+            console.log('No current task available');
             return;
         }
 
         // Reset banking flag when selecting a new task
         this.hasBankedForCurrentTask = false;
-        console.log('Selected task:', this.currentTask.description);
+        console.log('Working on task:', this.currentTask.description);
     }
 
-    // Check if current task is still valid (first incomplete task)
+    // Check if current task is still valid
     isCurrentTaskValid() {
         if (!this.currentTask) return false;
         if (!window.taskManager) return false;
         
-        const firstIncomplete = taskManager.getFirstIncompleteTask();
-        return this.currentTask === firstIncomplete;
+        // Check if our task is still the current task in task manager
+        return this.currentTask === taskManager.currentTask;
     }
 
     // ==================== DECISION MAKING & EXECUTION ====================
@@ -51,7 +50,6 @@ class AIManager {
         }
 
         // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
-        // This happens when task is rerolled or becomes invalid while we're moving
         if (this.currentTask === null && player.isMoving()) {
             console.log('Task lost while moving, stopping to re-evaluate');
             // Stop movement immediately
@@ -66,9 +64,9 @@ class AIManager {
             return;
         }
 
-        // Check if current task changed while we were busy (moving OR performing activity)
+        // Check if current task changed while we were busy
         if (!this.isCurrentTaskValid() && this.currentTask !== null) {
-            // Task was invalidated (rerolled, completed, etc)
+            // Task was invalidated (completed, changed, etc)
             if (player.isMoving()) {
                 console.log('Task changed while moving, stopping to re-evaluate');
                 // Stop movement
@@ -183,11 +181,8 @@ class AIManager {
 
         // Check if task is valid
         if (!taskManager.isTaskPossible(task)) {
-            console.log('Task is impossible, rerolling...');
-            const index = taskManager.tasks.indexOf(task);
-            if (index >= 0) {
-                taskManager.rerollTask(index);
-            }
+            console.log('Task is impossible, will be replaced when completed tasks promote');
+            // Don't reroll - the task system will handle it
             this.currentTask = null;
             this.hasBankedForCurrentTask = false;
             return;
@@ -196,11 +191,8 @@ class AIManager {
         // Check if skill can continue with this task
         const skill = skillRegistry.getSkill(task.skill);
         if (skill && !skill.canContinueTask(task)) {
-            console.log(`Skill ${task.skill} cannot continue task, rerolling...`);
-            const index = taskManager.tasks.indexOf(task);
-            if (index >= 0) {
-                taskManager.rerollTask(index);
-            }
+            console.log(`Skill ${task.skill} cannot continue task`);
+            // Task will be replaced when promotion happens
             this.currentTask = null;
             this.hasBankedForCurrentTask = false;
             return;
@@ -254,11 +246,7 @@ class AIManager {
                 }
                 
                 console.log(`Cannot perform ${task.activityId} - required items not available`);
-                // Reroll the task
-                const index = taskManager.tasks.indexOf(task);
-                if (index >= 0) {
-                    taskManager.rerollTask(index);
-                }
+                // Task will be replaced when promotion happens
                 this.currentTask = null;
                 this.hasBankedForCurrentTask = false;
                 return;
@@ -341,11 +329,7 @@ class AIManager {
                     this.hasBankedForCurrentTask = true;
                 } else {
                     console.log('Banking failed for skill task');
-                    // Can't complete task, should reroll
-                    const index = taskManager.tasks.indexOf(this.currentTask);
-                    if (index >= 0) {
-                        taskManager.rerollTask(index);
-                    }
+                    // Can't complete task
                     this.currentTask = null;
                     this.hasBankedForCurrentTask = false;
                     return;
