@@ -214,18 +214,11 @@ class MapRenderer {
         this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
 
-        // Activity indicator with skill color
+        // Activity indicator
         if (player.currentActivity) {
-            // Get the skill for the current activity
-            let activityColor = SKILL_COLORS.default;
-            const activityData = loadingManager.getData('activities')[player.currentActivity];
-            if (activityData && activityData.skill) {
-                activityColor = getSkillColor(activityData.skill);
-            }
-            
             this.ctx.beginPath();
             this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = activityColor;
+            this.ctx.strokeStyle = '#f39c12';
             this.ctx.lineWidth = 0.4;  // reduced from 2
             this.ctx.stroke();
         }

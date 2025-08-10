@@ -1,8 +1,7 @@
 class TaskManager {
     constructor() {
         this.tasks = [];
-        this.maxTasks = 7; // Current + Next + 5 pool tasks
-        this.completedTasks = []; // Track all completed tasks
+        this.maxTasks = 5;
         this.skillWeights = null; // For future weighted distribution
     }
 
@@ -13,7 +12,7 @@ class TaskManager {
         }
     }
 
-    // Generate a new batch of 7 tasks
+    // Generate a new batch of 5 tasks
     generateNewTasks() {
         this.tasks = [];
         const availableSkills = this.getAvailableSkills();
@@ -36,20 +35,20 @@ class TaskManager {
             const task = skill.generateTask();
             
             if (task) {
-                // Set initial progress tracking based on task type
-                if (task.isCookingTask) {
-                    // For cooking tasks, initialize the consumption counter
-                    task.rawFoodConsumed = 0;
-                    task.startingCount = 0; // We track consumption, not bank amount
-                } else {
-                    // For gathering tasks, DON'T set startingCount yet!
-                    // It will be set when the task becomes active
-                    task.startingCount = null; // Mark as not yet initialized
-                }
-                task.progress = 0;
-                this.tasks.push(task);
-                console.log(`Generated task: ${task.description}`);
-            }
+    // Set initial progress tracking based on task type
+    if (task.isCookingTask) {
+        // For cooking tasks, initialize the consumption counter
+        task.rawFoodConsumed = 0;
+        task.startingCount = 0; // We track consumption, not bank amount
+    } else {
+        // For gathering tasks, DON'T set startingCount yet!
+        // It will be set when the task becomes active
+        task.startingCount = null; // Mark as not yet initialized
+    }
+    task.progress = 0;
+    this.tasks.push(task);
+    console.log(`Generated task: ${task.description}`);
+}
         }
 
         if (this.tasks.length < this.maxTasks) {
@@ -108,6 +107,12 @@ class TaskManager {
         if (window.ui) {
             window.ui.updateTasks();
         }
+        
+        // Check if all tasks are complete
+        if (this.areAllTasksComplete()) {
+            console.log('All tasks complete! Generating new batch...');
+            this.generateNewTasks();
+        }
     }
 
     // Update task progress for a specific task (for gathering tasks)
@@ -127,8 +132,8 @@ class TaskManager {
 
     // Update progress for ONLY the first incomplete task if it matches the given item
     updateProgressForItem(itemId) {
-        // Get the current task (index 0)
-        const currentTask = this.tasks[0];
+        // Get the first incomplete task overall
+        const currentTask = this.getFirstIncompleteTask();
         
         // Only update if the current task matches this item and is NOT a cooking task
         if (currentTask && !currentTask.isCookingTask && currentTask.itemId === itemId) {
@@ -136,119 +141,82 @@ class TaskManager {
         }
     }
 
-    // Update all task progress (called periodically to sync)
-    updateAllProgress() {
-        // Only update the current task (index 0)
-        const currentTask = this.tasks[0];
+// Update all task progress (called periodically to sync)
+updateAllProgress() {
+    let anyComplete = false;
+    
+    // Only update the FIRST incomplete task
+    const firstIncomplete = this.getFirstIncompleteTask();
+    
+    for (const task of this.tasks) {
+        const wasComplete = task.progress >= 1;
         
-        if (!currentTask || currentTask.progress >= 1) {
-            // Current task is complete, check if we need to promote next task
-            if (currentTask && currentTask.progress >= 1) {
-                this.promoteNextTask();
-            }
-            return;
-        }
+        // Skip if this task is already complete
+        if (wasComplete) continue;
         
-        if (currentTask.isCookingTask) {
-            // Cooking tasks manage their own progress through the cooking skill
-            // Just check if complete
-            if (currentTask.progress >= 1) {
-                this.completeTask(currentTask);
-            }
-        } else {
-            // Initialize startingCount if this is the first time this task is active
-            if (currentTask.startingCount === null) {
-                currentTask.startingCount = this.getCurrentItemCount(currentTask.itemId);
-                console.log(`Task "${currentTask.description}" now active, starting count: ${currentTask.startingCount}`);
-            }
-            
-            // Update gathering task based on current counts
-            const currentCount = this.getCurrentItemCount(currentTask.itemId);
-            const itemsGained = currentCount - currentTask.startingCount;
-            currentTask.progress = Math.min(itemsGained / currentTask.targetCount, 1);
-            
-            if (currentTask.progress >= 1) {
-                this.completeTask(currentTask);
+        // Only update progress for the FIRST incomplete task
+        if (task === firstIncomplete) {
+            if (task.isCookingTask) {
+                // Cooking tasks manage their own progress through the cooking skill
+                // Just check if complete
+                if (task.progress >= 1) {
+                    anyComplete = true;
+                }
+            } else {
+                // Initialize startingCount if this is the first time this task is active
+                if (task.startingCount === null) {
+                    task.startingCount = this.getCurrentItemCount(task.itemId);
+                    console.log(`Task "${task.description}" now active, starting count: ${task.startingCount}`);
+                }
+                
+                // Update gathering task based on current counts
+                const currentCount = this.getCurrentItemCount(task.itemId);
+                const itemsGained = currentCount - task.startingCount;
+                task.progress = Math.min(itemsGained / task.targetCount, 1);
+                
+                if (task.progress >= 1) {
+                    anyComplete = true;
+                    this.completeTask(task);
+                }
             }
         }
-        
-        // Update UI if needed
-        if (window.ui) {
-            window.ui.updateTasks();
-        }
+        // For other incomplete tasks, keep their progress as-is (don't update)
     }
+    
+    // Check if all tasks are complete
+    if (this.areAllTasksComplete()) {
+        console.log('All tasks complete! Generating new batch...');
+        this.generateNewTasks();
+    } else if (anyComplete && window.ui) {
+        window.ui.updateTasks();
+    }
+}
 
-    // Mark a task as complete and move to completed list
+    // Mark a task as complete
     completeTask(task) {
         console.log(`Task complete: ${task.description}`);
         task.progress = 1;
-        task.completedAt = Date.now();
-        
-        // Add to completed tasks with a completion number
-        this.completedTasks.push({
-            ...task,
-            completionNumber: this.completedTasks.length + 1
-        });
-        
-        // Promote next task to current
-        this.promoteNextTask();
     }
 
-    // Move tasks up when current task completes
-    promoteNextTask() {
-        // Remove completed current task
-        if (this.tasks[0] && this.tasks[0].progress >= 1) {
-            this.tasks.shift();
-        }
-        
-        // Generate a new task to fill the empty slot at the end
-        const availableSkills = this.getAvailableSkills();
-        if (availableSkills.length > 0) {
-            let attempts = 0;
-            let newTask = null;
-            
-            while (attempts < 20 && !newTask) {
-                attempts++;
-                const skill = availableSkills[Math.floor(Math.random() * availableSkills.length)];
-                newTask = skill.generateTask();
-            }
-            
-            if (newTask) {
-                // Initialize based on task type
-                if (newTask.isCookingTask) {
-                    newTask.rawFoodConsumed = 0;
-                    newTask.startingCount = 0;
-                } else {
-                    newTask.startingCount = null;
-                }
-                newTask.progress = 0;
-                this.tasks.push(newTask);
-                console.log(`Generated new pool task: ${newTask.description}`);
-            }
-        }
-        
-        // Update UI
-        if (window.ui) {
-            window.ui.updateTasks();
-        }
-        
-        // Notify AI to check the new current task
-        if (window.ai) {
-            console.log('Tasks promoted, notifying AI to check new current task');
-            window.ai.currentTask = null;
-            window.ai.decisionCooldown = 0;
-        }
+    // Check if all tasks are complete
+    areAllTasksComplete() {
+        return this.tasks.length > 0 && this.tasks.every(task => task.progress >= 1);
     }
 
-    // Reroll a specific task (only works for pool tasks, indices 2-6)
+    // Reroll a specific task - now picks a random skill
     rerollTask(index) {
-        if (index < 2 || index >= this.tasks.length) {
-            console.error('Can only reroll pool tasks (indices 2-6)');
+        if (index < 0 || index >= this.tasks.length) {
+            console.error('Invalid task index');
             return;
         }
 
         const oldTask = this.tasks[index];
         console.log(`Rerolling task: ${oldTask.description}`);
+
+        // Check if this was the current task BEFORE rerolling
+// Also check if it was the AI's current task (they should be the same, but let's be explicit)
+const wasCurrentTask = (oldTask === this.getFirstIncompleteTask());
+const wasAICurrentTask = window.ai && (oldTask === window.ai.currentTask);
 
         const availableSkills = this.getAvailableSkills();
         if (availableSkills.length === 0) {
@@ -276,60 +244,53 @@ class TaskManager {
         }
 
         if (newTask) {
-            // Initialize based on task type
-            if (newTask.isCookingTask) {
-                newTask.rawFoodConsumed = 0;
-                newTask.startingCount = 0;
-            } else {
-                // Don't set startingCount yet - will be set when task becomes active
-                newTask.startingCount = null;
-            }
-            newTask.progress = 0;
-            this.tasks[index] = newTask;
-            console.log(`New task: ${newTask.description}`);
+    // Initialize based on task type
+    if (newTask.isCookingTask) {
+        newTask.rawFoodConsumed = 0;
+        newTask.startingCount = 0;
+    } else {
+        // Don't set startingCount yet - will be set when task becomes active
+        newTask.startingCount = null;
+    }
+    newTask.progress = 0;
+    this.tasks[index] = newTask;
+    console.log(`New task: ${newTask.description}`);
             
             // Update UI
             if (window.ui) {
                 window.ui.updateTasks();
             }
+            
+            // If this was the current task being worked on, notify AI to re-evaluate
+if ((wasCurrentTask || wasAICurrentTask) && window.ai) {
+    console.log('Current task was rerolled, notifying AI to re-evaluate');
+    window.ai.currentTask = null;
+    window.ai.decisionCooldown = 0;
+}
         } else {
             console.error('Failed to generate replacement task');
         }
     }
 
-    // Reorder pool tasks (indices 2-6)
-    reorderPoolTasks(fromIndex, toIndex) {
-        // Validate indices are in pool range
-        if (fromIndex < 2 || fromIndex > 6 || toIndex < 2 || toIndex > 6) {
-            console.error('Can only reorder pool tasks (indices 2-6)');
-            return;
-        }
-        
-        if (fromIndex === toIndex) return;
-        
-        // Move the task
-        const [movedTask] = this.tasks.splice(fromIndex, 1);
-        this.tasks.splice(toIndex, 0, movedTask);
-        
-        // Update UI
-        if (window.ui) {
-            window.ui.updateTasks();
-        }
-    }
-
-    // Get the current task (always first incomplete)
-    getFirstIncompleteTask() {
-        return this.tasks[0] && this.tasks[0].progress < 1 ? this.tasks[0] : null;
-    }
-
-    // Get next incomplete task for AI (same as getFirstIncompleteTask)
+    // Get next incomplete task for AI (always the first incomplete one)
     getNextTask() {
-        return this.getFirstIncompleteTask();
+        for (const task of this.tasks) {
+            if (task.progress < 1) {
+                return task;
+            }
+        }
+        return null;
     }
 
-    // Check if a given task is the current task
+    // Get the first incomplete task (same as getNextTask but more explicit)
+    getFirstIncompleteTask() {
+        return this.getNextTask();
+    }
+
+    // Check if a given task is the current task (first incomplete)
     isCurrentTask(task) {
-        return this.tasks[0] === task;
+        const current = this.getFirstIncompleteTask();
+        return current === task;
     }
 
     // Get all tasks
@@ -337,24 +298,11 @@ class TaskManager {
         return this.tasks;
     }
 
-    // Get all completed tasks
-    getCompletedTasks() {
-        return this.completedTasks;
-    }
-
     // Clear all tasks (for debugging)
     clearTasks() {
         this.tasks = [];
         if (window.ui) {
             window.ui.updateTasks();
-        }
-    }
-
-    // Clear completed tasks history
-    clearCompletedTasks() {
-        this.completedTasks = [];
-        if (window.ui) {
-            window.ui.updateCompletedTasks();
         }
     }
 

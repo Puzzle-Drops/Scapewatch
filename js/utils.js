@@ -1,19 +1,5 @@
 // Utility functions
 
-// Skill colors for UI and rendering
-const SKILL_COLORS = {
-    mining: '#7f8c8d',      // Grey/rock color
-    fishing: '#3498db',     // Light blue
-    woodcutting: '#27ae60', // Green
-    cooking: '#9b59b6',     // Purple
-    default: '#f39c12'      // Orange (default)
-};
-
-// Get color for a skill
-function getSkillColor(skillId) {
-    return SKILL_COLORS[skillId] || SKILL_COLORS.default;
-}
-
 // Calculate distance between two points
 function distance(x1, y1, x2, y2) {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
