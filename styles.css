@@ -377,7 +377,17 @@ body {
     border-radius: 6px;
     border: 1px solid #444;
     transition: all 0.2s ease;
+    position: relative;
+}
+
+/* Draggable tasks (positions 3-7) */
+.task-item.task-draggable {
     cursor: move;
+    user-select: none;
+}
+
+.task-item.task-draggable:hover {
+    background-color: #2a2a2a;
 }
 
 /* Locked tasks (positions 0 and 1) */
@@ -395,11 +405,13 @@ body {
 .task-item.dragging {
     opacity: 0.5;
     transform: scale(0.95);
+    z-index: 1000;
 }
 
 .task-item.drag-over {
     background-color: #333;
     border-color: #f39c12;
+    transform: scale(1.02);
 }
 
 .task-header {
@@ -408,18 +420,22 @@ body {
     align-items: center;
     margin-bottom: 8px;
     gap: 8px;
+    pointer-events: auto;
 }
 
 .task-skill-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
+    pointer-events: none;
 }
 
 .task-description {
     font-size: 14px;
     color: #fff;
     flex: 1;
+    pointer-events: none;
+    user-select: none;
 }
 
 .task-reroll {
@@ -430,10 +446,18 @@ body {
     border-radius: 3px;
     font-size: 12px;
     cursor: pointer;
+    pointer-events: auto;
+    z-index: 10;
+    flex-shrink: 0;
 }
 
 .task-reroll:hover {
     background-color: #666;
+}
+
+.task-reroll:active {
+    background-color: #777;
+    transform: scale(0.95);
 }
 
 .task-progress {
