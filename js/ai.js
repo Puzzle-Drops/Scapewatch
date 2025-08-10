@@ -103,15 +103,10 @@ class AIManager {
         }
     }
 
-shouldCheckBanking() {
-    // Don't check banking if we're actively cooking
-    if (player.currentActivity === 'cook_food') {
-        return false;
+    shouldCheckBanking() {
+        // Check if inventory is full
+        return inventory.isFull();
     }
-    
-    // Check if inventory is full
-    return inventory.isFull();
-}
 
     makeDecision() {
         console.log('AI making decision...', {
@@ -158,7 +153,11 @@ shouldCheckBanking() {
             const skill = skillRegistry.getSkill(this.currentTask.skill);
             if (skill && skill.needsBankingForTask) {
                 // Skill has specific banking logic - use it
-                return skill.needsBankingForTask(this.currentTask);
+                const needsBank = skill.needsBankingForTask(this.currentTask);
+                if (needsBank) {
+                    console.log(`Skill ${this.currentTask.skill} says banking needed for task`);
+                    return true;
+                }
             }
         }
         
@@ -170,10 +169,19 @@ shouldCheckBanking() {
         return false;
     }
 
-    hasRawFood() {
-        // Delegate to cooking skill
-        const cookingSkill = skillRegistry.getSkill('cooking');
-        return cookingSkill ? cookingSkill.hasRawFoodInInventory() : false;
+    // Check if any processing skill has materials to work with
+    hasProcessingMaterials() {
+        if (!this.currentTask) return false;
+        
+        const skill = skillRegistry.getSkill(this.currentTask.skill);
+        if (!skill) return false;
+        
+        // Use the generic interface
+        if (skill.isProcessingSkill) {
+            return skill.hasMaterials ? skill.hasMaterials() : false;
+        }
+        
+        return false;
     }
 
     executeTask(task) {
@@ -231,6 +239,20 @@ shouldCheckBanking() {
                 console.log(`currentNode says ${task.nodeId} but player is ${dist} tiles away, clearing and moving`);
                 player.currentNode = null;
                 player.moveTo(task.nodeId);
+                return;
+            }
+        }
+        
+        // Check for processing skills - do we have the right materials?
+        if (skill && skill.isProcessingSkill) {
+            if (!skill.hasMaterialsForCurrentTask || !skill.hasMaterialsForCurrentTask()) {
+                const materials = skill.getMaterialsNeededForTask ? skill.getMaterialsNeededForTask(task) : null;
+                if (materials) {
+                    console.log(`No ${materials.itemId} in inventory for ${task.skill} task, need to bank`);
+                } else {
+                    console.log(`No materials in inventory for ${task.skill} task, need to bank`);
+                }
+                this.goToBank();
                 return;
             }
         }
