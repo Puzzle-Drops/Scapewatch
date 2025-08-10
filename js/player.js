@@ -360,9 +360,16 @@ if (this.currentActivity) {
         console.log(`Started activity: ${activityData.name}`);
     }
 
-    stopActivity() {
+stopActivity() {
     if (this.currentActivity) {
         console.log(`Stopped activity: ${this.currentActivity}`);
+        
+        // NEW: Notify the skill that the activity was stopped
+        const skill = skillRegistry.getSkillForActivity(this.currentActivity);
+        if (skill && skill.onActivityStopped) {
+            skill.onActivityStopped();
+        }
+        
         this.currentActivity = null;
         this.activityProgress = 0;
         
