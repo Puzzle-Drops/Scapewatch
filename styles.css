@@ -380,6 +380,9 @@ body {
     border-radius: 6px;
     border: 1px solid #444;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .task-item.current-task {
@@ -392,7 +395,6 @@ body {
 }
 
 .task-item.pool-task {
-    cursor: move;
     opacity: 0.7;
 }
 
@@ -401,20 +403,12 @@ body {
     background-color: #333;
 }
 
-.task-item.dragging {
-    opacity: 0.5;
-}
-
-.task-item.drag-over {
-    border-color: #f39c12;
-    background-color: #333;
-}
-
 .task-content {
     display: flex;
     align-items: center;
     padding: 10px;
     gap: 10px;
+    flex: 1;
 }
 
 .task-icon {
@@ -470,15 +464,51 @@ body {
     text-align: right;
 }
 
-.task-reroll {
-    padding: 4px 8px;
+.task-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-right: 10px;
+}
+
+.task-move-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
     background-color: #555;
     color: #fff;
     border: none;
     border-radius: 3px;
     font-size: 14px;
     cursor: pointer;
-    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-move-btn:hover {
+    background-color: #666;
+}
+
+.task-move-placeholder {
+    width: 24px;
+    height: 24px;
+}
+
+.task-reroll {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background-color: #555;
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
 }
 
 .task-reroll:hover {
