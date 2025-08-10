@@ -350,6 +350,12 @@ class CookingSkill extends BaseSkill {
                 // We have a cooking task but don't have the required raw food
                 console.log(`Cannot cook - need ${taskRawItemId} for task but don't have it`);
                 this.clearCookingState(); // Clear state when we can't cook
+                
+                // Tell the AI it needs to re-evaluate (probably need to bank)
+                if (window.ai) {
+                    window.ai.decisionCooldown = 0;
+                }
+                
                 return false; // IMPORTANT: Don't fall back to other items
             }
         } else {
@@ -392,8 +398,10 @@ class CookingSkill extends BaseSkill {
         
         // Double-check we still have the raw item
         if (!inventory.hasItem(this.currentRawItem.rawItemId, 1)) {
-            console.log('Raw item disappeared during cooking!');
+            // This shouldn't happen if beforeActivityStart() is working correctly
+            console.log('ERROR: Raw item disappeared during cooking - this should not happen!');
             this.lastCookingXp = 0;
+            this.clearCookingState();
             return [];
         }
         
@@ -577,6 +585,17 @@ class CookingSkill extends BaseSkill {
                 console.log('Cooking task complete, resetting banking state');
                 this.hasBankedForTask = false;
                 this.currentTaskId = null;
+            } else {
+                // Task not complete, check if we need to bank for more raw food
+                if (!inventory.hasItem(window.ai.currentTask.itemId, 1)) {
+                    console.log('Cooking task needs more raw food, triggering AI re-evaluation');
+                    // Clear banking flag so AI will go bank again
+                    this.hasBankedForTask = false;
+                    // Tell AI to re-evaluate immediately
+                    if (window.ai) {
+                        window.ai.decisionCooldown = 0;
+                    }
+                }
             }
         }
     }
