@@ -7,7 +7,7 @@ class CookingSkill extends BaseSkill {
         this.hasBankedForTask = false; // Track if we've banked for current cooking task
         this.currentTaskId = null; // Track which task we've banked for
         
-        // NEW: State tracking to prevent duplicate cooking starts
+        // State tracking to prevent duplicate cooking starts
         this.isCooking = false;
         this.cookingTaskId = null;
         this.cookingItemId = null;
@@ -300,6 +300,44 @@ class CookingSkill extends BaseSkill {
         return false;
     }
     
+    // NEW METHOD: Check if we have raw food for the CURRENT TASK specifically
+    hasRawFoodForCurrentTask() {
+        // Only check if we have an active cooking task
+        if (!window.ai || !window.ai.currentTask || !window.ai.currentTask.isCookingTask) {
+            return false;
+        }
+        
+        const task = window.ai.currentTask;
+        const hasRawFood = inventory.hasItem(task.itemId, 1);
+        
+        if (!hasRawFood) {
+            console.log(`No ${task.itemId} in inventory for cooking task`);
+        }
+        
+        return hasRawFood;
+    }
+    
+    // ==================== PROCESSING SKILL INTERFACE ====================
+    // Implement the generic processing skill interface
+    
+    isProcessingSkill() {
+        return true; // Cooking is a processing skill
+    }
+    
+    hasMaterialsForCurrentTask() {
+        // Delegate to our specific implementation
+        return this.hasRawFoodForCurrentTask();
+    }
+    
+    getMaterialsNeededForTask(task) {
+        if (!task || !task.isCookingTask) return null;
+        
+        return {
+            itemId: task.itemId, // The raw food needed
+            quantity: task.targetCount - (task.rawFoodConsumed || 0)
+        };
+    }
+    
     // ==================== CORE BEHAVIOR ====================
     
     getDuration(baseDuration, level, activityData) {
@@ -307,7 +345,7 @@ class CookingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
-        // NEW: Check if we're already cooking
+        // Check if we're already cooking
         if (this.isCooking) {
             const currentTime = Date.now();
             const timeCooking = currentTime - this.cookingStartTime;
@@ -372,7 +410,7 @@ class CookingSkill extends BaseSkill {
         // Store what we're going to cook
         this.currentRawItem = rawItem;
         
-        // NEW: Set cooking state
+        // Set cooking state
         this.isCooking = true;
         this.cookingStartTime = Date.now();
         this.cookingItemId = rawItem.rawItemId;
@@ -402,6 +440,12 @@ class CookingSkill extends BaseSkill {
             console.log('ERROR: Raw item disappeared during cooking - this should not happen!');
             this.lastCookingXp = 0;
             this.clearCookingState();
+            
+            // Trigger AI re-evaluation to go bank
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+            }
+            
             return [];
         }
         
@@ -471,7 +515,7 @@ class CookingSkill extends BaseSkill {
         return taskId !== this.currentTaskId;
     }
     
-    // NEW: Clear cooking state
+    // Clear cooking state
     clearCookingState() {
         this.isCooking = false;
         this.cookingTaskId = null;
@@ -566,7 +610,7 @@ class CookingSkill extends BaseSkill {
             // Reset banking flag when task becomes impossible
             this.hasBankedForTask = false;
             this.currentTaskId = null;
-            this.clearCookingState(); // NEW: Clear cooking state
+            this.clearCookingState();
             return false;
         }
         
@@ -575,7 +619,7 @@ class CookingSkill extends BaseSkill {
     
     // Called when activity completes to potentially reset state
     onActivityComplete(activityData) {
-        // NEW: Clear cooking state when activity completes
+        // Clear cooking state when activity completes
         this.clearCookingState();
         
         // Check if task is complete
@@ -605,7 +649,7 @@ class CookingSkill extends BaseSkill {
         return this.hasRawFoodInInventory();
     }
     
-    // NEW: Called when activity is stopped (interrupted)
+    // Called when activity is stopped (interrupted)
     onActivityStopped() {
         console.log('Cooking activity was stopped, clearing state');
         this.clearCookingState();
