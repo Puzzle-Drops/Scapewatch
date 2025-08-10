@@ -351,24 +351,7 @@ body {
 .tasks-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-}
-
-/* Task Section Headers */
-.task-section-header {
-    font-size: 12px;
-    font-weight: bold;
-    color: #999;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 10px;
-    margin-bottom: 4px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #333;
-}
-
-.task-section-header:first-child {
-    margin-top: 0;
+    gap: 10px;
 }
 
 .task-item {
@@ -376,42 +359,6 @@ body {
     padding: 12px;
     border-radius: 6px;
     border: 1px solid #444;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-/* Draggable tasks (positions 3-7) */
-.task-item.task-draggable {
-    cursor: move;
-    user-select: none;
-}
-
-.task-item.task-draggable:hover {
-    background-color: #2a2a2a;
-}
-
-/* Locked tasks (positions 0 and 1) */
-.task-item.task-locked {
-    cursor: default;
-    background-color: #1a1a1a;
-    border-color: #555;
-}
-
-.task-item.task-locked .task-description {
-    font-weight: bold;
-}
-
-/* Dragging states */
-.task-item.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-    z-index: 1000;
-}
-
-.task-item.drag-over {
-    background-color: #333;
-    border-color: #f39c12;
-    transform: scale(1.02);
 }
 
 .task-header {
@@ -419,23 +366,12 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    gap: 8px;
-    pointer-events: auto;
-}
-
-.task-skill-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    pointer-events: none;
 }
 
 .task-description {
     font-size: 14px;
     color: #fff;
     flex: 1;
-    pointer-events: none;
-    user-select: none;
 }
 
 .task-reroll {
@@ -446,18 +382,10 @@ body {
     border-radius: 3px;
     font-size: 12px;
     cursor: pointer;
-    pointer-events: auto;
-    z-index: 10;
-    flex-shrink: 0;
 }
 
 .task-reroll:hover {
     background-color: #666;
-}
-
-.task-reroll:active {
-    background-color: #777;
-    transform: scale(0.95);
 }
 
 .task-progress {
@@ -485,45 +413,6 @@ body {
     color: #aaa;
     min-width: 60px;
     text-align: right;
-}
-
-/* Completed Tasks Modal */
-.completed-tasks-list {
-    max-height: 500px;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.completed-task-item {
-    display: flex;
-    align-items: baseline;
-    padding: 8px;
-    margin-bottom: 8px;
-    background-color: #222;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.completed-task-number {
-    color: #f39c12;
-    font-weight: bold;
-    margin-right: 10px;
-    min-width: 30px;
-}
-
-.completed-task-description {
-    color: #fff;
-    flex: 1;
-    text-align: left;
-}
-
-.completed-tasks-stats {
-    margin-top: 20px;
-    padding-top: 10px;
-    border-top: 1px solid #444;
-    font-size: 12px;
-    color: #999;
-    text-align: center;
 }
 
 /* Item count displays */
@@ -661,7 +550,7 @@ body {
     cursor: not-allowed;
 }
 
-#close-bank, #close-shop, #close-completed-tasks {
+#close-bank, #close-shop {
     width: 100%;
     padding: 10px;
     background-color: #e74c3c;
@@ -673,7 +562,7 @@ body {
     cursor: pointer;
 }
 
-#close-bank:hover, #close-shop:hover, #close-completed-tasks:hover {
+#close-bank:hover, #close-shop:hover {
     background-color: #c0392b;
 }
 
