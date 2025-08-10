@@ -158,10 +158,16 @@ class AIManager {
                     console.log(`Skill ${this.currentTask.skill} says banking needed for task`);
                     return true;
                 }
+                
+                // IMPORTANT: If this is a processing skill and it says no banking needed,
+                // trust it! Don't fall through to the inventory.isFull() check
+                if (skill.isProcessingSkill) {
+                    return false;
+                }
             }
         }
         
-        // Fallback for skills without specific banking logic (gathering skills)
+        // Fallback ONLY for gathering skills (or skills without specific banking logic)
         if (inventory.isFull()) {
             return true;
         }
