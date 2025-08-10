@@ -2,6 +2,7 @@ class UIManager {
     constructor() {
         this.currentPanel = 'inventory';
         this.bankOpen = false;
+        this.completedTasksOpen = false;
         this.itemOrder = null;
         this.itemOrderMap = {};
         this.initializeUI();
@@ -70,13 +71,24 @@ class UIManager {
             });
         }
         
-        // Generate tasks button
-        const generateTasksBtn = document.getElementById('generate-tasks-btn');
-        if (generateTasksBtn) {
-            generateTasksBtn.addEventListener('click', () => {
-                if (window.taskManager) {
-                    taskManager.generateNewTasks();
+        // View completed tasks button
+        const viewCompletedBtn = document.getElementById('view-completed-tasks-btn');
+        if (!viewCompletedBtn) {
+            // Create the button if it doesn't exist (replacing generate tasks button)
+            const tasksPanel = document.getElementById('tasks-panel');
+            if (tasksPanel) {
+                const oldBtn = document.getElementById('generate-tasks-btn');
+                if (oldBtn) {
+                    oldBtn.id = 'view-completed-tasks-btn';
+                    oldBtn.textContent = 'View Completed Tasks';
+                    oldBtn.addEventListener('click', () => {
+                        this.openCompletedTasks();
+                    });
                 }
+            }
+        } else {
+            viewCompletedBtn.addEventListener('click', () => {
+                this.openCompletedTasks();
             });
         }
     }
@@ -181,39 +193,36 @@ class UIManager {
     }
 
     createSkillElement(skillId, skill) {
-    const skillDiv = document.createElement('div');
-    skillDiv.className = 'skill-item';
-    
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'skill-content';
-    
-    // Add skill icon
-    const iconElement = this.createSkillIcon(skillId, skill);
-    if (iconElement) {
-        contentDiv.appendChild(iconElement);
+        const skillDiv = document.createElement('div');
+        skillDiv.className = 'skill-item';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'skill-content';
+        
+        // Add skill icon
+        const iconElement = this.createSkillIcon(skillId, skill);
+        if (iconElement) {
+            contentDiv.appendChild(iconElement);
+        }
+        
+        // Create level display
+        const levelDiv = document.createElement('div');
+        levelDiv.className = 'skill-level';
+        levelDiv.textContent = skill.level;
+        contentDiv.appendChild(levelDiv);
+        
+        // Create progress bar
+        const progressBar = this.createSkillProgressBar(skill);
+        
+        // Create tooltip
+        const tooltip = this.createSkillTooltip(skill);
+        
+        skillDiv.appendChild(contentDiv);
+        skillDiv.appendChild(progressBar);
+        skillDiv.appendChild(tooltip);
+        
+        return skillDiv;
     }
-    
-    // Create level display
-    const levelDiv = document.createElement('div');
-    levelDiv.className = 'skill-level';
-    levelDiv.textContent = skill.level;
-    contentDiv.appendChild(levelDiv);
-    
-    // Create progress bar
-    const progressBar = this.createSkillProgressBar(skill);
-    
-    // Create tooltip
-    const tooltip = this.createSkillTooltip(skill);
-    
-    // Tooltip positioning is handled by CSS, no need for dynamic positioning
-    // The tooltip is positioned absolutely relative to the skill item
-    
-    skillDiv.appendChild(contentDiv);
-    skillDiv.appendChild(progressBar);
-    skillDiv.appendChild(tooltip);
-    
-    return skillDiv;
-}
 
     createSkillIcon(skillId, skill) {
         const preloadedIcon = loadingManager.getImage(`skill_${skillId}`);
@@ -295,37 +304,34 @@ class UIManager {
     }
 
     createLevelItem(iconKey, value, color, tooltipText) {
-    const levelItem = document.createElement('div');
-    levelItem.className = 'level-item';
-    levelItem.style.position = 'relative';
-    
-    const icon = loadingManager.getImage(iconKey);
-    if (icon) {
-        const iconImg = document.createElement('img');
-        iconImg.className = 'level-icon';
-        iconImg.src = icon.src;
-        levelItem.appendChild(iconImg);
+        const levelItem = document.createElement('div');
+        levelItem.className = 'level-item';
+        levelItem.style.position = 'relative';
+        
+        const icon = loadingManager.getImage(iconKey);
+        if (icon) {
+            const iconImg = document.createElement('img');
+            iconImg.className = 'level-icon';
+            iconImg.src = icon.src;
+            levelItem.appendChild(iconImg);
+        }
+        
+        const text = document.createElement('div');
+        text.style.fontSize = '34px';
+        text.style.fontWeight = 'bold';
+        text.style.color = color;
+        text.textContent = value;
+        
+        const tooltip = document.createElement('div');
+        tooltip.className = 'skill-tooltip';
+        tooltip.style.textAlign = 'left';
+        tooltip.innerHTML = tooltipText;
+        
+        levelItem.appendChild(text);
+        levelItem.appendChild(tooltip);
+        
+        return levelItem;
     }
-    
-    const text = document.createElement('div');
-    text.style.fontSize = '34px';
-    text.style.fontWeight = 'bold';
-    text.style.color = color;
-    text.textContent = value;
-    
-    const tooltip = document.createElement('div');
-    tooltip.className = 'skill-tooltip';
-    tooltip.style.textAlign = 'left';
-    tooltip.innerHTML = tooltipText;
-    
-    // Tooltip positioning is handled by CSS, no need for dynamic positioning
-    // The tooltip is positioned absolutely relative to the level item
-    
-    levelItem.appendChild(text);
-    levelItem.appendChild(tooltip);
-    
-    return levelItem;
-}
 
     calculateTotalExp(allSkills) {
         let totalExp = 0;
@@ -345,28 +351,92 @@ class UIManager {
         
         tasksList.innerHTML = '';
         
-        const tasks = taskManager.getAllTasks();
+        // Create sections for current, next, and regular tasks
         
-        if (tasks.length === 0) {
-            const emptyDiv = document.createElement('div');
-            emptyDiv.style.textAlign = 'center';
-            emptyDiv.style.color = '#999';
-            emptyDiv.textContent = 'No tasks available. Click button below to generate.';
-            tasksList.appendChild(emptyDiv);
-            return;
+        // Current Task Section
+        if (taskManager.currentTask) {
+            const currentSection = document.createElement('div');
+            currentSection.className = 'task-section';
+            
+            const currentHeader = document.createElement('div');
+            currentHeader.className = 'task-section-header';
+            currentHeader.textContent = 'Current Task';
+            
+            const currentTaskDiv = this.createTaskElement(taskManager.currentTask, -1, true); // -1 means no reroll
+            
+            currentSection.appendChild(currentHeader);
+            currentSection.appendChild(currentTaskDiv);
+            tasksList.appendChild(currentSection);
         }
         
-        tasks.forEach((task, index) => {
-            const taskDiv = this.createTaskElement(task, index);
-            tasksList.appendChild(taskDiv);
-        });
+        // Next Task Section
+        if (taskManager.nextTask) {
+            const nextSection = document.createElement('div');
+            nextSection.className = 'task-section';
+            
+            const nextHeader = document.createElement('div');
+            nextHeader.className = 'task-section-header';
+            nextHeader.textContent = 'Next Task';
+            
+            const nextTaskDiv = this.createTaskElement(taskManager.nextTask, -1, false); // No reroll, no progress
+            
+            nextSection.appendChild(nextHeader);
+            nextSection.appendChild(nextTaskDiv);
+            tasksList.appendChild(nextSection);
+        }
+        
+        // Regular Tasks Section
+        if (taskManager.tasks.length > 0) {
+            const regularSection = document.createElement('div');
+            regularSection.className = 'task-section';
+            
+            const regularHeader = document.createElement('div');
+            regularHeader.className = 'task-section-header';
+            regularHeader.textContent = 'Tasks';
+            
+            const regularTasksContainer = document.createElement('div');
+            regularTasksContainer.className = 'regular-tasks-container';
+            
+            taskManager.tasks.forEach((task, index) => {
+                const taskDiv = this.createTaskElement(task, index, false); // Can reroll, no progress
+                regularTasksContainer.appendChild(taskDiv);
+            });
+            
+            regularSection.appendChild(regularHeader);
+            regularSection.appendChild(regularTasksContainer);
+            tasksList.appendChild(regularSection);
+        }
     }
 
-    createTaskElement(task, index) {
+    createTaskElement(task, rerollIndex, showProgress) {
         const taskDiv = document.createElement('div');
         taskDiv.className = 'task-item';
         
-        // Header with description and reroll button
+        // Add skill-based class for styling
+        taskDiv.classList.add(`task-skill-${task.skill}`);
+        
+        // Container for icon and content
+        const taskContent = document.createElement('div');
+        taskContent.className = 'task-content';
+        
+        // Skill icon
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'task-icon';
+        const skillIcon = loadingManager.getImage(`skill_${task.skill}`);
+        if (skillIcon) {
+            const icon = document.createElement('img');
+            icon.src = skillIcon.src;
+            iconDiv.appendChild(icon);
+        } else {
+            // Fallback text
+            iconDiv.textContent = task.skill.substring(0, 3).toUpperCase();
+        }
+        
+        // Task details container
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'task-details';
+        
+        // Header with description and optional reroll button
         const headerDiv = document.createElement('div');
         headerDiv.className = 'task-header';
         
@@ -374,56 +444,176 @@ class UIManager {
         descDiv.className = 'task-description';
         descDiv.textContent = task.description;
         
-        const rerollBtn = document.createElement('button');
-        rerollBtn.className = 'task-reroll';
-        rerollBtn.textContent = '↻';
-        rerollBtn.title = 'Reroll task';
-        rerollBtn.addEventListener('click', () => {
-            if (window.taskManager) {
-                taskManager.rerollTask(index);
-            }
-        });
-        
         headerDiv.appendChild(descDiv);
-        headerDiv.appendChild(rerollBtn);
         
-        // Progress section
-        const progressDiv = document.createElement('div');
-        progressDiv.className = 'task-progress';
-        
-        const progressBar = document.createElement('div');
-        progressBar.className = 'task-progress-bar';
-        
-        const progressFill = document.createElement('div');
-        progressFill.className = 'task-progress-fill';
-        progressFill.style.width = `${task.progress * 100}%`;
-        
-        progressBar.appendChild(progressFill);
-        
-        const countDiv = document.createElement('div');
-        countDiv.className = 'task-count';
-        
-        // For cooking tasks, show raw food consumed vs target
-        if (task.isCookingTask) {
-            const consumed = task.rawFoodConsumed || 0;
-            countDiv.textContent = `${consumed}/${task.targetCount}`;
-        } else {
-            // For gathering tasks, show items collected
-            const current = Math.floor(task.progress * task.targetCount);
-            countDiv.textContent = `${current}/${task.targetCount}`;
+        // Add reroll button only for regular tasks
+        if (rerollIndex >= 0) {
+            const rerollBtn = document.createElement('button');
+            rerollBtn.className = 'task-reroll';
+            rerollBtn.textContent = '↻';
+            rerollBtn.title = 'Reroll task';
+            rerollBtn.addEventListener('click', () => {
+                if (window.taskManager) {
+                    taskManager.rerollTask(rerollIndex);
+                }
+            });
+            headerDiv.appendChild(rerollBtn);
         }
         
-        progressDiv.appendChild(progressBar);
-        progressDiv.appendChild(countDiv);
+        detailsDiv.appendChild(headerDiv);
         
-        taskDiv.appendChild(headerDiv);
-        taskDiv.appendChild(progressDiv);
+        // Progress section (only for current task)
+        if (showProgress) {
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'task-progress';
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'task-progress-bar';
+            
+            const progressFill = document.createElement('div');
+            progressFill.className = `task-progress-fill skill-${task.skill}`;
+            progressFill.style.width = `${task.progress * 100}%`;
+            
+            progressBar.appendChild(progressFill);
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'task-count';
+            
+            // For cooking tasks, show raw food consumed vs target
+            if (task.isCookingTask) {
+                const consumed = task.rawFoodConsumed || 0;
+                countDiv.textContent = `${consumed}/${task.targetCount}`;
+            } else {
+                // For gathering tasks, show items collected
+                const current = Math.floor(task.progress * task.targetCount);
+                countDiv.textContent = `${current}/${task.targetCount}`;
+            }
+            
+            progressDiv.appendChild(progressBar);
+            progressDiv.appendChild(countDiv);
+            detailsDiv.appendChild(progressDiv);
+        }
+        
+        // Assemble the task element
+        taskContent.appendChild(iconDiv);
+        taskContent.appendChild(detailsDiv);
+        taskDiv.appendChild(taskContent);
         
         // Mark complete tasks
         if (task.progress >= 1) {
-            taskDiv.style.opacity = '0.6';
-            progressFill.style.backgroundColor = '#f39c12';
+            taskDiv.classList.add('task-complete');
         }
+        
+        return taskDiv;
+    }
+
+    // ==================== COMPLETED TASKS MODAL ====================
+
+    openCompletedTasks() {
+        this.completedTasksOpen = true;
+        let modal = document.getElementById('completed-tasks-modal');
+        
+        // Create modal if it doesn't exist
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'completed-tasks-modal';
+            modal.className = 'modal';
+            modal.style.display = 'none';
+            
+            const content = document.createElement('div');
+            content.className = 'modal-content';
+            
+            const title = document.createElement('h2');
+            title.textContent = 'Completed Tasks';
+            
+            const listContainer = document.createElement('div');
+            listContainer.id = 'completed-tasks-list';
+            listContainer.className = 'completed-tasks-list';
+            
+            const closeBtn = document.createElement('button');
+            closeBtn.id = 'close-completed-tasks';
+            closeBtn.textContent = 'Close';
+            closeBtn.addEventListener('click', () => this.closeCompletedTasks());
+            
+            content.appendChild(title);
+            content.appendChild(listContainer);
+            content.appendChild(closeBtn);
+            modal.appendChild(content);
+            
+            // Add to scaled container
+            const scaledContainer = document.getElementById('scaled-container');
+            if (scaledContainer) {
+                scaledContainer.appendChild(modal);
+            } else {
+                document.body.appendChild(modal);
+            }
+        }
+        
+        modal.style.display = 'flex';
+        this.updateCompletedTasksList();
+    }
+
+    closeCompletedTasks() {
+        this.completedTasksOpen = false;
+        const modal = document.getElementById('completed-tasks-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    updateCompletedTasksList() {
+        const listContainer = document.getElementById('completed-tasks-list');
+        if (!listContainer || !window.taskManager) return;
+        
+        listContainer.innerHTML = '';
+        
+        const completedTasks = taskManager.getCompletedTasks();
+        
+        if (completedTasks.length === 0) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'completed-tasks-empty';
+            emptyDiv.textContent = 'No completed tasks yet';
+            listContainer.appendChild(emptyDiv);
+            return;
+        }
+        
+        // Show tasks in reverse order (most recent first)
+        completedTasks.slice().reverse().forEach((task, reverseIndex) => {
+            const actualIndex = completedTasks.length - reverseIndex;
+            const taskDiv = this.createCompletedTaskElement(task, actualIndex);
+            listContainer.appendChild(taskDiv);
+        });
+    }
+
+    createCompletedTaskElement(task, number) {
+        const taskDiv = document.createElement('div');
+        taskDiv.className = 'completed-task-item';
+        
+        // Number
+        const numberDiv = document.createElement('div');
+        numberDiv.className = 'completed-task-number';
+        numberDiv.textContent = `${number}.`;
+        
+        // Skill icon
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'completed-task-icon';
+        const skillIcon = loadingManager.getImage(`skill_${task.skill}`);
+        if (skillIcon) {
+            const icon = document.createElement('img');
+            icon.src = skillIcon.src;
+            iconDiv.appendChild(icon);
+        } else {
+            iconDiv.textContent = task.skill.substring(0, 3).toUpperCase();
+        }
+        
+        // Description
+        const descDiv = document.createElement('div');
+        descDiv.className = 'completed-task-description';
+        descDiv.textContent = task.description;
+        
+        taskDiv.appendChild(numberDiv);
+        taskDiv.appendChild(iconDiv);
+        taskDiv.appendChild(descDiv);
         
         return taskDiv;
     }
