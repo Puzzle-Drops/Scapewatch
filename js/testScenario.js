@@ -1,6 +1,6 @@
 class TestScenario {
     constructor() {
-        this.enabled = true; // Set to false to disable test scenario
+        this.enabled = false; // Set to false to disable test scenario
     }
 
     run() {
