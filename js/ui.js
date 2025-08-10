@@ -394,6 +394,7 @@ class UIManager {
             // Make draggable for tasks 3-7 (indices 2-6)
             taskDiv.draggable = true;
             taskDiv.dataset.taskIndex = index;
+            taskDiv.classList.add('task-draggable');
             
             // Add drag event listeners
             taskDiv.addEventListener('dragstart', (e) => this.handleDragStart(e, index));
@@ -426,7 +427,9 @@ class UIManager {
             rerollBtn.className = 'task-reroll';
             rerollBtn.textContent = '↻';
             rerollBtn.title = 'Reroll task';
-            rerollBtn.addEventListener('click', () => {
+            rerollBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent drag from initiating
+                console.log(`Rerolling task at index ${index}`);
                 if (window.taskManager) {
                     taskManager.rerollTask(index);
                 }
@@ -434,47 +437,51 @@ class UIManager {
             headerDiv.appendChild(rerollBtn);
         }
         
-        // Progress section
-        const progressDiv = document.createElement('div');
-        progressDiv.className = 'task-progress';
-        
-        const progressBar = document.createElement('div');
-        progressBar.className = 'task-progress-bar';
-        
-        const progressFill = document.createElement('div');
-        progressFill.className = 'task-progress-fill';
-        progressFill.style.width = `${task.progress * 100}%`;
-        
-        // Active task gets special color
+        // Only show progress section for the active task (index 0)
         if (index === 0) {
-            progressFill.style.backgroundColor = '#3498db';
-        }
-        
-        progressBar.appendChild(progressFill);
-        
-        const countDiv = document.createElement('div');
-        countDiv.className = 'task-count';
-        
-        // For cooking tasks, show raw food consumed vs target
-        if (task.isCookingTask) {
-            const consumed = task.rawFoodConsumed || 0;
-            countDiv.textContent = `${consumed}/${task.targetCount}`;
+            // Progress section with skill-specific color
+            const progressDiv = document.createElement('div');
+            progressDiv.className = 'task-progress';
+            
+            const progressBar = document.createElement('div');
+            progressBar.className = 'task-progress-bar';
+            
+            const progressFill = document.createElement('div');
+            progressFill.className = 'task-progress-fill';
+            progressFill.style.width = `${task.progress * 100}%`;
+            
+            // Use skill-specific color for the progress bar
+            const skillColor = this.getSkillColor(task.skill);
+            progressFill.style.backgroundColor = skillColor;
+            
+            progressBar.appendChild(progressFill);
+            
+            const countDiv = document.createElement('div');
+            countDiv.className = 'task-count';
+            
+            // For cooking tasks, show raw food consumed vs target
+            if (task.isCookingTask) {
+                const consumed = task.rawFoodConsumed || 0;
+                countDiv.textContent = `${consumed}/${task.targetCount}`;
+            } else {
+                // For gathering tasks, show items collected
+                const current = Math.floor(task.progress * task.targetCount);
+                countDiv.textContent = `${current}/${task.targetCount}`;
+            }
+            
+            progressDiv.appendChild(progressBar);
+            progressDiv.appendChild(countDiv);
+            
+            taskDiv.appendChild(headerDiv);
+            taskDiv.appendChild(progressDiv);
         } else {
-            // For gathering tasks, show items collected
-            const current = Math.floor(task.progress * task.targetCount);
-            countDiv.textContent = `${current}/${task.targetCount}`;
+            // For non-active tasks, just show the header
+            taskDiv.appendChild(headerDiv);
         }
-        
-        progressDiv.appendChild(progressBar);
-        progressDiv.appendChild(countDiv);
-        
-        taskDiv.appendChild(headerDiv);
-        taskDiv.appendChild(progressDiv);
         
         // Mark complete tasks
         if (task.progress >= 1) {
             taskDiv.style.opacity = '0.6';
-            progressFill.style.backgroundColor = '#f39c12';
         }
         
         return taskDiv;
@@ -493,14 +500,50 @@ class UIManager {
         return null;
     }
 
+    // Get skill color (matching map.js activity colors)
+    getSkillColor(skillId) {
+        const skillColors = {
+            fishing: '#3498db',      // Blue
+            mining: '#95a5a6',       // Grey/ore color
+            woodcutting: '#27ae60',  // Green
+            cooking: '#e67e22',      // Orange
+            smithing: '#34495e',     // Dark grey
+            crafting: '#9b59b6',     // Purple
+            combat: '#e74c3c',       // Red
+            agility: '#1abc9c',      // Teal
+            thieving: '#2c3e50',     // Dark blue-grey
+            farming: '#16a085',      // Dark green
+            herblore: '#8e44ad',     // Dark purple
+            construction: '#d35400', // Brown
+            firemaking: '#ff6b35',   // Fire orange
+            fletching: '#f1c40f',    // Yellow
+            prayer: '#ecf0f1',       // White
+            magic: '#9b59b6',        // Purple
+            runecraft: '#34495e',    // Dark grey
+            hunter: '#a0522d',       // Brown
+            slayer: '#c0392b'        // Dark red
+        };
+        
+        return skillColors[skillId] || '#f39c12'; // Default orange if skill not found
+    }
+
     // ==================== DRAG AND DROP ====================
 
     handleDragStart(e, index) {
-        if (index < 2) return; // Can't drag locked tasks
+        if (index < 2) {
+            e.preventDefault();
+            return; // Can't drag locked tasks
+        }
         
         this.draggedTaskIndex = index;
         e.dataTransfer.effectAllowed = 'move';
-        e.target.classList.add('dragging');
+        e.dataTransfer.setData('text/html', e.target.innerHTML); // Firefox needs this
+        
+        // Use currentTarget instead of target to ensure we get the task div
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.add('dragging');
+        
+        console.log(`Started dragging task at index ${index}`);
     }
 
     handleDragOver(e) {
@@ -512,15 +555,16 @@ class UIManager {
     }
 
     handleDragEnter(e) {
-        const taskDiv = e.target.closest('.task-item');
-        if (taskDiv && !taskDiv.classList.contains('task-locked')) {
+        const taskDiv = e.currentTarget;
+        if (taskDiv.classList.contains('task-draggable') && !taskDiv.classList.contains('dragging')) {
             taskDiv.classList.add('drag-over');
         }
     }
 
     handleDragLeave(e) {
-        const taskDiv = e.target.closest('.task-item');
-        if (taskDiv) {
+        const taskDiv = e.currentTarget;
+        // Only remove if we're actually leaving the element
+        if (!taskDiv.contains(e.relatedTarget)) {
             taskDiv.classList.remove('drag-over');
         }
     }
@@ -529,19 +573,25 @@ class UIManager {
         if (e.stopPropagation) {
             e.stopPropagation();
         }
+        e.preventDefault();
         
-        const taskDiv = e.target.closest('.task-item');
-        if (taskDiv) {
-            taskDiv.classList.remove('drag-over');
-        }
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.remove('drag-over');
         
         // Can't drop on locked tasks
-        if (dropIndex < 2) return false;
+        if (dropIndex < 2) {
+            console.log('Cannot drop on locked task');
+            return false;
+        }
         
         if (this.draggedTaskIndex !== null && this.draggedTaskIndex !== dropIndex) {
+            console.log(`Reordering task from index ${this.draggedTaskIndex} to ${dropIndex}`);
             // Reorder the tasks
             if (window.taskManager) {
-                taskManager.reorderTasks(this.draggedTaskIndex, dropIndex);
+                const success = taskManager.reorderTasks(this.draggedTaskIndex, dropIndex);
+                if (!success) {
+                    console.log('Reorder failed');
+                }
             }
         }
         
@@ -549,7 +599,8 @@ class UIManager {
     }
 
     handleDragEnd(e) {
-        e.target.classList.remove('dragging');
+        const taskDiv = e.currentTarget;
+        taskDiv.classList.remove('dragging');
         
         // Clean up any remaining drag-over classes
         document.querySelectorAll('.task-item').forEach(item => {
@@ -557,6 +608,7 @@ class UIManager {
         });
         
         this.draggedTaskIndex = null;
+        console.log('Drag ended');
     }
 
     // ==================== COMPLETED TASKS MODAL ====================
