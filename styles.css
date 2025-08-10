@@ -348,6 +348,7 @@ body {
 }
 
 /* Tasks Panel */
+/* Tasks Panel */
 .tasks-list {
     display: flex;
     flex-direction: column;
@@ -384,6 +385,18 @@ body {
 .task-item.task-draggable {
     cursor: move;
     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Prevent child elements from interfering with drag, except buttons */
+.task-item.task-draggable * {
+    pointer-events: none;
+}
+
+.task-item.task-draggable .task-reroll {
+    pointer-events: auto;
 }
 
 .task-item.task-draggable:hover {
@@ -420,22 +433,22 @@ body {
     align-items: center;
     margin-bottom: 8px;
     gap: 8px;
-    pointer-events: auto;
 }
 
 .task-skill-icon {
     width: 20px;
     height: 20px;
     flex-shrink: 0;
-    pointer-events: none;
 }
 
 .task-description {
     font-size: 14px;
     color: #fff;
     flex: 1;
-    pointer-events: none;
     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .task-reroll {
@@ -446,9 +459,9 @@ body {
     border-radius: 3px;
     font-size: 12px;
     cursor: pointer;
-    pointer-events: auto;
-    z-index: 10;
     flex-shrink: 0;
+    position: relative;
+    z-index: 10;
 }
 
 .task-reroll:hover {
