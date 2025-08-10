@@ -362,7 +362,13 @@ class AIManager {
                     this.hasBankedForCurrentTask = true;
                 } else {
                     console.log('Banking failed for skill task');
-                    // Can't complete task
+                    
+                    // IMPORTANT: Skip the impossible task in task manager
+                    if (window.taskManager) {
+                        taskManager.skipCurrentTask();
+                    }
+                    
+                    // Clear our reference
                     this.currentTask = null;
                     this.hasBankedForCurrentTask = false;
                     return;
@@ -422,6 +428,13 @@ class AIManager {
         console.log(`Deposited ${deposited} items`);
         
         if (!this.withdrawItemsForActivity(activityId)) {
+            // Failed to get required items - skip the current task if it exists
+            if (this.currentTask && window.taskManager) {
+                console.log('Cannot get required items for task, skipping it');
+                taskManager.skipCurrentTask();
+                this.currentTask = null;
+                this.hasBankedForCurrentTask = false;
+            }
             return;
         }
         
