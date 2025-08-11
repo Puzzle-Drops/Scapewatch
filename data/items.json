@@ -6,6 +6,13 @@
         "maxStack": 9999999999,
         "category": "currency"
     },
+"mark_of_grace": {
+    "id": "mark_of_grace",
+    "name": "Mark of grace",
+    "stackable": true,
+    "maxStack": 9999999999,
+    "category": "resource"
+},
     "feather": {
         "id": "feather",
         "name": "Feather",
