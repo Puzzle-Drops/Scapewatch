@@ -184,7 +184,7 @@ class TestScenario {
         };
         
         // Task 6: More woodcutting
-        const woodcuttingTask2 = {
+        const woodcuttingTask3 = {
             skill: 'woodcutting',
             itemId: 'logs',
             targetCount: 8,
@@ -197,7 +197,7 @@ class TestScenario {
         };
         
         // Task 7: More woodcutting
-        const woodcuttingTask3 = {
+        const woodcuttingTask4 = {
             skill: 'woodcutting',
             itemId: 'logs',
             targetCount: 28,
@@ -212,7 +212,7 @@ class TestScenario {
         // Set up the task structure
         taskManager.currentTask = woodcuttingTask1;
         taskManager.nextTask = woodcuttingTask2;
-        taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask2, woodcuttingTask3];
+        taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask3, woodcuttingTask4];
         
         console.log('Set up test tasks:');
         console.log('Current:', woodcuttingTask1.description);
