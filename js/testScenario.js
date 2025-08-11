@@ -115,31 +115,30 @@ class TestScenario {
     if (window.taskManager) {
         taskManager.clearTasks();
         
-        // Task 1: Woodcut 30 logs (Current Task)
+        // Task 1: Woodcut 14 logs (Current Task)
         const woodcuttingTask1 = {
             skill: 'woodcutting',
             itemId: 'logs',
-            targetCount: 30,
+            targetCount: 14,
             nodeId: 'lumbridge_trees',
             activityId: 'chop_tree',
-            description: 'Chop 30 Logs at Lumbridge Trees',
+            description: 'Chop 14 Logs at Lumbridge Trees',
             startingCount: null, // Will be set when task becomes current
             progress: 0,
             isCookingTask: false
         };
         
-        // Task 2: Burn 29 logs (Next Task)
-        const firemakingTask = {
-            skill: 'firemaking',
+        // Task 2: Woodcut 14 logs (Current Task)
+        const woodcuttingTask2 = {
+            skill: 'woodcutting',
             itemId: 'logs',
-            targetCount: 20,
-            nodeId: 'lumbridge_firemaking',
-            activityId: 'firemaking',
-            description: 'Burn 20 Logs at Lumbridge Firemaking',
-            startingCount: 0,
+            targetCount: 14,
+            nodeId: 'lumbridge_trees',
+            activityId: 'chop_tree',
+            description: 'Chop 14 Logs at Lumbridge Trees',
+            startingCount: null, // Will be set when task becomes current
             progress: 0,
-            isFiremakingTask: true,
-            logsConsumed: 0
+            isCookingTask: false
         };
         
         // Task 3: Complete 10 laps at Draynor agility
@@ -212,12 +211,12 @@ class TestScenario {
         
         // Set up the task structure
         taskManager.currentTask = woodcuttingTask1;
-        taskManager.nextTask = firemakingTask;
+        taskManager.nextTask = woodcuttingTask2;
         taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask2, woodcuttingTask3];
         
         console.log('Set up test tasks:');
         console.log('Current:', woodcuttingTask1.description);
-        console.log('Next:', firemakingTask.description);
+        console.log('Next:', woodcuttingTask2.description);
         taskManager.tasks.forEach((task, index) => {
             console.log(`Task ${index + 1}:`, task.description);
         });
