@@ -12,16 +12,23 @@ class Pathfinding {
 
         // Round positions to pixels and center them (add 0.5)
         const start = { x: Math.floor(startX) + 0.5, y: Math.floor(startY) + 0.5 };
-        const end = { x: Math.floor(endX) + 0.5, y: Math.floor(endY) + 0.5 };
+        let end = { x: Math.floor(endX) + 0.5, y: Math.floor(endY) + 0.5 };
 
-        // Check if start and end are walkable (use floor since collision uses integer coords)
+        // Check if start is walkable
         if (!this.collision.isWalkable(Math.floor(start.x), Math.floor(start.y))) {
             console.error('Start position is not walkable');
             return null;
         }
+        
+        // If end is not walkable, find nearest walkable position
         if (!this.collision.isWalkable(Math.floor(end.x), Math.floor(end.y))) {
-            console.error('End position is not walkable');
-            return null;
+            console.warn('End position is not walkable, finding nearest walkable position');
+            const nearestWalkable = this.findNearestWalkablePosition(Math.floor(end.x), Math.floor(end.y));
+            if (!nearestWalkable) {
+                console.error('Could not find walkable position near destination');
+                return null;
+            }
+            end = { x: nearestWalkable.x + 0.5, y: nearestWalkable.y + 0.5 };
         }
 
         // Check if we have line of sight - if so, just go straight
@@ -35,6 +42,10 @@ class Pathfinding {
         const cameFrom = new Map();
         const gScore = new Map();
         const fScore = new Map();
+        
+        // Iteration limit to prevent freezing
+        const maxIterations = 5000;
+        let iterations = 0;
 
         const startKey = `${start.x},${start.y}`;
         gScore.set(startKey, 0);
@@ -42,6 +53,13 @@ class Pathfinding {
         openSet.enqueue(start, fScore.get(startKey));
 
         while (!openSet.isEmpty()) {
+            // Check iteration limit
+            iterations++;
+            if (iterations > maxIterations) {
+                console.warn('Pathfinding exceeded max iterations, returning partial path');
+                return null;
+            }
+            
             const current = openSet.dequeue();
             const currentKey = `${current.x},${current.y}`;
 
@@ -141,6 +159,31 @@ class Pathfinding {
         }
 
         return smoothed;
+    }
+    
+    // Find nearest walkable position
+    findNearestWalkablePosition(x, y, maxRadius = 5) {
+        // Check if current position is already walkable
+        if (this.collision.isWalkable(x, y)) {
+            return { x, y };
+        }
+
+        // Search in expanding circles
+        for (let radius = 1; radius <= maxRadius; radius++) {
+            // Check positions in a circle
+            const steps = radius * 8; // More steps for larger radius
+            for (let i = 0; i < steps; i++) {
+                const angle = (i / steps) * Math.PI * 2;
+                const checkX = Math.round(x + Math.cos(angle) * radius);
+                const checkY = Math.round(y + Math.sin(angle) * radius);
+                
+                if (this.collision.isWalkable(checkX, checkY)) {
+                    return { x: checkX, y: checkY };
+                }
+            }
+        }
+
+        return null; // No walkable position found
     }
 }
 
