@@ -27,24 +27,36 @@ class SkillsManager {
     }
 
     addXp(skillId, amount) {
-        const skill = this.skills[skillId];
-        if (!skill) {
-            console.error(`Skill ${skillId} not found`);
-            return;
-        }
-
-        skill.xp += amount;
-        
-        // Check for level up
-        const oldLevel = skill.level;
-        skill.level = getLevelFromXp(skill.xp);
-        
-        if (skill.level !== oldLevel) {
-            this.onLevelUp(skillId, skill.level);
-        }
-
-        skill.xpForNextLevel = getXpForLevel(skill.level + 1);
+    const skill = this.skills[skillId];
+    if (!skill) {
+        console.error(`Skill ${skillId} not found`);
+        return;
     }
+
+    // Cap at 200 million XP
+    const maxXp = 200000000;
+    const newXp = Math.min(skill.xp + amount, maxXp);
+    const actualGained = newXp - skill.xp;
+    
+    skill.xp = newXp;
+    
+    // Check for level up
+    const oldLevel = skill.level;
+    skill.level = getLevelFromXp(skill.xp);
+    
+    if (skill.level !== oldLevel) {
+        this.onLevelUp(skillId, skill.level);
+    }
+
+    // Only set xpForNextLevel if not at max XP
+    if (skill.xp < maxXp) {
+        skill.xpForNextLevel = getXpForLevel(skill.level + 1);
+    } else {
+        skill.xpForNextLevel = maxXp; // Already at max
+    }
+    
+    return actualGained; // Return actual XP gained (useful for tracking)
+}
 
     onLevelUp(skillId, newLevel) {
         console.log(`Level up! ${this.skills[skillId].name} is now level ${newLevel}`);
