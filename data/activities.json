@@ -6,7 +6,6 @@
     "requiredLevel": 1,
     "xpPerLap": 120,
     "baseDuration": 43200,
-    "lapTime": 43200,
     "markOfGraceChance": 0.125
 },
     "small_fishing_net": {
