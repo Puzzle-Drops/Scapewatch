@@ -377,9 +377,6 @@ class FiremakingSkill extends BaseSkill {
     }
     
     processRewards(activityData, level) {
-        // Clear burning state when processing rewards (burning attempt is complete)
-        this.clearBurningState();
-        
         if (!this.currentLog) {
             this.lastFiremakingXp = 0;
             return [];
@@ -404,6 +401,9 @@ class FiremakingSkill extends BaseSkill {
         const success = Math.random() <= successChance;
         
         if (success) {
+            // Clear burning state on success
+            this.clearBurningState();
+            
             // NOW consume the log
             inventory.removeItem(this.currentLog.logId, 1);
             
