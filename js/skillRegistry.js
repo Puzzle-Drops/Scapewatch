@@ -11,6 +11,7 @@ class SkillRegistry {
         this.register(new FishingSkill());
         this.register(new CookingSkill());
         this.register(new AgilitySkill());
+        this.register(new FiremakingSkill());
         
         this.initialized = true;
         console.log('Skill registry initialized with', Object.keys(this.skills).length, 'skills');
