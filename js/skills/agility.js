@@ -1,11 +1,6 @@
 class AgilitySkill extends BaseSkill {
     constructor() {
         super('agility', 'Agility');
-        this.isRunningLap = false;
-        this.lapWaypoints = [];
-        this.currentWaypointIndex = 0;
-        this.originalMovementSpeed = 3;
-        this.lapMovementSpeed = 3;
     }
     
     // ==================== TASK GENERATION ====================
@@ -40,7 +35,6 @@ class AgilitySkill extends BaseSkill {
         const lapCount = this.determineLapCount(selectedCourse.activityId);
         
         // Get activity data for the name
-        const activityData = loadingManager.getData('activities')[selectedCourse.activityId];
         const nodeData = nodes.getNode(courseNode);
         
         return {
@@ -141,118 +135,12 @@ class AgilitySkill extends BaseSkill {
             return false;
         }
         
-        // Store lap data
-        this.lapWaypoints = activityData.lapPositions || [];
-        this.currentWaypointIndex = 0;
-        this.lapMovementSpeed = activityData.lapSpeed || 3;
-        this.originalMovementSpeed = player.movementSpeed;
-        
-        // Start the lap movement
-        this.startLapMovement();
-        
+        console.log('Starting agility lap');
         return true;
-    }
-    
-    startLapMovement() {
-    if (this.lapWaypoints.length === 0) {
-        console.error('No waypoints defined for agility course');
-        return;
-    }
-    
-    // Debug: Calculate total lap distance
-    let totalDistance = 0;
-    for (let i = 1; i < this.lapWaypoints.length; i++) {
-        const prev = this.lapWaypoints[i - 1];
-        const curr = this.lapWaypoints[i];
-        const dist = Math.sqrt(Math.pow(curr.x - prev.x, 2) + Math.pow(curr.y - prev.y, 2));
-        totalDistance += dist;
-    }
-    
-    // Also add distance from player's current position to first waypoint
-    if (window.player && this.lapWaypoints.length > 0) {
-        const distToFirst = Math.sqrt(
-            Math.pow(this.lapWaypoints[0].x - player.position.x, 2) + 
-            Math.pow(this.lapWaypoints[0].y - player.position.y, 2)
-        );
-        totalDistance += distToFirst;
-    }
-    
-    const expectedTime = totalDistance / this.lapMovementSpeed;
-    console.log(`=== AGILITY LAP DEBUG ===`);
-    console.log(`Waypoints: ${this.lapWaypoints.length}`);
-    console.log(`Lap distance: ${totalDistance.toFixed(1)} tiles`);
-    console.log(`Movement speed: ${this.lapMovementSpeed} tiles/second`);
-    console.log(`Expected movement time: ${(expectedTime * 1000).toFixed(0)}ms (${expectedTime.toFixed(1)}s)`);
-    console.log(`Activity duration (lapTime): ${player.currentActivity ? loadingManager.getData('activities')[player.currentActivity].lapTime : 'unknown'}ms`);
-    console.log(`=========================`);
-    
-    this.isRunningLap = true;
-    this.currentWaypointIndex = 0;
-    
-    // Set lap movement speed
-    if (window.player) {
-        player.movementSpeed = this.lapMovementSpeed;
-        
-        // Start moving to first waypoint (no collision)
-        this.moveToNextWaypoint();
-    }
-}
-    
-    moveToNextWaypoint() {
-        if (!this.isRunningLap || this.currentWaypointIndex >= this.lapWaypoints.length) {
-            // Lap complete
-            this.onLapComplete();
-            return;
-        }
-        
-        const waypoint = this.lapWaypoints[this.currentWaypointIndex];
-        
-        // Set up direct path to waypoint (no pathfinding, ignore collision)
-        if (window.player) {
-            player.path = [{ x: waypoint.x, y: waypoint.y }];
-            player.pathIndex = 0;
-            player.segmentProgress = 0;
-            player.targetPosition = { x: waypoint.x, y: waypoint.y };
-            
-            // Set a flag so player knows this is agility movement
-            player.isAgilityMovement = true;
-            
-            console.log(`Moving to waypoint ${this.currentWaypointIndex + 1}/${this.lapWaypoints.length}`);
-        }
-    }
-    
-    onReachedWaypoint() {
-        console.log(`Reached waypoint ${this.currentWaypointIndex + 1}/${this.lapWaypoints.length}`);
-        
-        this.currentWaypointIndex++;
-        
-        if (this.currentWaypointIndex < this.lapWaypoints.length) {
-            // Move to next waypoint
-            this.moveToNextWaypoint();
-        } else {
-            // Lap complete
-            this.onLapComplete();
-        }
-    }
-    
-    onLapComplete() {
-        console.log('Agility lap complete!');
-        
-        this.isRunningLap = false;
-        
-        // Reset movement speed
-        if (window.player) {
-            player.movementSpeed = this.originalMovementSpeed;
-            player.isAgilityMovement = false;
-        }
-        
-        // The activity will complete naturally after this
     }
     
     processRewards(activityData, level) {
         const rewards = [];
-        
-        // Always grant XP (handled separately)
         
         // Check for mark of grace
         const markChance = activityData.markOfGraceChance || (1/8);
@@ -280,22 +168,7 @@ class AgilitySkill extends BaseSkill {
     }
     
     onActivityComplete(activityData) {
-        // Make sure we've reset everything
-        this.isRunningLap = false;
-        if (window.player) {
-            player.movementSpeed = this.originalMovementSpeed;
-            player.isAgilityMovement = false;
-        }
-    }
-    
-    onActivityStopped() {
-        // Clean up if activity is interrupted
-        console.log('Agility activity stopped, cleaning up');
-        this.isRunningLap = false;
-        if (window.player) {
-            player.movementSpeed = this.originalMovementSpeed;
-            player.isAgilityMovement = false;
-        }
+        console.log('Completed agility lap');
     }
     
     // ==================== BANKING ====================
@@ -310,26 +183,5 @@ class AgilitySkill extends BaseSkill {
         const deposited = bank.depositAll();
         console.log(`Deposited ${deposited} items before agility`);
         return true;
-    }
-    
-    // Check if player reached a waypoint (called from player.js)
-    checkWaypointReached(position) {
-        if (!this.isRunningLap || this.currentWaypointIndex >= this.lapWaypoints.length) {
-            return false;
-        }
-        
-        const waypoint = this.lapWaypoints[this.currentWaypointIndex];
-        const distance = Math.sqrt(
-            Math.pow(position.x - waypoint.x, 2) + 
-            Math.pow(position.y - waypoint.y, 2)
-        );
-        
-        // Check if close enough to waypoint (within 0.5 tiles)
-        if (distance < 0.5) {
-            this.onReachedWaypoint();
-            return true;
-        }
-        
-        return false;
     }
 }
