@@ -132,10 +132,10 @@ class TestScenario {
         const firemakingTask = {
             skill: 'firemaking',
             itemId: 'logs',
-            targetCount: 29,
+            targetCount: 20,
             nodeId: 'lumbridge_firemaking',
             activityId: 'firemaking',
-            description: 'Burn 29 Logs at Lumbridge Firemaking',
+            description: 'Burn 20 Logs at Lumbridge Firemaking',
             startingCount: 0,
             progress: 0,
             isFiremakingTask: true,
