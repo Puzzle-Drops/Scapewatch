@@ -1,4 +1,31 @@
 {
+    "draynor_rooftop": {
+    "id": "draynor_rooftop",
+    "name": "Draynor Village Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 1,
+    "xpPerLap": 120,
+    "baseDuration": 43200,
+    "lapTime": 43200,
+    "lapSpeed": 1.8,
+    "markOfGraceChance": 0.125,
+    "lapPositions": [
+        {"x": 4158, "y": 1755},
+        {"x": 4163, "y": 1750},
+        {"x": 4168, "y": 1748},
+        {"x": 4173, "y": 1748},
+        {"x": 4178, "y": 1750},
+        {"x": 4183, "y": 1755},
+        {"x": 4183, "y": 1760},
+        {"x": 4183, "y": 1765},
+        {"x": 4178, "y": 1770},
+        {"x": 4173, "y": 1772},
+        {"x": 4168, "y": 1772},
+        {"x": 4163, "y": 1770},
+        {"x": 4158, "y": 1765},
+        {"x": 4158, "y": 1760}
+    ]
+},
     "small_fishing_net": {
         "id": "small_fishing_net",
         "name": "Small Net Fishing",
