@@ -147,8 +147,12 @@ class TaskManager {
 
     // Update progress for the current task if it matches the given item
     updateProgressForItem(itemId) {
-        // Only update if the current task matches this item and is NOT a cooking task
-        if (this.currentTask && !this.currentTask.isCookingTask && this.currentTask.itemId === itemId) {
+        // Only update gathering tasks - processing tasks manage their own progress
+        if (this.currentTask && 
+            !this.currentTask.isCookingTask && 
+            !this.currentTask.isFiremakingTask && 
+            !this.currentTask.isAgilityTask && 
+            this.currentTask.itemId === itemId) {
             this.updateTaskProgress(this.currentTask);
         }
     }
