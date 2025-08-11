@@ -28,14 +28,22 @@ class Player {
     }
 
     updateSmoothMovement(deltaTime) {
-        if (this.pathIndex >= this.path.length) {
-            this.path = [];
-            this.pathIndex = 0;
-            this.targetPosition = null;
-            this.segmentProgress = 0;
-            this.onReachedTarget();
-            return;
+    // Check if this is agility movement and we reached a waypoint
+    if (this.isAgilityMovement && window.skillRegistry) {
+        const agilitySkill = skillRegistry.getSkill('agility');
+        if (agilitySkill && agilitySkill.isRunningLap) {
+            agilitySkill.checkWaypointReached(this.position);
         }
+    }
+    
+    if (this.pathIndex >= this.path.length) {
+        this.path = [];
+        this.pathIndex = 0;
+        this.targetPosition = null;
+        this.segmentProgress = 0;
+        this.onReachedTarget();
+        return;
+    }
 
         const currentWaypoint = this.pathIndex === 0 ? this.position : this.path[this.pathIndex - 1];
         const targetWaypoint = this.path[this.pathIndex];
