@@ -159,10 +159,10 @@ class TestScenario {
         const fishingTask = {
             skill: 'fishing',
             itemId: 'raw_shrimps',
-            targetCount: 30,
+            targetCount: 10,
             nodeId: 'lumbridge_fishing',
             activityId: 'small_fishing_net',
-            description: 'Catch 30 Raw shrimps at River Lum',
+            description: 'Catch 10 Raw shrimps at River Lum',
             startingCount: null, // Will be set when task becomes current
             progress: 0,
             isCookingTask: false
@@ -172,10 +172,10 @@ class TestScenario {
         const cookingTask = {
             skill: 'cooking',
             itemId: 'raw_shrimps', // Raw item being consumed
-            targetCount: 29,
+            targetCount: 10,
             nodeId: 'lumbridge_kitchen',
             activityId: 'cook_food',
-            description: 'Cook 29 Raw shrimps at Lumbridge Kitchen',
+            description: 'Cook 10 Raw shrimps at Lumbridge Kitchen',
             startingCount: 0,
             progress: 0,
             isCookingTask: true,
@@ -187,10 +187,10 @@ class TestScenario {
         const woodcuttingTask2 = {
             skill: 'woodcutting',
             itemId: 'logs',
-            targetCount: 28,
+            targetCount: 8,
             nodeId: 'lumbridge_trees',
             activityId: 'chop_tree',
-            description: 'Chop 28 Logs at Lumbridge Trees',
+            description: 'Chop 8 Logs at Lumbridge Trees',
             startingCount: null, // Will be set when task becomes current
             progress: 0,
             isCookingTask: false
