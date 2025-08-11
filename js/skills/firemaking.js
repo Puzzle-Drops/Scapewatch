@@ -102,40 +102,39 @@ class FiremakingSkill extends BaseSkill {
         }
     }
     
-    // Filter out logs that already have tasks
-    filterOutExistingTasks(availableLogs) {
-        if (!window.taskManager) return availableLogs;
+    // Filter out logs that already have tasks (ANY skill, not just firemaking)
+filterOutExistingTasks(availableLogs) {
+    if (!window.taskManager) return availableLogs;
+    
+    const filtered = [];
+    const existingTasks = taskManager.getAllTasks();
+    
+    for (const log of availableLogs) {
+        // Check if there's already ANY task (from any skill) for this log
+        const existingTask = existingTasks.find(task => 
+            task.itemId === log.logId &&
+            task.progress < 1
+        );
         
-        const filtered = [];
-        const existingTasks = taskManager.getAllTasks();
-        
-        for (const log of availableLogs) {
-            // Check if there's already a firemaking task for this log
-            const existingTask = existingTasks.find(task => 
-                task.isFiremakingTask && 
-                task.itemId === log.logId &&
-                task.progress < 1
-            );
+        if (existingTask) {
+            // Only allow if we have 10x the amount needed for a typical task
+            const typicalTaskSize = this.determineTargetCount(log.logId);
+            const safeAmount = typicalTaskSize * 10;
             
-            if (existingTask) {
-                // Only allow if we have 10x the amount needed for a typical task
-                const typicalTaskSize = this.determineTargetCount(log.logId);
-                const safeAmount = typicalTaskSize * 10;
-                
-                if (log.available >= safeAmount) {
-                    console.log(`Allowing duplicate task for ${log.logId} - have ${log.available}, safe threshold is ${safeAmount}`);
-                    filtered.push(log);
-                } else {
-                    console.log(`Filtering out ${log.logId} - already has task and only ${log.available} available`);
-                }
-            } else {
-                // No existing task for this item, safe to use
+            if (log.available >= safeAmount) {
+                console.log(`Allowing duplicate task for ${log.logId} (used by ${existingTask.skill}) - have ${log.available}, safe threshold is ${safeAmount}`);
                 filtered.push(log);
+            } else {
+                console.log(`Filtering out ${log.logId} - already has task in ${existingTask.skill} and only ${log.available} available`);
             }
+        } else {
+            // No existing task for this item, safe to use
+            filtered.push(log);
         }
-        
-        return filtered;
     }
+    
+    return filtered;
+}
     
     // Get all available logs
     getAvailableLogs() {
