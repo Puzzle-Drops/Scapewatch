@@ -97,7 +97,7 @@ class AIManager {
         if (!player.isBusy()) {
             this.makeDecision();
             this.resetDecisionCooldown();
-        } else if (this.shouldCheckBanking() && !player.isMoving()) {
+        } else if (this.shouldCheckBanking() && !player.isMoving() && !player.isPerformingActivity()) {
             this.makeDecision();
             this.resetDecisionCooldown();
         }
