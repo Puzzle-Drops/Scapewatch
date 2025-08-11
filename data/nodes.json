@@ -1,4 +1,16 @@
 {
+    "draynor_rooftop": {
+    "id": "draynor_rooftop",
+    "name": "Draynor Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4158,
+        "y": 1760
+    },
+    "activities": [
+        "draynor_rooftop"
+    ]
+},
     "test_trees": {
         "id": "test_trees",
         "name": "Test Trees",
