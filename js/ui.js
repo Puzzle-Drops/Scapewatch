@@ -479,15 +479,9 @@ class UIManager {
             const countDiv = document.createElement('div');
             countDiv.className = 'task-count';
             
-            // For cooking tasks, show raw food consumed vs target
-            if (task.isCookingTask) {
-                const consumed = task.rawFoodConsumed || 0;
-                countDiv.textContent = `${consumed}/${task.targetCount}`;
-            } else {
-                // For gathering tasks, show items collected
-                const current = Math.floor(task.progress * task.targetCount);
-                countDiv.textContent = `${current}/${task.targetCount}`;
-            }
+            // All tasks now properly track their own progress
+            const current = Math.floor(task.progress * task.targetCount);
+            countDiv.textContent = `${current}/${task.targetCount}`;
             
             progressDiv.appendChild(progressBar);
             progressDiv.appendChild(countDiv);
