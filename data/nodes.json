@@ -4,8 +4,8 @@
     "name": "Draynor Rooftop",
     "type": "skill",
     "position": {
-        "x": 4158,
-        "y": 1760
+        "x": 4142,
+        "y": 1830
     },
     "activities": [
         "draynor_rooftop"
