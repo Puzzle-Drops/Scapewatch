@@ -27,6 +27,12 @@
         "maxStack": 9999999999,
         "category": "resource"
     },
+"ashes": {
+        "id": "ashes",
+        "name": "Ashes",
+        "stackable": false,
+        "category": "resource"
+    },
     "raw_meat": {
         "id": "raw_meat",
         "name": "Raw Meat",
