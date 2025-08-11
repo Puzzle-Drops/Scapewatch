@@ -28,13 +28,6 @@ class Player {
     }
 
     updateSmoothMovement(deltaTime) {
-    // Check if this is agility movement and we reached a waypoint
-    if (this.isAgilityMovement && window.skillRegistry) {
-        const agilitySkill = skillRegistry.getSkill('agility');
-        if (agilitySkill && agilitySkill.isRunningLap) {
-            agilitySkill.checkWaypointReached(this.position);
-        }
-    }
     
     if (this.pathIndex >= this.path.length) {
         this.path = [];
