@@ -1,5 +1,5 @@
 {
-    "draynor_rooftop": {
+"draynor_rooftop": {
     "id": "draynor_rooftop",
     "name": "Draynor Rooftop",
     "type": "skill",
@@ -9,6 +9,102 @@
     },
     "activities": [
         "draynor_rooftop"
+    ]
+},
+"al_kharid_rooftop": {
+    "id": "al_kharid_rooftop",
+    "name": "Al Kharid Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4497,
+        "y": 1929
+    },
+    "activities": [
+        "al_kharid_rooftop"
+    ]
+},
+"varrock_rooftop": {
+    "id": "varrock_rooftop",
+    "name": "Varrock Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4394,
+        "y": 1491
+    },
+    "activities": [
+        "varrock_rooftop"
+    ]
+},
+"canifis_rooftop": {
+    "id": "canifis_rooftop",
+    "name": "Canifis Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4964,
+        "y": 1340
+    },
+    "activities": [
+        "canifis_rooftop"
+    ]
+},
+"falador_rooftop": {
+    "id": "falador_rooftop",
+    "name": "Falador Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4024,
+        "y": 1637
+    },
+    "activities": [
+        "falador_rooftop"
+    ]
+},
+"seers_rooftop": {
+    "id": "seers_rooftop",
+    "name": "Seers' Village Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 3410,
+        "y": 1342
+    },
+    "activities": [
+        "seers_rooftop"
+    ]
+},
+"pollnivneach_rooftop": {
+    "id": "pollnivneach_rooftop",
+    "name": "Pollnivneach Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 4653,
+        "y": 2397
+    },
+    "activities": [
+        "pollnivneach_rooftop"
+    ]
+},
+"rellekka_rooftop": {
+    "id": "rellekka_rooftop",
+    "name": "Rellekka Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 3202,
+        "y": 963
+    },
+    "activities": [
+        "rellekka_rooftop"
+    ]
+},
+"ardougne_rooftop": {
+    "id": "ardougne_rooftop",
+    "name": "Ardougne Rooftop",
+    "type": "skill",
+    "position": {
+        "x": 3297,
+        "y": 1724
+    },
+    "activities": [
+        "ardougne_rooftop"
     ]
 },
     "test_trees": {
