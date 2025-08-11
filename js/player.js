@@ -306,7 +306,7 @@ class Player {
         }
     }
 
-    checkCurrentNode() {
+    checkCurrentNode() {checkCurrentNode() {
     const previousNode = this.currentNode;
     
     const tolerance = 1;
@@ -344,16 +344,17 @@ class Player {
                 break;
             }
         }
-        
-        if (!foundNode) {
-            this.currentNode = null;
-        }
-        
-        if (previousNode !== this.currentNode && this.currentActivity) {
-            console.log(`Node changed, stopping activity`);
-            this.stopActivity();
-        }
     }
+    
+    if (!foundNode) {
+        this.currentNode = null;
+    }
+    
+    if (previousNode !== this.currentNode && this.currentActivity) {
+        console.log(`Node changed, stopping activity`);
+        this.stopActivity();
+    }
+}
 
     startActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
