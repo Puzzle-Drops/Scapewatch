@@ -1,6 +1,6 @@
 class TestScenario {
     constructor() {
-        this.enabled = false; // Set to false to disable test scenario
+        this.enabled = true; // Set to false to disable test scenario
     }
 
     run() {
@@ -115,29 +115,27 @@ class TestScenario {
         if (window.taskManager) {
             taskManager.clearTasks();
             
-            // Manually create specific test tasks
-            
-            // Task 1: Catch 50 raw shrimps
-            const fishingTask = {
+            // Task 1: Fish 30 shrimp (Current Task)
+            const fishingTask1 = {
                 skill: 'fishing',
                 itemId: 'raw_shrimps',
-                targetCount: 50,
+                targetCount: 30,
                 nodeId: 'lumbridge_fishing',
                 activityId: 'small_fishing_net',
-                description: 'Catch 50 Raw shrimps at River Lum',
+                description: 'Catch 30 Raw shrimps at River Lum',
                 startingCount: this.getCurrentItemCount('raw_shrimps'),
                 progress: 0,
                 isCookingTask: false
             };
             
-            // Task 2: Cook 44 raw shrimps
+            // Task 2: Cook 29 shrimp (Next Task)
             const cookingTask = {
                 skill: 'cooking',
                 itemId: 'raw_shrimps', // Raw item being consumed
-                targetCount: 44,
+                targetCount: 29,
                 nodeId: 'lumbridge_kitchen',
                 activityId: 'cook_food',
-                description: 'Cook 44 Raw shrimps at Lumbridge Kitchen',
+                description: 'Cook 29 Raw shrimps at Lumbridge Kitchen',
                 startingCount: 0,
                 progress: 0,
                 isCookingTask: true,
@@ -145,86 +143,78 @@ class TestScenario {
                 rawFoodConsumed: 0
             };
             
-            // Task 3: Mine 75 copper ore
-            const miningTask = {
-                skill: 'mining',
-                itemId: 'copper_ore',
-                targetCount: 75,
-                nodeId: 'west_lumbridge_mine',
-                activityId: 'mine_copper_tin',
-                description: 'Mine 75 Copper ore at West Lumbridge Mine',
-                startingCount: null, // Will be set when task becomes current
-                progress: 0,
-                isCookingTask: false
-            };
-            
-            // Task 4: Chop 100 logs
-            const woodcuttingTask = {
-                skill: 'woodcutting',
-                itemId: 'logs',
-                targetCount: 100,
-                nodeId: 'lumbridge_trees',
-                activityId: 'chop_tree',
-                description: 'Chop 100 Logs at Lumbridge Trees',
-                startingCount: null, // Will be set when task becomes current
-                progress: 0,
-                isCookingTask: false
-            };
-            
-            // Task 5: Cook 30 raw meat
-            const cookingTask2 = {
-                skill: 'cooking',
-                itemId: 'raw_meat',
-                targetCount: 30,
-                nodeId: 'lumbridge_kitchen',
-                activityId: 'cook_food',
-                description: 'Cook 30 Raw meat at Lumbridge Kitchen',
-                startingCount: 0,
-                progress: 0,
-                isCookingTask: true,
-                cookedItemId: 'meat',
-                rawFoodConsumed: 0
-            };
-            
-            // Task 6: Catch 60 raw anchovies
-            const fishingTask2 = {
-                skill: 'fishing',
-                itemId: 'raw_anchovies',
-                targetCount: 60,
-                nodeId: 'lumbridge_fishing',
-                activityId: 'small_fishing_net',
-                description: 'Catch 60 Raw anchovies at River Lum',
-                startingCount: null, // Will be set when task becomes current
-                progress: 0,
-                isCookingTask: false
-            };
-            
-            // Task 7: Mine 50 tin ore
-            const miningTask2 = {
+            // Task 3: Mine 20 tin ore
+            const miningTask1 = {
                 skill: 'mining',
                 itemId: 'tin_ore',
-                targetCount: 50,
+                targetCount: 20,
                 nodeId: 'east_lumbridge_mine',
                 activityId: 'mine_copper_tin',
-                description: 'Mine 50 Tin ore at East Lumbridge Mine',
+                description: 'Mine 20 Tin ore at East Lumbridge Mine',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 4: Woodcut 28 logs
+            const woodcuttingTask1 = {
+                skill: 'woodcutting',
+                itemId: 'logs',
+                targetCount: 28,
+                nodeId: 'lumbridge_trees',
+                activityId: 'chop_tree',
+                description: 'Chop 28 Logs at Lumbridge Trees',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 5: Mine 20 copper ore
+            const miningTask2 = {
+                skill: 'mining',
+                itemId: 'copper_ore',
+                targetCount: 20,
+                nodeId: 'west_lumbridge_mine',
+                activityId: 'mine_copper_tin',
+                description: 'Mine 20 Copper ore at West Lumbridge Mine',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 6: Woodcut 28 logs (again)
+            const woodcuttingTask2 = {
+                skill: 'woodcutting',
+                itemId: 'logs',
+                targetCount: 28,
+                nodeId: 'lumbridge_trees',
+                activityId: 'chop_tree',
+                description: 'Chop 28 Logs at Lumbridge Trees',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 7: Fish 20 shrimp
+            const fishingTask2 = {
+                skill: 'fishing',
+                itemId: 'raw_shrimps',
+                targetCount: 20,
+                nodeId: 'lumbridge_fishing',
+                activityId: 'small_fishing_net',
+                description: 'Catch 20 Raw shrimps at River Lum',
                 startingCount: null, // Will be set when task becomes current
                 progress: 0,
                 isCookingTask: false
             };
             
             // Set up the task structure
-            taskManager.currentTask = fishingTask;
+            taskManager.currentTask = fishingTask1;
             taskManager.nextTask = cookingTask;
-            taskManager.tasks = [miningTask, woodcuttingTask, cookingTask2];
-            
-            // Add a couple more tasks if you want a full set of 5 regular tasks
-            if (fishingTask2 && miningTask2) {
-                taskManager.tasks.push(fishingTask2);
-                taskManager.tasks.push(miningTask2);
-            }
+            taskManager.tasks = [miningTask1, woodcuttingTask1, miningTask2, woodcuttingTask2, fishingTask2];
             
             console.log('Set up test tasks:');
-            console.log('Current:', fishingTask.description);
+            console.log('Current:', fishingTask1.description);
             console.log('Next:', cookingTask.description);
             taskManager.tasks.forEach((task, index) => {
                 console.log(`Task ${index + 1}:`, task.description);
