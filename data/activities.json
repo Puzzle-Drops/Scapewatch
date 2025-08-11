@@ -1,4 +1,48 @@
 {
+"firemaking": {
+    "id": "firemaking",
+    "name": "Firemaking",
+    "skill": "firemaking",
+    "requiredLevel": 1,
+    "baseDuration": 2400,
+    "firemakingTable": [
+        {
+            "logId": "logs",
+            "requiredLevel": 1,
+            "xpPerAction": 40
+        },
+        {
+            "logId": "oak_logs",
+            "requiredLevel": 15,
+            "xpPerAction": 60
+        },
+        {
+            "logId": "willow_logs",
+            "requiredLevel": 30,
+            "xpPerAction": 90
+        },
+        {
+            "logId": "maple_logs",
+            "requiredLevel": 45,
+            "xpPerAction": 135
+        },
+        {
+            "logId": "yew_logs",
+            "requiredLevel": 60,
+            "xpPerAction": 202.5
+        },
+        {
+            "logId": "magic_logs",
+            "requiredLevel": 75,
+            "xpPerAction": 303.8
+        },
+        {
+            "logId": "redwood_logs",
+            "requiredLevel": 90,
+            "xpPerAction": 350
+        }
+    ]
+},
 "draynor_rooftop": {
     "id": "draynor_rooftop",
     "name": "Draynor Village Rooftop Course",
