@@ -120,10 +120,6 @@ class AgilitySkill extends BaseSkill {
     
     // ==================== CORE BEHAVIOR ====================
     
-    getDuration(baseDuration, level, activityData) {
-        // For agility, duration is the lap time
-        return activityData.lapTime || baseDuration;
-    }
     
     beforeActivityStart(activityData) {
         // Check if inventory is full (need space for marks of grace)
