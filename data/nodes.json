@@ -1,4 +1,16 @@
 {
+"lumbridge_firemaking": {
+    "id": "lumbridge_firemaking",
+    "name": "Lumbridge Firemaking",
+    "type": "skill",
+    "position": {
+        "x": 4330,
+        "y": 1856
+    },
+    "activities": [
+        "firemaking"
+    ]
+},
 "draynor_rooftop": {
     "id": "draynor_rooftop",
     "name": "Draynor Rooftop",
