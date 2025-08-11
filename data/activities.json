@@ -1,11 +1,83 @@
 {
-    "draynor_rooftop": {
+"draynor_rooftop": {
     "id": "draynor_rooftop",
     "name": "Draynor Village Rooftop Course",
     "skill": "agility",
     "requiredLevel": 1,
     "xpPerLap": 120,
     "baseDuration": 43200,
+    "markOfGraceChance": 0.125
+},
+"al_kharid_rooftop": {
+    "id": "al_kharid_rooftop",
+    "name": "Al Kharid Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 20,
+    "xpPerLap": 216,
+    "baseDuration": 64200,
+    "markOfGraceChance": 0.125
+},
+"varrock_rooftop": {
+    "id": "varrock_rooftop",
+    "name": "Varrock Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 30,
+    "xpPerLap": 270,
+    "baseDuration": 70000,
+    "markOfGraceChance": 0.125
+},
+"canifis_rooftop": {
+    "id": "canifis_rooftop",
+    "name": "Canifis Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 40,
+    "xpPerLap": 240,
+    "baseDuration": 43800,
+    "markOfGraceChance": 0.25
+},
+"falador_rooftop": {
+    "id": "falador_rooftop",
+    "name": "Falador Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 50,
+    "xpPerLap": 586,
+    "baseDuration": 60000,
+    "markOfGraceChance": 0.125
+},
+"seers_rooftop": {
+    "id": "seers_rooftop",
+    "name": "Seers' Village Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 60,
+    "xpPerLap": 570,
+    "baseDuration": 43800,
+    "markOfGraceChance": 0.125
+},
+"pollnivneach_rooftop": {
+    "id": "pollnivneach_rooftop",
+    "name": "Pollnivneach Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 70,
+    "xpPerLap": 890,
+    "baseDuration": 47400,
+    "markOfGraceChance": 0.125
+},
+"rellekka_rooftop": {
+    "id": "rellekka_rooftop",
+    "name": "Rellekka Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 80,
+    "xpPerLap": 780,
+    "baseDuration": 51000,
+    "markOfGraceChance": 0.125
+},
+"ardougne_rooftop": {
+    "id": "ardougne_rooftop",
+    "name": "Ardougne Rooftop Course",
+    "skill": "agility",
+    "requiredLevel": 90,
+    "xpPerLap": 889,
+    "baseDuration": 45600,
     "markOfGraceChance": 0.125
 },
     "small_fishing_net": {
