@@ -306,55 +306,55 @@ class Player {
         }
     }
 
-    checkCurrentNode() {checkCurrentNode() {
-    const previousNode = this.currentNode;
-    
-    const tolerance = 1;
-    const allNodes = nodes.getAllNodes();
-    let foundNode = false;
-    
-    // Special handling for firemaking - only check Y position
-    if (this.currentActivity === 'firemaking' && this.currentNode) {
-        const currentNodeData = allNodes[this.currentNode];
-        if (currentNodeData) {
-            // For firemaking, only check if we're on the same Y coordinate
-            const yDist = Math.abs(this.position.y - currentNodeData.position.y);
-            if (yDist <= tolerance) {
-                foundNode = true; // Stay at the firemaking node
-            }
-        }
-    }
-    
-    // Normal node checking for non-firemaking activities
-    if (!foundNode) {
-        for (const [nodeId, node] of Object.entries(allNodes)) {
-            const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
-            if (dist <= tolerance) {
-                if (this.currentNode !== nodeId) {
-                    console.log(`Detected arrival at node: ${nodeId}`);
-                    this.currentNode = nodeId;
-                    foundNode = true;
-                    
-                    if (window.ai) {
-                        window.ai.decisionCooldown = 0;
-                    }
-                } else {
-                    foundNode = true;
+    checkCurrentNode() {
+        const previousNode = this.currentNode;
+        
+        const tolerance = 1;
+        const allNodes = nodes.getAllNodes();
+        let foundNode = false;
+        
+        // Special handling for firemaking - only check Y position
+        if (this.currentActivity === 'firemaking' && this.currentNode) {
+            const currentNodeData = allNodes[this.currentNode];
+            if (currentNodeData) {
+                // For firemaking, only check if we're on the same Y coordinate
+                const yDist = Math.abs(this.position.y - currentNodeData.position.y);
+                if (yDist <= tolerance) {
+                    foundNode = true; // Stay at the firemaking node
                 }
-                break;
             }
         }
+        
+        // Normal node checking for non-firemaking activities
+        if (!foundNode) {
+            for (const [nodeId, node] of Object.entries(allNodes)) {
+                const dist = distance(this.position.x, this.position.y, node.position.x, node.position.y);
+                if (dist <= tolerance) {
+                    if (this.currentNode !== nodeId) {
+                        console.log(`Detected arrival at node: ${nodeId}`);
+                        this.currentNode = nodeId;
+                        foundNode = true;
+                        
+                        if (window.ai) {
+                            window.ai.decisionCooldown = 0;
+                        }
+                    } else {
+                        foundNode = true;
+                    }
+                    break;
+                }
+            }
+        }
+        
+        if (!foundNode) {
+            this.currentNode = null;
+        }
+        
+        if (previousNode !== this.currentNode && this.currentActivity) {
+            console.log(`Node changed, stopping activity`);
+            this.stopActivity();
+        }
     }
-    
-    if (!foundNode) {
-        this.currentNode = null;
-    }
-    
-    if (previousNode !== this.currentNode && this.currentActivity) {
-        console.log(`Node changed, stopping activity`);
-        this.stopActivity();
-    }
-}
 
     startActivity(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
