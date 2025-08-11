@@ -115,7 +115,34 @@ class TestScenario {
     if (window.taskManager) {
         taskManager.clearTasks();
         
-        // Task 1: Complete 10 laps at Draynor agility (Current Task)
+        // Task 1: Woodcut 30 logs (Current Task)
+        const woodcuttingTask1 = {
+            skill: 'woodcutting',
+            itemId: 'logs',
+            targetCount: 30,
+            nodeId: 'lumbridge_trees',
+            activityId: 'chop_tree',
+            description: 'Chop 30 Logs at Lumbridge Trees',
+            startingCount: null, // Will be set when task becomes current
+            progress: 0,
+            isCookingTask: false
+        };
+        
+        // Task 2: Burn 29 logs (Next Task)
+        const firemakingTask = {
+            skill: 'firemaking',
+            itemId: 'logs',
+            targetCount: 29,
+            nodeId: 'lumbridge_firemaking',
+            activityId: 'firemaking',
+            description: 'Burn 29 Logs at Lumbridge Firemaking',
+            startingCount: 0,
+            progress: 0,
+            isFiremakingTask: true,
+            logsConsumed: 0
+        };
+        
+        // Task 3: Complete 10 laps at Draynor agility
         const agilityTask = {
             skill: 'agility',
             itemId: 'agility_laps_draynor_rooftop',
@@ -129,8 +156,8 @@ class TestScenario {
             lapsCompleted: 0
         };
         
-        // Task 2: Fish 30 shrimp (Next Task)
-        const fishingTask1 = {
+        // Task 4: Fish 30 shrimp
+        const fishingTask = {
             skill: 'fishing',
             itemId: 'raw_shrimps',
             targetCount: 30,
@@ -142,7 +169,7 @@ class TestScenario {
             isCookingTask: false
         };
         
-        // Task 3: Cook 29 shrimp
+        // Task 5: Cook 29 shrimp
         const cookingTask = {
             skill: 'cooking',
             itemId: 'raw_shrimps', // Raw item being consumed
@@ -157,46 +184,7 @@ class TestScenario {
             rawFoodConsumed: 0
         };
         
-        // Task 4: Mine 20 tin ore
-        const miningTask1 = {
-            skill: 'mining',
-            itemId: 'tin_ore',
-            targetCount: 20,
-            nodeId: 'east_lumbridge_mine',
-            activityId: 'mine_copper_tin',
-            description: 'Mine 20 Tin ore at East Lumbridge Mine',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 5: Woodcut 28 logs
-        const woodcuttingTask1 = {
-            skill: 'woodcutting',
-            itemId: 'logs',
-            targetCount: 28,
-            nodeId: 'lumbridge_trees',
-            activityId: 'chop_tree',
-            description: 'Chop 28 Logs at Lumbridge Trees',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 6: Mine 20 copper ore
-        const miningTask2 = {
-            skill: 'mining',
-            itemId: 'copper_ore',
-            targetCount: 20,
-            nodeId: 'west_lumbridge_mine',
-            activityId: 'mine_copper_tin',
-            description: 'Mine 20 Copper ore at West Lumbridge Mine',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 7: Woodcut 28 logs (again)
+        // Task 6: More woodcutting
         const woodcuttingTask2 = {
             skill: 'woodcutting',
             itemId: 'logs',
@@ -209,14 +197,27 @@ class TestScenario {
             isCookingTask: false
         };
         
+        // Task 7: More woodcutting
+        const woodcuttingTask3 = {
+            skill: 'woodcutting',
+            itemId: 'logs',
+            targetCount: 28,
+            nodeId: 'lumbridge_trees',
+            activityId: 'chop_tree',
+            description: 'Chop 28 Logs at Lumbridge Trees',
+            startingCount: null, // Will be set when task becomes current
+            progress: 0,
+            isCookingTask: false
+        };
+        
         // Set up the task structure
-        taskManager.currentTask = agilityTask;
-        taskManager.nextTask = fishingTask1;
-        taskManager.tasks = [cookingTask, miningTask1, woodcuttingTask1, miningTask2, woodcuttingTask2];
+        taskManager.currentTask = woodcuttingTask1;
+        taskManager.nextTask = firemakingTask;
+        taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask2, woodcuttingTask3];
         
         console.log('Set up test tasks:');
-        console.log('Current:', agilityTask.description);
-        console.log('Next:', fishingTask1.description);
+        console.log('Current:', woodcuttingTask1.description);
+        console.log('Next:', firemakingTask.description);
         taskManager.tasks.forEach((task, index) => {
             console.log(`Task ${index + 1}:`, task.description);
         });
