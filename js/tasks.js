@@ -157,13 +157,17 @@ class TaskManager {
     updateAllProgress() {
         // Only update the current task
         if (this.currentTask && this.currentTask.progress < 1) {
-            if (this.currentTask.isCookingTask) {
-                // Cooking tasks manage their own progress through the cooking skill
+            // Check if this task manages its own progress (processing skills)
+            if (this.currentTask.isCookingTask || 
+                this.currentTask.isFiremakingTask || 
+                this.currentTask.isAgilityTask) {
+                // These tasks manage their own progress through their skills
                 // Just check if complete
                 if (this.currentTask.progress >= 1) {
                     this.completeTask(this.currentTask);
                 }
             } else {
+                // Gathering tasks - calculate progress based on inventory/bank
                 // Initialize startingCount if this is the first time
                 if (this.currentTask.startingCount === null) {
                     this.currentTask.startingCount = this.getCurrentItemCount(this.currentTask.itemId);
