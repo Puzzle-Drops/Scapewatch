@@ -17,36 +17,17 @@ class NodeManager {
 
     validateNodePositions() {
         let invalidNodes = [];
-        let correctedNodes = 0;
         
         for (const [id, node] of Object.entries(this.nodes)) {
             if (!collision.isWalkable(node.position.x, node.position.y)) {
-                // Try to find nearest walkable position
-                const walkablePos = this.findNearestWalkablePosition(
-                    node.position.x, 
-                    node.position.y, 
-                    3 // Search within 3 tiles
-                );
-                
-                if (walkablePos) {
-                    console.warn(`Node ${id} (${node.name}) auto-corrected from (${node.position.x}, ${node.position.y}) to (${walkablePos.x}, ${walkablePos.y})`);
-                    node.position.x = walkablePos.x;
-                    node.position.y = walkablePos.y;
-                    correctedNodes++;
-                } else {
-                    invalidNodes.push(id);
-                    console.error(`Node ${id} (${node.name}) is in a non-walkable position and could not be corrected!`);
-                }
+                invalidNodes.push(id);
+                console.warn(`Node ${id} (${node.name}) is in a non-walkable position!`);
             }
         }
         
-        if (correctedNodes > 0) {
-            console.log(`Auto-corrected ${correctedNodes} node positions`);
-        }
-        
         if (invalidNodes.length > 0) {
-            console.warn(`Found ${invalidNodes.length} nodes that could not be corrected. These nodes will be inaccessible.`);
-        } else if (correctedNodes === 0) {
+            console.warn(`Found ${invalidNodes.length} nodes in non-walkable positions. These nodes may be inaccessible.`);
+        } else {
             console.log('All nodes are in walkable positions.');
         }
     }
