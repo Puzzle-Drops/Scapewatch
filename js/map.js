@@ -233,35 +233,43 @@ class MapRenderer {
     }
 
     drawPlayer() {
-        // Use the actual player position for smooth movement
-        const { x, y } = player.position;
+    // Use the actual player position for smooth movement
+    const { x, y } = player.position;
 
-        // Player circle (reduced to 1/5 of original size)
+    // Player circle (reduced to 1/5 of original size)
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
+    this.ctx.fillStyle = player.isStunned ? '#e74c3c' : '#2ecc71'; // Red when stunned
+    this.ctx.fill();
+    this.ctx.strokeStyle = player.isStunned ? '#c0392b' : '#27ae60';
+    this.ctx.lineWidth = 0.4; // reduced from 2
+    this.ctx.stroke();
+
+    // Activity indicator OR stun indicator
+    if (player.isStunned) {
+        // Show stun progress (counter-clockwise from full)
+        const stunProgress = player.getStunProgress();
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 1.2, 0, Math.PI * 2);  // was 6, now 1.2
-        this.ctx.fillStyle = '#2ecc71';
-        this.ctx.fill();
-        this.ctx.strokeStyle = '#27ae60';
-        this.ctx.lineWidth = 0.4; // reduced from 2
+        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 - (Math.PI * 2 * stunProgress));
+        this.ctx.strokeStyle = '#e74c3c';
+        this.ctx.lineWidth = 0.4;
         this.ctx.stroke();
-
-        // Activity indicator with skill-based color
-        if (player.currentActivity) {
-            // Get the skill for the current activity
-            let activityColor = '#f39c12'; // Default orange
-            
-            const activityData = loadingManager.getData('activities')[player.currentActivity];
-            if (activityData && activityData.skill) {
-                activityColor = this.getSkillColor(activityData.skill);
-            }
-            
-            this.ctx.beginPath();
-            this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
-            this.ctx.strokeStyle = activityColor;
-            this.ctx.lineWidth = 0.4;  // reduced from 2
-            this.ctx.stroke();
+    } else if (player.currentActivity) {
+        // Get the skill for the current activity
+        let activityColor = '#f39c12'; // Default orange
+        
+        const activityData = loadingManager.getData('activities')[player.currentActivity];
+        if (activityData && activityData.skill) {
+            activityColor = this.getSkillColor(activityData.skill);
         }
+        
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * player.activityProgress));  // was 10, now 2
+        this.ctx.strokeStyle = activityColor;
+        this.ctx.lineWidth = 0.4;  // reduced from 2
+        this.ctx.stroke();
     }
+}
 
     drawPlayerPath() {
         if (!player.path || player.path.length === 0) return;
