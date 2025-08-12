@@ -1,7 +1,7 @@
 class ThievingSkill extends BaseSkill {
     constructor() {
         super('thieving', 'Thieving');
-        this.requiresBankingBeforeTask = true; // Always bank before thieving
+        this.requiresBankingBeforeTask = false; // Don't start trip with banking for gathering skills
         this.isStunned = false;
         this.stunEndTime = 0;
         this.blackjackCounter = {}; // Track consecutive successful blackjacks per NPC
