@@ -400,6 +400,34 @@
         "maxStack": 9999999999,
         "category": "seed"
     },
+    "potato": {
+        "id": "potato",
+        "name": "Potato",
+        "stackable": false,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "snape_grass": {
+        "id": "snape_grass",
+        "name": "Snape grass",
+        "stackable": false,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "limpwurt_root": {
+        "id": "limpwurt_root",
+        "name": "Limpwurt root",
+        "stackable": false,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "potato_cactus": {
+        "id": "potato_cactus",
+        "name": "Potato cactus",
+        "stackable": false,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
     "guam_seed": {
         "id": "guam_seed",
         "name": "Guam seed",
