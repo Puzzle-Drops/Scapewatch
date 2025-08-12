@@ -15,16 +15,13 @@ class TestScenario {
         //this.setPlayerPosition();
 
         // Set skill levels (each on its own line for easy modification)
-        //this.setSkillLevels();
+        this.setSkillLevels();
 
         // Add items to bank
         //this.populateBank();
 
         // Add some items to inventory for testing
         //this.populateInventory();
-
-        // Add the lumbridge_thieving node for testing
-        this.addThievingNode();
 
         // Set up specific test tasks
         this.setupTestTasks();
@@ -34,25 +31,6 @@ class TestScenario {
         bank.deposit('feather', 1000);
 
         console.log('Test scenario complete!');
-    }
-
-    addThievingNode() {
-        // Add the lumbridge_thieving node for testing
-        if (window.nodes && window.nodes.nodes) {
-            nodes.nodes['lumbridge_thieving'] = {
-                "id": "lumbridge_thieving",
-                "name": "Lumbridge Town Center",
-                "type": "skill",
-                "position": {
-                    "x": 4397,
-                    "y": 1880
-                },
-                "activities": [
-                    "pickpocket_man"
-                ]
-            };
-            console.log('Added lumbridge_thieving node for testing');
-        }
     }
 
     setPlayerPosition() {
@@ -140,11 +118,11 @@ class TestScenario {
             // Task 1: Pickpocket Men/Women 50 times (Current Task)
             const thievingTask1 = {
                 skill: 'thieving',
-                itemId: 'thieving_pickpocket_man', // Virtual item for tracking
+                itemId: 'thieving_pickpocket_rogue', // Virtual item for tracking
                 targetCount: 50,
-                nodeId: 'lumbridge_thieving',
-                activityId: 'pickpocket_man',
-                description: 'Pickpocket Man/Woman 50 times at Lumbridge Town Center',
+                nodeId: 'test_thieving',
+                activityId: 'pickpocket_rogue',
+                description: 'Pickpocket Rogue 50 times at Test Thieving',
                 startingCount: 0,
                 progress: 0,
                 isThievingTask: true, // Important flag for thieving tasks
