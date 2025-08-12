@@ -176,29 +176,33 @@ class ThievingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
-        // Check if we're still stunned
-        if (this.isStunned && Date.now() < this.stunEndTime) {
-            console.log('Still stunned, cannot pickpocket yet');
-            return false;
-        }
-        
-        // Clear stun if it expired
-        if (this.isStunned) {
-            this.isStunned = false;
-            console.log('Stun expired, can pickpocket again');
-        }
-        
-        // Check inventory space
-        if (inventory.isFull()) {
-            console.log('Inventory full - need to bank');
-            if (window.ai) {
-                window.ai.decisionCooldown = 0;
-            }
-            return false;
-        }
-        
-        return true;
+    // Check if we're still stunned
+    if (this.isStunned && Date.now() < this.stunEndTime) {
+        const remainingTime = Math.ceil((this.stunEndTime - Date.now()) / 1000);
+        console.log(`Still stunned for ${remainingTime} more seconds`);
+        return false;
     }
+    
+    // Clear stun if it expired (backup check - should be handled in canPerformActivity)
+    if (this.isStunned) {
+        console.log('Stun expired in beforeActivityStart, clearing');
+        this.isStunned = false;
+        if (window.player) {
+            player.setStunned(false);
+        }
+    }
+    
+    // Check inventory space
+    if (inventory.isFull()) {
+        console.log('Inventory full - need to bank');
+        if (window.ai) {
+            window.ai.decisionCooldown = 0;
+        }
+        return false;
+    }
+    
+    return true;
+}
     
     processRewards(activityData, level) {
         // Calculate success chance
@@ -403,12 +407,24 @@ class ThievingSkill extends BaseSkill {
     }
     
     canPerformActivity(activityId) {
-        const activityData = loadingManager.getData('activities')[activityId];
-        if (!activityData || activityData.skill !== this.id) return false;
-        
-        const requiredLevel = activityData.requiredLevel || 1;
-        const currentLevel = skills.getLevel(this.id);
-        
-        return currentLevel >= requiredLevel && !this.isStunned;
+    const activityData = loadingManager.getData('activities')[activityId];
+    if (!activityData || activityData.skill !== this.id) return false;
+    
+    const requiredLevel = activityData.requiredLevel || 1;
+    const currentLevel = skills.getLevel(this.id);
+    
+    // Check if stun has expired and clear it if so
+    if (this.isStunned && Date.now() >= this.stunEndTime) {
+        console.log('Stun expired, clearing stun state');
+        this.isStunned = false;
+        // Also clear player stun
+        if (window.player) {
+            player.setStunned(false);
+        }
     }
+    
+    return currentLevel >= requiredLevel && !this.isStunned;
+}
+
+    
 }
