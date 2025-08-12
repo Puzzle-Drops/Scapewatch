@@ -51,6 +51,15 @@ class AIManager {
 
         // CRITICAL: If we have no current task but player is moving, stop and re-evaluate
         if (this.currentTask === null && player.isMoving()) {
+            // Check if we're moving to a bank - if so, this is intentional
+            if (player.targetNode) {
+                const targetNode = nodes.getNode(player.targetNode);
+                if (targetNode && targetNode.type === 'bank') {
+                    // We're moving to bank after task completion - this is fine
+                    return;
+                }
+            }
+            
             console.log('Task lost while moving, stopping to re-evaluate');
             // Stop movement immediately
             player.path = [];
@@ -67,8 +76,25 @@ class AIManager {
         // Check if current task changed while we were busy
         if (!this.isCurrentTaskValid() && this.currentTask !== null) {
             // Task was invalidated (completed, changed, etc)
+            const oldTaskDesc = this.currentTask ? this.currentTask.description : 'none';
+            const newTaskDesc = window.taskManager && taskManager.currentTask ? 
+                taskManager.currentTask.description : 'none';
+            
+            console.log(`Task changed from "${oldTaskDesc}" to "${newTaskDesc}"`);
+            
             if (player.isMoving()) {
-                console.log('Task changed while moving, stopping to re-evaluate');
+                // Check if we're moving to bank - that's fine after task completion
+                if (player.targetNode) {
+                    const targetNode = nodes.getNode(player.targetNode);
+                    if (targetNode && targetNode.type === 'bank') {
+                        console.log('Moving to bank after task completion - continuing movement');
+                        this.currentTask = null;
+                        this.hasBankedForCurrentTask = false;
+                        return; // Don't stop movement to bank
+                    }
+                }
+                
+                console.log('Task changed while moving to non-bank location, stopping to re-evaluate');
                 // Stop movement
                 player.path = [];
                 player.pathIndex = 0;
