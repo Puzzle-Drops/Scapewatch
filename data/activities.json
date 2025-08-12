@@ -1,4 +1,411 @@
 {
+"pickpocket_man": {
+    "id": "pickpocket_man",
+    "name": "Pickpocket Man/Woman",
+    "targetName": "Man/Woman",
+    "skill": "thieving",
+    "requiredLevel": 1,
+    "baseDuration": 600,
+    "xpPerAction": 8,
+    "successChanceScaling": {
+        "minChance": 0.7070,
+        "maxChance": 1.0,
+        "minLevel": 1,
+        "maxLevel": 85
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 3}
+    ]
+},
+"pickpocket_farmer": {
+    "id": "pickpocket_farmer",
+    "name": "Pickpocket Farmer",
+    "targetName": "Farmer",
+    "skill": "thieving",
+    "requiredLevel": 10,
+    "baseDuration": 600,
+    "xpPerAction": 14.5,
+    "successChanceScaling": {
+        "minChance": 0.6211,
+        "maxChance": 1.0,
+        "minLevel": 10,
+        "maxLevel": 90
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 9}
+    ],
+    "drops": [
+        {"itemId": "potato_seed", "quantity": 1, "chance": 0.0390625}
+    ]
+},
+"pickpocket_ham": {
+    "id": "pickpocket_ham",
+    "name": "Pickpocket H.A.M. Member",
+    "targetName": "H.A.M. Member",
+    "skill": "thieving",
+    "requiredLevel": 15,
+    "baseDuration": 600,
+    "xpPerAction": 22.2,
+    "successChanceScaling": {
+        "minChance": 0.5898,
+        "maxChance": 1.0,
+        "minLevel": 15,
+        "maxLevel": 93
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": "1-4"}
+    ],
+    "drops": [
+        {"itemId": "bronze_arrow", "quantity": "1-13", "chance": 0.02941},
+        {"itemId": "steel_arrow", "quantity": "1-13", "chance": 0.01961},
+        {"itemId": "feather", "quantity": "1-7", "chance": 0.02941},
+        {"itemId": "fishing_bait", "quantity": "1-7", "chance": 0.02941},
+        {"itemId": "rune_essence", "quantity": "1-7", "chance": 0.02941}
+    ]
+},
+"pickpocket_warrior": {
+    "id": "pickpocket_warrior",
+    "name": "Pickpocket Warrior",
+    "targetName": "Warrior",
+    "skill": "thieving",
+    "requiredLevel": 25,
+    "baseDuration": 600,
+    "xpPerAction": 26,
+    "successChanceScaling": {
+        "minChance": 0.5273,
+        "maxChance": 1.0,
+        "minLevel": 25,
+        "maxLevel": 93
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 18}
+    ]
+},
+"pickpocket_rogue": {
+    "id": "pickpocket_rogue",
+    "name": "Pickpocket Rogue",
+    "targetName": "Rogue",
+    "skill": "thieving",
+    "requiredLevel": 32,
+    "baseDuration": 600,
+    "xpPerAction": 36.5,
+    "successChanceScaling": {
+        "minChance": 0.4878,
+        "maxChance": 1.0,
+        "minLevel": 32,
+        "maxLevel": 92
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 10}
+    ],
+    "drops": [
+        {"itemId": "coins", "quantity": 3, "chance": 0.297},
+        {"itemId": "coins", "quantity": 5, "chance": 0.0703},
+        {"itemId": "coins", "quantity": 15, "chance": 0.03125},
+        {"itemId": "coins", "quantity": 25, "chance": 0.0078125},
+        {"itemId": "bronze_arrow", "quantity": 7, "chance": 0.02344},
+        {"itemId": "earth_rune", "quantity": 4, "chance": 0.015625},
+        {"itemId": "fire_rune", "quantity": 6, "chance": 0.015625},
+        {"itemId": "mind_rune", "quantity": 9, "chance": 0.015625},
+        {"itemId": "chaos_rune", "quantity": 2, "chance": 0.0078125}
+    ],
+    "herbTableChance": 0.1797
+},
+"pickpocket_master_farmer": {
+    "id": "pickpocket_master_farmer",
+    "name": "Pickpocket Master Farmer",
+    "targetName": "Master Farmer",
+    "skill": "thieving",
+    "requiredLevel": 38,
+    "baseDuration": 600,
+    "xpPerAction": 43,
+    "successChanceScaling": {
+        "minChance": 0.5781,
+        "maxChance": 1.0,
+        "minLevel": 38,
+        "maxLevel": 91
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 3}
+    ],
+    "specialDropTable": "master_farmer_seeds"
+},
+"pickpocket_guard": {
+    "id": "pickpocket_guard",
+    "name": "Pickpocket Guard",
+    "targetName": "Guard",
+    "skill": "thieving",
+    "requiredLevel": 40,
+    "baseDuration": 600,
+    "xpPerAction": 46.8,
+    "successChanceScaling": {
+        "minChance": 0.4961,
+        "maxChance": 1.0,
+        "minLevel": 40,
+        "maxLevel": 95
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 30}
+    ]
+},
+"blackjack_bearded": {
+    "id": "blackjack_bearded",
+    "name": "Blackjack Bearded Bandit",
+    "targetName": "Bearded Bandit",
+    "skill": "thieving",
+    "requiredLevel": 45,
+    "baseDuration": 600,
+    "xpPerAction": 65,
+    "successChanceScaling": {
+        "minChance": 1.0,
+        "maxChance": 1.0,
+        "minLevel": 45,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 40}
+    ]
+},
+"pickpocket_bandit_camp": {
+    "id": "pickpocket_bandit_camp",
+    "name": "Pickpocket Bandit",
+    "targetName": "Bandit",
+    "skill": "thieving",
+    "requiredLevel": 53,
+    "baseDuration": 600,
+    "xpPerAction": 79.4,
+    "successChanceScaling": {
+        "minChance": 0.5938,
+        "maxChance": 1.0,
+        "minLevel": 53,
+        "maxLevel": 95
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 18}
+    ],
+    "drops": [
+        {"itemId": "chaos_rune", "quantity": 2, "chance": 0.164},
+        {"itemId": "death_rune", "quantity": 2, "chance": 0.02344},
+        {"itemId": "nature_rune", "quantity": 2, "chance": 0.015625},
+        {"itemId": "cosmic_rune", "quantity": 2, "chance": 0.015625},
+        {"itemId": "law_rune", "quantity": 2, "chance": 0.015625},
+        {"itemId": "coins", "quantity": 12, "chance": 0.1797},
+        {"itemId": "coins", "quantity": 20, "chance": 0.09375},
+        {"itemId": "coins", "quantity": 45, "chance": 0.046875},
+        {"itemId": "coins", "quantity": 30, "chance": 0.0078125}
+    ],
+    "herbTableChance": 0.1
+},
+"blackjack_bandit": {
+    "id": "blackjack_bandit",
+    "name": "Blackjack Bandit",
+    "targetName": "Bandit",
+    "skill": "thieving",
+    "requiredLevel": 55,
+    "baseDuration": 600,
+    "xpPerAction": 84.3,
+    "successChanceScaling": {
+        "minChance": 1.0,
+        "maxChance": 1.0,
+        "minLevel": 55,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 50}
+    ]
+},
+"pickpocket_knight": {
+    "id": "pickpocket_knight",
+    "name": "Pickpocket Knight of Ardougne",
+    "targetName": "Knight",
+    "skill": "thieving",
+    "requiredLevel": 55,
+    "baseDuration": 600,
+    "xpPerAction": 84.3,
+    "successChanceScaling": {
+        "minChance": 0.6094,
+        "maxChance": 1.0,
+        "minLevel": 55,
+        "maxLevel": 95
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 50}
+    ]
+},
+"pickpocket_watchman": {
+    "id": "pickpocket_watchman",
+    "name": "Pickpocket Watchman",
+    "targetName": "Watchman",
+    "skill": "thieving",
+    "requiredLevel": 65,
+    "baseDuration": 600,
+    "xpPerAction": 137.5,
+    "successChanceScaling": {
+        "minChance": 0.4336,
+        "maxChance": 0.6914,
+        "minLevel": 65,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 60}
+    ]
+},
+"pickpocket_menaphite": {
+    "id": "pickpocket_menaphite",
+    "name": "Pickpocket Menaphite Thug",
+    "targetName": "Menaphite Thug",
+    "skill": "thieving",
+    "requiredLevel": 65,
+    "baseDuration": 600,
+    "xpPerAction": 137.5,
+    "successChanceScaling": {
+        "minChance": 0.7227,
+        "maxChance": 0.9414,
+        "minLevel": 65,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 60}
+    ]
+},
+"pickpocket_paladin": {
+    "id": "pickpocket_paladin",
+    "name": "Pickpocket Paladin",
+    "targetName": "Paladin",
+    "skill": "thieving",
+    "requiredLevel": 70,
+    "baseDuration": 600,
+    "xpPerAction": 131.8,
+    "successChanceScaling": {
+        "minChance": 0.5195,
+        "maxChance": 0.7344,
+        "minLevel": 70,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 80},
+        {"itemId": "chaos_rune", "quantity": 2}
+    ]
+},
+"pickpocket_gnome": {
+    "id": "pickpocket_gnome",
+    "name": "Pickpocket Gnome",
+    "targetName": "Gnome",
+    "skill": "thieving",
+    "requiredLevel": 75,
+    "baseDuration": 600,
+    "xpPerAction": 133.5,
+    "successChanceScaling": {
+        "minChance": 0.5625,
+        "maxChance": 0.7539,
+        "minLevel": 75,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 70}
+    ],
+    "drops": [
+        {"itemId": "arrow_shaft", "quantity": "2-4", "chance": 0.4375},
+        {"itemId": "gold_ore", "quantity": 1, "chance": 0.0625},
+        {"itemId": "earth_rune", "quantity": 1, "chance": 0.0390625}
+    ]
+},
+"pickpocket_hero": {
+    "id": "pickpocket_hero",
+    "name": "Pickpocket Hero",
+    "targetName": "Hero",
+    "skill": "thieving",
+    "requiredLevel": 80,
+    "baseDuration": 600,
+    "xpPerAction": 163.3,
+    "successChanceScaling": {
+        "minChance": 0.5391,
+        "maxChance": 0.6914,
+        "minLevel": 80,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 240}
+    ],
+    "drops": [
+        {"itemId": "death_rune", "quantity": 2, "chance": 0.0625},
+        {"itemId": "blood_rune", "quantity": 1, "chance": 0.0390625},
+        {"itemId": "uncut_diamond", "quantity": 1, "chance": 0.0078125},
+        {"itemId": "gold_ore", "quantity": 1, "chance": 0.0078125}
+    ]
+},
+"pickpocket_vyre": {
+    "id": "pickpocket_vyre",
+    "name": "Pickpocket Vyre",
+    "targetName": "Vyre",
+    "skill": "thieving",
+    "requiredLevel": 82,
+    "baseDuration": 600,
+    "xpPerAction": 306.9,
+    "successChanceScaling": {
+        "minChance": 0.4219,
+        "maxChance": 0.5508,
+        "minLevel": 82,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 300}
+    ],
+    "drops": [
+        {"itemId": "death_rune", "quantity": 2, "chance": 0.0606},
+        {"itemId": "uncut_ruby", "quantity": 1, "chance": 0.0379},
+        {"itemId": "blood_rune", "quantity": 4, "chance": 0.01515},
+        {"itemId": "uncut_diamond", "quantity": 1, "chance": 0.00758}
+    ]
+},
+"pickpocket_elf": {
+    "id": "pickpocket_elf",
+    "name": "Pickpocket Elf",
+    "targetName": "Elf",
+    "skill": "thieving",
+    "requiredLevel": 85,
+    "baseDuration": 600,
+    "xpPerAction": 353.3,
+    "successChanceScaling": {
+        "minChance": 0.3438,
+        "maxChance": 0.4336,
+        "minLevel": 85,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 325}
+    ],
+    "drops": [
+        {"itemId": "death_rune", "quantity": 2, "chance": 0.0625},
+        {"itemId": "nature_rune", "quantity": 3, "chance": 0.0390625},
+        {"itemId": "uncut_diamond", "quantity": 1, "chance": 0.0078125},
+        {"itemId": "gold_ore", "quantity": 1, "chance": 0.0078125}
+    ]
+},
+"pickpocket_tzhaar": {
+    "id": "pickpocket_tzhaar",
+    "name": "Pickpocket TzHaar-Hur",
+    "targetName": "TzHaar-Hur",
+    "skill": "thieving",
+    "requiredLevel": 90,
+    "baseDuration": 600,
+    "xpPerAction": 103.4,
+    "successChanceScaling": {
+        "minChance": 0.6406,
+        "maxChance": 0.8633,
+        "minLevel": 90,
+        "maxLevel": 99
+    },
+    "guaranteedDrops": [
+        {"itemId": "coins", "quantity": 350}
+    ],
+    "drops": [
+        {"itemId": "uncut_sapphire", "quantity": 1, "chance": 0.02564},
+        {"itemId": "uncut_emerald", "quantity": 1, "chance": 0.02051},
+        {"itemId": "uncut_ruby", "quantity": 1, "chance": 0.01538},
+        {"itemId": "uncut_diamond", "quantity": 1, "chance": 0.00513}
+    ]
+},
 "firemaking": {
     "id": "firemaking",
     "name": "Firemaking",
