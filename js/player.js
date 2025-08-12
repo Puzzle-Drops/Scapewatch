@@ -11,6 +11,9 @@ class Player {
         this.path = [];
         this.pathIndex = 0;
         this.segmentProgress = 0;
+        this.isStunned = false;
+        this.stunEndTime = 0;
+        this.stunDuration = 0;
     }
 
     update(deltaTime) {
@@ -430,6 +433,26 @@ class Player {
     isBusy() {
         return this.isMoving() || this.isPerformingActivity();
     }
+
+setStunned(stunned, duration = 0) {
+    this.isStunned = stunned;
+    if (stunned) {
+        this.stunDuration = duration;
+        this.stunEndTime = Date.now() + duration;
+        // Stop any current activity
+        this.stopActivity();
+    } else {
+        this.stunDuration = 0;
+        this.stunEndTime = 0;
+    }
+}
+
+getStunProgress() {
+    if (!this.isStunned) return 0;
+    
+    const elapsed = Date.now() - (this.stunEndTime - this.stunDuration);
+    return Math.min(1, elapsed / this.stunDuration);
+}
 
     hasRequiredItems(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
