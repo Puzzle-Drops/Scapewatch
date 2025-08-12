@@ -164,7 +164,8 @@ class TaskManager {
             // Check if this task manages its own progress (processing skills)
             if (this.currentTask.isCookingTask || 
                 this.currentTask.isFiremakingTask || 
-                this.currentTask.isAgilityTask) {
+                this.currentTask.isAgilityTask ||
+                this.currentTask.isThievingTask) {
                 // These tasks manage their own progress through their skills
                 // Just check if complete
                 if (this.currentTask.progress >= 1) {
