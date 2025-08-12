@@ -337,11 +337,6 @@ class AIManager {
                 return;
             }
         }
-
-        // Check if player is stunned
-        if (player.isStunned) {
-            return;
-        }
         
         // Start the activity
         console.log(`Starting activity ${task.activityId} for task`);
