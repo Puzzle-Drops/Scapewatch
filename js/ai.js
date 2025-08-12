@@ -249,7 +249,7 @@ class AIManager {
             return;
         }
 
-        // NEW: Check if skill requires banking before starting the task
+        // Check if skill requires banking before starting the task
         if (skill && skill.requiresBankingBeforeTask && !this.hasBankedForCurrentTask) {
             console.log(`${task.skill} requires banking before starting task`);
             this.goToBank();
@@ -336,6 +336,11 @@ class AIManager {
                 this.hasBankedForCurrentTask = false;
                 return;
             }
+        }
+
+        // Check if player is stunned
+        if (player.isStunned) {
+            return;
         }
         
         // Start the activity
