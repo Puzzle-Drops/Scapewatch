@@ -24,8 +24,8 @@ class AgilitySkill extends BaseSkill {
             return null;
         }
         
-        // Find the node for this course
-        const courseNode = this.findNodeForCourse(selectedCourse.activityId);
+        // Use the pre-validated node from getAvailableCourses
+        const courseNode = selectedCourse.nodeId || this.findNodeForCourse(selectedCourse.activityId);
         if (!courseNode) {
             console.log(`No node found for agility course ${selectedCourse.activityId}`);
             return null;
@@ -62,9 +62,17 @@ class AgilitySkill extends BaseSkill {
             const requiredLevel = activity.requiredLevel || 1;
             if (currentLevel < requiredLevel) continue;
             
+            // Check if this course has a reachable node
+            const courseNode = this.findNodeForCourse(activityId);
+            if (!courseNode) {
+                console.log(`No reachable node for agility course ${activityId}, excluding from available courses`);
+                continue;
+            }
+            
             courses.push({
                 activityId: activityId,
-                requiredLevel: requiredLevel
+                requiredLevel: requiredLevel,
+                nodeId: courseNode  // Store the valid node for later use
             });
         }
         
@@ -73,11 +81,39 @@ class AgilitySkill extends BaseSkill {
     
     findNodeForCourse(activityId) {
         const allNodes = nodes.getAllNodes();
+        const viableNodes = [];
         
         for (const [nodeId, node] of Object.entries(allNodes)) {
             if (node.activities && node.activities.includes(activityId)) {
-                return nodeId;
+                // Check if node is walkable
+                if (window.collision && window.collision.initialized) {
+                    if (!collision.isWalkable(Math.floor(node.position.x), Math.floor(node.position.y))) {
+                        console.log(`Agility node ${nodeId} is not walkable, skipping`);
+                        continue;
+                    }
+                }
+                
+                // Check if we can path to this node from current position
+                if (window.pathfinding && window.player) {
+                    const path = pathfinding.findPath(
+                        player.position.x, 
+                        player.position.y, 
+                        node.position.x, 
+                        node.position.y
+                    );
+                    if (!path) {
+                        console.log(`No path to agility node ${nodeId}, skipping`);
+                        continue;
+                    }
+                }
+                
+                viableNodes.push(nodeId);
             }
+        }
+        
+        // Return a random viable node if we have any
+        if (viableNodes.length > 0) {
+            return viableNodes[Math.floor(Math.random() * viableNodes.length)];
         }
         
         return null;
