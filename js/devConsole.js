@@ -486,16 +486,27 @@ class DevConsole {
     }
 
     toggle() {
-        this.visible = !this.visible;
-        this.consoleDiv.style.display = this.visible ? 'block' : 'none';
+    this.visible = !this.visible;
+    this.consoleDiv.style.display = this.visible ? 'block' : 'none';
+    
+    if (this.visible) {
+        this.inputField.focus();
+        if (this.outputDiv.children.length === 0) {
+            this.log('Developer Console - Type "help" for commands', 'info');
+        }
         
-        if (this.visible) {
-            this.inputField.focus();
-            if (this.outputDiv.children.length === 0) {
-                this.log('Developer Console - Type "help" for commands', 'info');
-            }
+        // Display all captured console output when toggling on
+        if (this.consoleOutputDiv && this.consoleOutput.length > 0) {
+            // Clear existing display
+            this.consoleOutputDiv.innerHTML = '';
+            
+            // Re-display all captured output
+            this.consoleOutput.forEach(output => {
+                this.appendConsoleOutput(output);
+            });
         }
     }
+}
 
     log(message, type = 'normal') {
         const entry = document.createElement('div');
