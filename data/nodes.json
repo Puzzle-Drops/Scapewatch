@@ -1,4 +1,46 @@
 {
+"lumbridge_thieving": {
+    "id": "lumbridge_thieving",
+    "name": "Lumbridge Town Center",
+    "type": "skill",
+    "position": {
+        "x": 4397,
+        "y": 1880
+    },
+    "activities": [
+        "pickpocket_man"
+    ]
+},
+"test_thieving": {
+    "id": "test_thieving",
+    "name": "Test Thieving",
+    "type": "skill",
+    "position": {
+        "x": 4325,
+        "y": 1862
+    },
+    "activities": [
+        "pickpocket_man",
+        "pickpocket_farmer",
+        "pickpocket_ham",
+        "pickpocket_warrior",
+        "pickpocket_rogue",
+        "pickpocket_master_farmer",
+        "pickpocket_guard",
+        "blackjack_bearded",
+        "pickpocket_bandit_camp",
+        "blackjack_bandit",
+        "pickpocket_knight",
+        "pickpocket_watchman",
+        "pickpocket_menaphite",
+        "pickpocket_paladin",
+        "pickpocket_gnome",
+        "pickpocket_hero",
+        "pickpocket_vyre",
+        "pickpocket_elf",
+        "pickpocket_tzhaar"
+    ]
+},
 "lumbridge_firemaking": {
     "id": "lumbridge_firemaking",
     "name": "Lumbridge Firemaking",
