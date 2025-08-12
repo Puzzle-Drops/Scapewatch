@@ -20,7 +20,7 @@ class Pathfinding {
             return null;
         }
         if (!this.collision.isWalkable(Math.floor(end.x), Math.floor(end.y))) {
-            console.error('End position is not walkable');
+            console.error(`End position (${Math.floor(endX)}, ${Math.floor(endY)}) is not walkable - Target: ${endX.toFixed(1)}, ${endY.toFixed(1)}`);
             return null;
         }
 
