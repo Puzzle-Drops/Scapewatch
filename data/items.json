@@ -372,23 +372,500 @@
         "stackable": false,
         "category": "gem"
     },
-    "goblin_mail": {
-        "id": "goblin_mail",
-        "name": "Goblin Mail",
-        "stackable": false,
-        "category": "armor"
+    "potato_seed": {
+        "id": "potato_seed",
+        "name": "Potato seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
     },
-    "bronze_bar": {
-        "id": "bronze_bar",
-        "name": "Bronze Bar",
+    "snape_grass_seed": {
+        "id": "snape_grass_seed",
+        "name": "Snape grass seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "limpwurt_seed": {
+        "id": "limpwurt_seed",
+        "name": "Limpwurt seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "potato_cactus_seed": {
+        "id": "potato_cactus_seed",
+        "name": "Potato cactus seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "guam_seed": {
+        "id": "guam_seed",
+        "name": "Guam seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "marrentill_seed": {
+        "id": "marrentill_seed",
+        "name": "Marrentill seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "tarromin_seed": {
+        "id": "tarromin_seed",
+        "name": "Tarromin seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "harralander_seed": {
+        "id": "harralander_seed",
+        "name": "Harralander seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "ranarr_seed": {
+        "id": "ranarr_seed",
+        "name": "Ranarr seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "irit_seed": {
+        "id": "irit_seed",
+        "name": "Irit seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "avantoe_seed": {
+        "id": "avantoe_seed",
+        "name": "Avantoe seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "kwuarm_seed": {
+        "id": "kwuarm_seed",
+        "name": "Kwuarm seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "cadantine_seed": {
+        "id": "cadantine_seed",
+        "name": "Cadantine seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "lantadyme_seed": {
+        "id": "lantadyme_seed",
+        "name": "Lantadyme seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "dwarf_weed_seed": {
+        "id": "dwarf_weed_seed",
+        "name": "Dwarf weed seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "snapdragon_seed": {
+        "id": "snapdragon_seed",
+        "name": "Snapdragon seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "toadflax_seed": {
+        "id": "toadflax_seed",
+        "name": "Toadflax seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "torstol_seed": {
+        "id": "torstol_seed",
+        "name": "Torstol seed",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "seed"
+    },
+    "grimy_guam_leaf": {
+        "id": "grimy_guam_leaf",
+        "name": "Grimy guam leaf",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_marrentill": {
+        "id": "grimy_marrentill",
+        "name": "Grimy marrentill",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_tarromin": {
+        "id": "grimy_tarromin",
+        "name": "Grimy tarromin",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_harralander": {
+        "id": "grimy_harralander",
+        "name": "Grimy harralander",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_ranarr_weed": {
+        "id": "grimy_ranarr_weed",
+        "name": "Grimy ranarr weed",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_irit_leaf": {
+        "id": "grimy_irit_leaf",
+        "name": "Grimy irit leaf",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_avantoe": {
+        "id": "grimy_avantoe",
+        "name": "Grimy avantoe",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_kwuarm": {
+        "id": "grimy_kwuarm",
+        "name": "Grimy kwuarm",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_cadantine": {
+        "id": "grimy_cadantine",
+        "name": "Grimy cadantine",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_lantadyme": {
+        "id": "grimy_lantadyme",
+        "name": "Grimy lantadyme",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_dwarf_weed": {
+        "id": "grimy_dwarf_weed",
+        "name": "Grimy dwarf weed",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_snapdragon": {
+        "id": "grimy_snapdragon",
+        "name": "Grimy snapdragon",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_toadflax": {
+        "id": "grimy_toadflax",
+        "name": "Grimy toadflax",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "grimy_torstol": {
+        "id": "grimy_torstol",
+        "name": "Grimy torstol",
+        "stackable": false,
+        "category": "grimy"
+    },
+    "guam_leaf": {
+        "id": "guam_leaf",
+        "name": "Guam leaf",
+        "stackable": false,
+        "category": "herb"
+    },
+    "marrentill": {
+        "id": "marrentill",
+        "name": "Marrentill",
+        "stackable": false,
+        "category": "herb"
+    },
+    "tarromin": {
+        "id": "tarromin",
+        "name": "Tarromin",
+        "stackable": false,
+        "category": "herb"
+    },
+    "harralander": {
+        "id": "harralander",
+        "name": "Harralander",
+        "stackable": false,
+        "category": "herb"
+    },
+    "ranarr_weed": {
+        "id": "ranarr_weed",
+        "name": "Ranarr weed",
+        "stackable": false,
+        "category": "herb"
+    },
+    "irit_leaf": {
+        "id": "irit_leaf",
+        "name": "Irit leaf",
+        "stackable": false,
+        "category": "herb"
+    },
+    "avantoe": {
+        "id": "avantoe",
+        "name": "Avantoe",
+        "stackable": false,
+        "category": "herb"
+    },
+    "kwuarm": {
+        "id": "kwuarm",
+        "name": "Kwuarm",
+        "stackable": false,
+        "category": "herb"
+    },
+    "cadantine": {
+        "id": "cadantine",
+        "name": "Cadantine",
+        "stackable": false,
+        "category": "herb"
+    },
+    "lantadyme": {
+        "id": "lantadyme",
+        "name": "Lantadyme",
+        "stackable": false,
+        "category": "herb"
+    },
+    "dwarf_weed": {
+        "id": "dwarf_weed",
+        "name": "Dwarf weed",
+        "stackable": false,
+        "category": "herb"
+    },
+    "snapdragon": {
+        "id": "snapdragon",
+        "name": "Snapdragon",
+        "stackable": false,
+        "category": "herb"
+    },
+    "toadflax": {
+        "id": "toadflax",
+        "name": "Toadflax",
+        "stackable": false,
+        "category": "herb"
+    },
+    "torstol": {
+        "id": "torstol",
+        "name": "Torstol",
+        "stackable": false,
+        "category": "herb"
+    },
+    "rune_essence": {
+        "id": "rune_essence",
+        "name": "Rune essence",
         "stackable": false,
         "category": "resource"
     },
-    "iron_bar": {
-        "id": "iron_bar",
-        "name": "Iron Bar",
+    "air_rune": {
+        "id": "air_rune",
+        "name": "Air rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "water_rune": {
+        "id": "water_rune",
+        "name": "Water rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "earth_rune": {
+        "id": "earth_rune",
+        "name": "Earth rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "fire_rune": {
+        "id": "fire_rune",
+        "name": "Fire rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "nature_rune": {
+        "id": "nature_rune",
+        "name": "Nature rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "law_rune": {
+        "id": "law_rune",
+        "name": "Law rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "astral_rune": {
+        "id": "astral_rune",
+        "name": "Astral rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "cosmic_rune": {
+        "id": "cosmic_rune",
+        "name": "Cosmic rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "mind_rune": {
+        "id": "mind_rune",
+        "name": "Mind rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "body_rune": {
+        "id": "body_rune",
+        "name": "Body rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "chaos_rune": {
+        "id": "chaos_rune",
+        "name": "Chaos rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "death_rune": {
+        "id": "death_rune",
+        "name": "Death rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "soul_rune": {
+        "id": "soul_rune",
+        "name": "Soul rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "blood_rune": {
+        "id": "blood_rune",
+        "name": "Blood rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "wrath_rune": {
+        "id": "wrath_rune",
+        "name": "Wrath rune",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "runes"
+    },
+    "small_pouch": {
+        "id": "small_pouch",
+        "name": "Small pouch",
         "stackable": false,
+        "category": "pouch"
+    },
+    "medium_pouch": {
+        "id": "medium_pouch",
+        "name": "Medium pouch",
+        "stackable": false,
+        "category": "pouch"
+    },
+    "large_pouch": {
+        "id": "large_pouch",
+        "name": "Large pouch",
+        "stackable": false,
+        "category": "pouch"
+    },
+    "giant_pouch": {
+        "id": "giant_pouch",
+        "name": "Giant pouch",
+        "stackable": false,
+        "category": "pouch"
+    },
+    "arrow_shaft": {
+        "id": "arrow_shaft",
+        "name": "Arrow shaft",
+        "stackable": true,
+        "maxStack": 9999999999,
         "category": "resource"
+    },
+    "headless_arrow": {
+        "id": "headless_arrow",
+        "name": "Headless arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "resource"
+    },
+    "bronze_arrow": {
+        "id": "bronze_arrow",
+        "name": "Bronze arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "iron_arrow": {
+        "id": "iron_arrow",
+        "name": "Iron arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "steel_arrow": {
+        "id": "steel_arrow",
+        "name": "Steel arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "mithril_arrow": {
+        "id": "mithril_arrow",
+        "name": "Mithril arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "adamant_arrow": {
+        "id": "adamant_arrow",
+        "name": "Adamant arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "rune_arrow": {
+        "id": "rune_arrow",
+        "name": "Rune arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
+    },
+    "amethyst_arrow": {
+        "id": "amethyst_arrow",
+        "name": "Amethyst arrow",
+        "stackable": true,
+        "maxStack": 9999999999,
+        "category": "ammo"
     }
+
+
+
 
 }
