@@ -157,7 +157,9 @@ class ThievingSkill extends BaseSkill {
         if (this.isStunned) {
             const remainingStun = this.stunEndTime - Date.now();
             if (remainingStun > 0) {
-                return remainingStun;
+                // Return a very long duration to prevent activity from starting
+                // This prevents the spam without needing to log anything
+                return 999999;
             } else {
                 this.isStunned = false;
             }
@@ -176,33 +178,33 @@ class ThievingSkill extends BaseSkill {
     }
     
     beforeActivityStart(activityData) {
-    // Check if we're still stunned
-    if (this.isStunned && Date.now() < this.stunEndTime) {
-        const remainingTime = Math.ceil((this.stunEndTime - Date.now()) / 1000);
-        console.log(`Still stunned for ${remainingTime} more seconds`);
-        return false;
-    }
-    
-    // Clear stun if it expired (backup check - should be handled in canPerformActivity)
-    if (this.isStunned) {
-        console.log('Stun expired in beforeActivityStart, clearing');
-        this.isStunned = false;
-        if (window.player) {
-            player.setStunned(false);
+        // Check if we're still stunned
+        if (this.isStunned && Date.now() < this.stunEndTime) {
+            const remainingTime = Math.ceil((this.stunEndTime - Date.now()) / 1000);
+            console.log(`Still stunned for ${remainingTime} more seconds`);
+            return false;
         }
-    }
-    
-    // Check inventory space
-    if (inventory.isFull()) {
-        console.log('Inventory full - need to bank');
-        if (window.ai) {
-            window.ai.decisionCooldown = 0;
+        
+        // Clear stun if it expired (backup check - should be handled in canPerformActivity)
+        if (this.isStunned) {
+            console.log('Stun expired in beforeActivityStart, clearing');
+            this.isStunned = false;
+            if (window.player) {
+                player.setStunned(false);
+            }
         }
-        return false;
+        
+        // Check inventory space
+        if (inventory.isFull()) {
+            console.log('Inventory full - need to bank');
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+            }
+            return false;
+        }
+        
+        return true;
     }
-    
-    return true;
-}
     
     processRewards(activityData, level) {
         // Calculate success chance
@@ -210,8 +212,7 @@ class ThievingSkill extends BaseSkill {
         const success = Math.random() <= successChance;
         
         if (!success) {
-            // Failed - apply stun
-            console.log('Pickpocket failed! Stunned for 6 seconds');
+            // Failed - apply stun (applyStun will handle the console message)
             this.applyStun();
             
             // Reset blackjack counter on failure
@@ -364,12 +365,27 @@ class ThievingSkill extends BaseSkill {
     }
     
     applyStun() {
+        // Apply speed modifier to stun duration
+        let stunDuration = 6000; // Base 6 second stun
+        
+        // Apply action speed modifier if dev console is available
+        if (window.devConsole && window.devConsole.speedModifiers) {
+            stunDuration = stunDuration * window.devConsole.speedModifiers.actionDuration;
+        }
+        
         this.isStunned = true;
-        this.stunEndTime = Date.now() + 6000; // 6 second stun
+        this.stunEndTime = Date.now() + stunDuration;
         
         // Notify player to show stun animation
         if (window.player) {
-            player.setStunned(true, 6000);
+            player.setStunned(true, stunDuration);
+        }
+        
+        // Only log if stun is significant (more than 100ms)
+        if (stunDuration > 100) {
+            console.log(`Pickpocket failed! Stunned for ${(stunDuration / 1000).toFixed(1)} seconds`);
+        } else {
+            console.log('Pickpocket failed! (Brief stun)');
         }
     }
     
@@ -407,24 +423,22 @@ class ThievingSkill extends BaseSkill {
     }
     
     canPerformActivity(activityId) {
-    const activityData = loadingManager.getData('activities')[activityId];
-    if (!activityData || activityData.skill !== this.id) return false;
-    
-    const requiredLevel = activityData.requiredLevel || 1;
-    const currentLevel = skills.getLevel(this.id);
-    
-    // Check if stun has expired and clear it if so
-    if (this.isStunned && Date.now() >= this.stunEndTime) {
-        console.log('Stun expired, clearing stun state');
-        this.isStunned = false;
-        // Also clear player stun
-        if (window.player) {
-            player.setStunned(false);
+        const activityData = loadingManager.getData('activities')[activityId];
+        if (!activityData || activityData.skill !== this.id) return false;
+        
+        const requiredLevel = activityData.requiredLevel || 1;
+        const currentLevel = skills.getLevel(this.id);
+        
+        // Check if stun has expired and clear it if so
+        if (this.isStunned && Date.now() >= this.stunEndTime) {
+            console.log('Stun expired, clearing stun state');
+            this.isStunned = false;
+            // Also clear player stun
+            if (window.player) {
+                player.setStunned(false);
+            }
         }
+        
+        return currentLevel >= requiredLevel && !this.isStunned;
     }
-    
-    return currentLevel >= requiredLevel && !this.isStunned;
-}
-
-    
 }
