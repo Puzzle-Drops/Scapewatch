@@ -128,14 +128,14 @@ class TestScenario {
             isCookingTask: false
         };
         
-        // Task 2: Woodcut 14 logs (Current Task)
+        // Task 2: Woodcut 13 logs (Current Task)
         const woodcuttingTask2 = {
             skill: 'woodcutting',
             itemId: 'logs',
-            targetCount: 14,
+            targetCount: 13,
             nodeId: 'lumbridge_trees',
             activityId: 'chop_tree',
-            description: 'Chop 14 Logs at Lumbridge Trees',
+            description: 'Chop 13 Logs at Lumbridge Trees',
             startingCount: null, // Will be set when task becomes current
             progress: 0,
             isCookingTask: false
