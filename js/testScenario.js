@@ -15,13 +15,16 @@ class TestScenario {
         //this.setPlayerPosition();
 
         // Set skill levels (each on its own line for easy modification)
-        this.setSkillLevels();
+        //this.setSkillLevels();
 
         // Add items to bank
         //this.populateBank();
 
         // Add some items to inventory for testing
         //this.populateInventory();
+
+        // Add the lumbridge_thieving node for testing
+        this.addThievingNode();
 
         // Set up specific test tasks
         this.setupTestTasks();
@@ -31,6 +34,25 @@ class TestScenario {
         bank.deposit('feather', 1000);
 
         console.log('Test scenario complete!');
+    }
+
+    addThievingNode() {
+        // Add the lumbridge_thieving node for testing
+        if (window.nodes && window.nodes.nodes) {
+            nodes.nodes['lumbridge_thieving'] = {
+                "id": "lumbridge_thieving",
+                "name": "Lumbridge Town Center",
+                "type": "skill",
+                "position": {
+                    "x": 4397,
+                    "y": 1880
+                },
+                "activities": [
+                    "pickpocket_man"
+                ]
+            };
+            console.log('Added lumbridge_thieving node for testing');
+        }
     }
 
     setPlayerPosition() {
@@ -111,128 +133,129 @@ class TestScenario {
     }
 
     setupTestTasks() {
-    // Clear existing tasks first
-    if (window.taskManager) {
-        taskManager.clearTasks();
-        
-        // Task 1: Woodcut 14 logs (Current Task)
-        const woodcuttingTask1 = {
-            skill: 'woodcutting',
-            itemId: 'logs',
-            targetCount: 14,
-            nodeId: 'lumbridge_trees',
-            activityId: 'chop_tree',
-            description: 'Chop 14 Logs at Lumbridge Trees',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 2: Woodcut 13 logs (Current Task)
-        const woodcuttingTask2 = {
-            skill: 'woodcutting',
-            itemId: 'logs',
-            targetCount: 13,
-            nodeId: 'lumbridge_trees',
-            activityId: 'chop_tree',
-            description: 'Chop 13 Logs at Lumbridge Trees',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 3: Complete 10 laps at Draynor agility
-        const agilityTask = {
-            skill: 'agility',
-            itemId: 'agility_laps_draynor_rooftop',
-            targetCount: 10,
-            nodeId: 'draynor_rooftop',
-            activityId: 'draynor_rooftop',
-            description: '10 laps at Draynor Rooftop',
-            startingCount: 0,
-            progress: 0,
-            isAgilityTask: true,
-            lapsCompleted: 0
-        };
-        
-        // Task 4: Fish 30 shrimp
-        const fishingTask = {
-            skill: 'fishing',
-            itemId: 'raw_shrimps',
-            targetCount: 10,
-            nodeId: 'lumbridge_fishing',
-            activityId: 'small_fishing_net',
-            description: 'Catch 10 Raw shrimps at River Lum',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 5: Cook 29 shrimp
-        const cookingTask = {
-            skill: 'cooking',
-            itemId: 'raw_shrimps', // Raw item being consumed
-            targetCount: 10,
-            nodeId: 'lumbridge_kitchen',
-            activityId: 'cook_food',
-            description: 'Cook 10 Raw shrimps at Lumbridge Kitchen',
-            startingCount: 0,
-            progress: 0,
-            isCookingTask: true,
-            cookedItemId: 'shrimps',
-            rawFoodConsumed: 0
-        };
-        
-        // Task 6: More woodcutting
-        const woodcuttingTask3 = {
-            skill: 'woodcutting',
-            itemId: 'logs',
-            targetCount: 8,
-            nodeId: 'lumbridge_trees',
-            activityId: 'chop_tree',
-            description: 'Chop 8 Logs at Lumbridge Trees',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Task 7: More woodcutting
-        const woodcuttingTask4 = {
-            skill: 'woodcutting',
-            itemId: 'logs',
-            targetCount: 28,
-            nodeId: 'lumbridge_trees',
-            activityId: 'chop_tree',
-            description: 'Chop 28 Logs at Lumbridge Trees',
-            startingCount: null, // Will be set when task becomes current
-            progress: 0,
-            isCookingTask: false
-        };
-        
-        // Set up the task structure
-        taskManager.currentTask = woodcuttingTask1;
-        taskManager.nextTask = woodcuttingTask2;
-        taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask3, woodcuttingTask4];
-        
-        console.log('Set up test tasks:');
-        console.log('Current:', woodcuttingTask1.description);
-        console.log('Next:', woodcuttingTask2.description);
-        taskManager.tasks.forEach((task, index) => {
-            console.log(`Task ${index + 1}:`, task.description);
-        });
-        
-        // Update UI to show the new tasks
-        if (window.ui) {
-            window.ui.updateTasks();
-        }
-        
-        // Notify AI to start working on the current task
-        if (window.ai) {
-            window.ai.currentTask = null;
-            window.ai.decisionCooldown = 0;
+        // Clear existing tasks first
+        if (window.taskManager) {
+            taskManager.clearTasks();
+            
+            // Task 1: Pickpocket Men/Women 50 times (Current Task)
+            const thievingTask1 = {
+                skill: 'thieving',
+                itemId: 'thieving_pickpocket_man', // Virtual item for tracking
+                targetCount: 50,
+                nodeId: 'lumbridge_thieving',
+                activityId: 'pickpocket_man',
+                description: 'Pickpocket Man/Woman 50 times at Lumbridge Town Center',
+                startingCount: 0,
+                progress: 0,
+                isThievingTask: true, // Important flag for thieving tasks
+                successfulThefts: 0 // Counter for successful pickpockets
+            };
+            
+            // Task 2: Woodcut 13 logs (Current Task)
+            const woodcuttingTask2 = {
+                skill: 'woodcutting',
+                itemId: 'logs',
+                targetCount: 13,
+                nodeId: 'lumbridge_trees',
+                activityId: 'chop_tree',
+                description: 'Chop 13 Logs at Lumbridge Trees',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 3: Complete 10 laps at Draynor agility
+            const agilityTask = {
+                skill: 'agility',
+                itemId: 'agility_laps_draynor_rooftop',
+                targetCount: 10,
+                nodeId: 'draynor_rooftop',
+                activityId: 'draynor_rooftop',
+                description: '10 laps at Draynor Rooftop',
+                startingCount: 0,
+                progress: 0,
+                isAgilityTask: true,
+                lapsCompleted: 0
+            };
+            
+            // Task 4: Fish 30 shrimp
+            const fishingTask = {
+                skill: 'fishing',
+                itemId: 'raw_shrimps',
+                targetCount: 10,
+                nodeId: 'lumbridge_fishing',
+                activityId: 'small_fishing_net',
+                description: 'Catch 10 Raw shrimps at River Lum',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 5: Cook 29 shrimp
+            const cookingTask = {
+                skill: 'cooking',
+                itemId: 'raw_shrimps', // Raw item being consumed
+                targetCount: 10,
+                nodeId: 'lumbridge_kitchen',
+                activityId: 'cook_food',
+                description: 'Cook 10 Raw shrimps at Lumbridge Kitchen',
+                startingCount: 0,
+                progress: 0,
+                isCookingTask: true,
+                cookedItemId: 'shrimps',
+                rawFoodConsumed: 0
+            };
+            
+            // Task 6: More woodcutting
+            const woodcuttingTask3 = {
+                skill: 'woodcutting',
+                itemId: 'logs',
+                targetCount: 8,
+                nodeId: 'lumbridge_trees',
+                activityId: 'chop_tree',
+                description: 'Chop 8 Logs at Lumbridge Trees',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Task 7: More woodcutting
+            const woodcuttingTask4 = {
+                skill: 'woodcutting',
+                itemId: 'logs',
+                targetCount: 28,
+                nodeId: 'lumbridge_trees',
+                activityId: 'chop_tree',
+                description: 'Chop 28 Logs at Lumbridge Trees',
+                startingCount: null, // Will be set when task becomes current
+                progress: 0,
+                isCookingTask: false
+            };
+            
+            // Set up the task structure
+            taskManager.currentTask = thievingTask1;
+            taskManager.nextTask = woodcuttingTask2;
+            taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask3, woodcuttingTask4];
+            
+            console.log('Set up test tasks:');
+            console.log('Current:', thievingTask1.description);
+            console.log('Next:', woodcuttingTask2.description);
+            taskManager.tasks.forEach((task, index) => {
+                console.log(`Task ${index + 1}:`, task.description);
+            });
+            
+            // Update UI to show the new tasks
+            if (window.ui) {
+                window.ui.updateTasks();
+            }
+            
+            // Notify AI to start working on the current task
+            if (window.ai) {
+                window.ai.currentTask = null;
+                window.ai.decisionCooldown = 0;
+            }
         }
     }
-}
 
     getCurrentItemCount(itemId) {
         let count = 0;
