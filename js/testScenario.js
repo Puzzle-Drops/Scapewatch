@@ -15,7 +15,7 @@ class TestScenario {
         //this.setPlayerPosition();
 
         // Set skill levels (each on its own line for easy modification)
-        //this.setSkillLevels();
+        this.setSkillLevels();
 
         // Add items to bank
         //this.populateBank();
