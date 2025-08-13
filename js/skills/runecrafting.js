@@ -293,12 +293,23 @@ return {
             this.currentPhase = 2;
             console.log('Emptying giant pouch');
         } else {
-    // No more essence to craft
+    // No more essence to craft - trip complete
     console.log('No essence left to craft - trip complete');
     this.clearCraftingState();
     
+    // Update task progress for this completed trip
+    this.updateRunecraftingTaskProgress();
+    
     // Reset phase for next trip
     this.currentPhase = 0;
+    
+    // Clear pouch contents
+    this.pouchContents = {
+        small_pouch: 0,
+        medium_pouch: 0,
+        large_pouch: 0,
+        giant_pouch: 0
+    };
     
     // Tell AI to re-evaluate (need to bank)
     if (window.ai) {
@@ -364,9 +375,26 @@ return {
     }
         
         if (essenceToConsume === 0) {
-            console.log('No essence to consume');
-            return [];
-        }
+    console.log('No essence to consume - trip incomplete, ending trip');
+    // Reset for next trip
+    this.currentPhase = 0;
+    this.clearCraftingState();
+    
+    // Update task progress if we crafted anything this trip
+    const inventoryEssence = inventory.getItemCount('rune_essence');
+    const pouchEssence = this.getTotalPouchContents();
+    if (inventoryEssence === 0 && pouchEssence === 0) {
+        // Trip is actually complete
+        this.updateRunecraftingTaskProgress();
+    }
+    
+    // Tell AI to re-evaluate (go bank)
+    if (window.ai) {
+        window.ai.decisionCooldown = 0;
+    }
+    
+    return [];
+}
         
         // Consume the essence
         if (this.currentPhase === 0) {
@@ -544,25 +572,32 @@ return {
     }
     
     canContinueTask(task) {
-        if (!task || !task.isRunecraftingTask) return true;
-        
-        // Check if we have enough essence for remaining trips
-        const essencePerTrip = 58;
-        const tripsRemaining = task.targetCount - (task.tripsCompleted || 0);
-        const essenceNeeded = essencePerTrip * tripsRemaining;
-        
-        const totalAvailable = this.getTotalEssenceAvailable();
-        
-        if (totalAvailable < essenceNeeded) {
-            console.log(`Cannot continue runecrafting task - need ${essenceNeeded} essence, have ${totalAvailable}`);
-            this.hasBankedForTask = false;
-            this.currentTaskId = null;
-            this.clearCraftingState();
-            return false;
-        }
-        
-        return true;
+    if (!task || !task.isRunecraftingTask) return true;
+    
+    // Check if we have enough essence for remaining trips
+    // Be conservative - assume we need at least 58 essence per trip (minimum viable trip)
+    const minEssencePerTrip = 58;
+    const tripsRemaining = task.targetCount - (task.tripsCompleted || 0);
+    const essenceNeeded = minEssencePerTrip * tripsRemaining;
+    
+    const totalAvailable = this.getTotalEssenceAvailable();
+    
+    if (totalAvailable < minEssencePerTrip) {
+        // Can't even do one trip
+        console.log(`Cannot continue runecrafting task - need at least ${minEssencePerTrip} essence for one trip, have ${totalAvailable}`);
+        this.hasBankedForTask = false;
+        this.currentTaskId = null;
+        this.clearCraftingState();
+        return false;
     }
+    
+    if (totalAvailable < essenceNeeded) {
+        console.log(`Warning: Only have ${totalAvailable} essence, may not complete all ${tripsRemaining} remaining trips`);
+        // Still return true - we can do at least one more trip
+    }
+    
+    return true;
+}
     
     hasMaterials() {
         return this.hasEssenceForCurrentTask();
