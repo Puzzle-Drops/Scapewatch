@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scapewatch Bank Distance Calculator v3.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #f39c12;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #f39c12;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #e67e22;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background-color: #333;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #f39c12;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .console {
+            background-color: #000;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .console-entry {
+            margin-bottom: 2px;
+        }
+
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #2ecc71;
+        }
+
+        .warning {
+            color: #f39c12;
+        }
+
+        .info {
+            color: #3498db;
+        }
+
+        .dim {
+            color: #666;
+        }
+
+        .results {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .results h2 {
+            color: #f39c12;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background-color: #333;
+            padding: 10px;
+            border-radius: 4px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .stat-value {
+            color: #f39c12;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Scapewatch Bank Distance Calculator v3.0 🏦</h1>
+        
+        <div class="controls">
+            <button id="startBtn">Start Analysis</button>
+            <button id="exportBtn" disabled>Export to Clipboard</button>
+            <button id="downloadBtn" disabled>Download JSON</button>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%">0%</div>
+            </div>
+            <div id="progressText" class="progress-text">Ready to start...</div>
+        </div>
+
+        <div class="console" id="console"></div>
+
+        <div class="results" id="results">
+            <h2>Analysis Complete!</h2>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-label">Total Nodes</div>
+                    <div class="stat-value" id="totalNodes">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Accessible Nodes</div>
+                    <div class="stat-value" id="accessibleNodes">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Inaccessible Nodes</div>
+                    <div class="stat-value" id="inaccessibleNodes">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Banks Found</div>
+                    <div class="stat-value" id="banksFound">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Updated Nodes</div>
+                    <div class="stat-value" id="updatedNodes">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Processing Time</div>
+                    <div class="stat-value" id="processingTime">0s</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ERROR CAPTURE ====================
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            logConsole('CONSOLE ERROR: ' + args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            logConsole('CONSOLE WARN: ' + args.join(' '), 'warning');
+        };
+        
+        window.addEventListener('error', function(e) {
+            logConsole(`UNCAUGHT ERROR: ${e.message} at ${e.filename}:${e.lineno}:${e.colno}`, 'error');
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            logConsole(`UNHANDLED PROMISE REJECTION: ${e.reason}`, 'error');
+        });
+
+        // ==================== COLLISION SYSTEM (EXACT COPY FROM GAME) ====================
+        class CollisionSystem {
+            constructor() {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.imageData = null;
+                this.width = 0;
+                this.height = 0;
+                this.initialized = false;
+            }
+
+            async initialize(imageUrl) {
+                logConsole('Loading collision map from: ' + imageUrl, 'dim');
+                
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        try {
+                            this.width = img.width;
+                            this.height = img.height;
+                            this.canvas.width = this.width;
+                            this.canvas.height = this.height;
+                            
+                            this.ctx.drawImage(img, 0, 0);
+                            this.imageData = this.ctx.getImageData(0, 0, this.width, this.height);
+                            
+                            this.initialized = true;
+                            logConsole(`Collision map loaded: ${this.width}x${this.height}`, 'success');
+                            logConsole('Player collision: Single point (1x1 pixel)', 'info');
+                            resolve();
+                        } catch (error) {
+                            logConsole('Error processing collision map: ' + error.message, 'error');
+                            reject(error);
+                        }
+                    };
+                    
+                    img.onerror = (error) => {
+                        logConsole('Failed to load collision map: ' + error, 'error');
+                        reject(new Error('Failed to load collision map'));
+                    };
+                    
+                    img.src = imageUrl;
+                });
+            }
+
+            isWalkable(x, y) {
+                if (!this.initialized) return false;
+                
+                // Round to nearest pixel
+                x = Math.round(x);
+                y = Math.round(y);
+                
+                // Check bounds
+                if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+                    return false;
+                }
+                
+                // Get pixel data (RGBA)
+                const index = (y * this.width + x) * 4;
+                const alpha = this.imageData.data[index + 3];
+                
+                // If alpha is 0 (transparent), it's walkable
+                return alpha === 0;
+            }
+
+            // Check if a line from start to end is clear (EXACT COPY FROM GAME)
+            isLineOfSight(x1, y1, x2, y2) {
+                const dx = Math.abs(x2 - x1);
+                const dy = Math.abs(y2 - y1);
+                const sx = x1 < x2 ? 1 : -1;
+                const sy = y1 < y2 ? 1 : -1;
+                let err = dx - dy;
+                
+                let x = Math.round(x1);
+                let y = Math.round(y1);
+                
+                while (x !== Math.round(x2) || y !== Math.round(y2)) {
+                    if (!this.isWalkable(x, y)) {
+                        return false;
+                    }
+                    
+                    const e2 = 2 * err;
+                    if (e2 > -dy) {
+                        err -= dy;
+                        x += sx;
+                    }
+                    if (e2 < dx) {
+                        err += dx;
+                        y += sy;
+                    }
+                }
+                
+                return this.isWalkable(Math.round(x2), Math.round(y2));
+            }
+
+            // Get all walkable neighbors of a position (EXACT COPY FROM GAME)
+            getWalkableNeighbors(x, y) {
+                const neighbors = [];
+                
+                // 8-directional movement
+                const directions = [
+                    { x: 0, y: -1 },  // North
+                    { x: 1, y: -1 },  // Northeast
+                    { x: 1, y: 0 },   // East
+                    { x: 1, y: 1 },   // Southeast
+                    { x: 0, y: 1 },   // South
+                    { x: -1, y: 1 },  // Southwest
+                    { x: -1, y: 0 },  // West
+                    { x: -1, y: -1 }  // Northwest
+                ];
+                
+                for (const dir of directions) {
+                    const nx = x + dir.x;
+                    const ny = y + dir.y;
+                    
+                    if (this.isWalkable(nx, ny)) {
+                        // For diagonal movement, check that we can actually move diagonally
+                        // (not blocked by walls on either side)
+                        if (dir.x !== 0 && dir.y !== 0) {
+                            if (this.isWalkable(x + dir.x, y) && this.isWalkable(x, y + dir.y)) {
+                                neighbors.push({ x: nx, y: ny });
+                            }
+                        } else {
+                            neighbors.push({ x: nx, y: ny });
+                        }
+                    }
+                }
+                
+                return neighbors;
+            }
+        }
+
+        // ==================== PRIORITY QUEUE FOR A* ====================
+        class PriorityQueue {
+            constructor() {
+                this.elements = [];
+            }
+
+            enqueue(element, priority) {
+                this.elements.push({ element, priority });
+                this.elements.sort((a, b) => a.priority - b.priority);
+            }
+
+            dequeue() {
+                return this.elements.shift().element;
+            }
+
+            isEmpty() {
+                return this.elements.length === 0;
+            }
+
+            contains(element) {
+                return this.elements.some(item => 
+                    item.element.x === element.x && item.element.y === element.y
+                );
+            }
+        }
+
+        // ==================== PATHFINDING (EXACT COPY FROM GAME) ====================
+        class Pathfinding {
+            constructor(collisionSystem) {
+                this.collision = collisionSystem;
+            }
+
+            // A* pathfinding algorithm (EXACT COPY FROM js/pathfinding.js)
+            findPath(startX, startY, endX, endY) {
+                if (!this.collision.initialized) {
+                    console.error('Collision system not initialized');
+                    return null;
+                }
+
+                // Round positions to pixels and center them (add 0.5)
+                const start = { x: Math.floor(startX) + 0.5, y: Math.floor(startY) + 0.5 };
+                const end = { x: Math.floor(endX) + 0.5, y: Math.floor(endY) + 0.5 };
+
+                // Check if start and end are walkable (use floor since collision uses integer coords)
+                if (!this.collision.isWalkable(Math.floor(start.x), Math.floor(start.y))) {
+                    console.error('Start position is not walkable');
+                    return null;
+                }
+                if (!this.collision.isWalkable(Math.floor(end.x), Math.floor(end.y))) {
+                    console.error(`End position (${Math.floor(endX)}, ${Math.floor(endY)}) is not walkable`);
+                    return null;
+                }
+
+                // Check if we have line of sight - if so, just go straight
+                if (this.collision.isLineOfSight(Math.floor(start.x), Math.floor(start.y), Math.floor(end.x), Math.floor(end.y))) {
+                    return [start, end];
+                }
+
+                // A* implementation
+                const openSet = new PriorityQueue();
+                const closedSet = new Set();
+                const cameFrom = new Map();
+                const gScore = new Map();
+                const fScore = new Map();
+
+                const startKey = `${start.x},${start.y}`;
+                gScore.set(startKey, 0);
+                fScore.set(startKey, this.heuristic(start, end));
+                openSet.enqueue(start, fScore.get(startKey));
+
+                while (!openSet.isEmpty()) {
+                    const current = openSet.dequeue();
+                    const currentKey = `${current.x},${current.y}`;
+
+                    // Check if we reached the goal
+                    if (current.x === end.x && current.y === end.y) {
+                        return this.reconstructPath(cameFrom, current);
+                    }
+
+                    closedSet.add(currentKey);
+
+                    // Check all neighbors (getWalkableNeighbors returns integer coords, so center them)
+                    const neighbors = this.collision.getWalkableNeighbors(Math.floor(current.x), Math.floor(current.y));
+                    
+                    for (const neighbor of neighbors) {
+                        // Center the neighbor on the pixel
+                        neighbor.x = neighbor.x + 0.5;
+                        neighbor.y = neighbor.y + 0.5;
+                        const neighborKey = `${neighbor.x},${neighbor.y}`;
+                        
+                        if (closedSet.has(neighborKey)) {
+                            continue;
+                        }
+
+                        // Calculate tentative g score
+                        const isDiagonal = Math.abs(neighbor.x - current.x) === 1 && Math.abs(neighbor.y - current.y) === 1;
+                        const moveCost = isDiagonal ? Math.sqrt(2) : 1;
+                        const tentativeGScore = gScore.get(currentKey) + moveCost;
+
+                        if (!gScore.has(neighborKey) || tentativeGScore < gScore.get(neighborKey)) {
+                            // This path is better
+                            cameFrom.set(neighborKey, current);
+                            gScore.set(neighborKey, tentativeGScore);
+                            fScore.set(neighborKey, tentativeGScore + this.heuristic(neighbor, end));
+
+                            if (!openSet.contains(neighbor)) {
+                                openSet.enqueue(neighbor, fScore.get(neighborKey));
+                            }
+                        }
+                    }
+                }
+
+                // No path found
+                console.log('No path found');
+                return null;
+            }
+
+            heuristic(a, b) {
+                // Euclidean distance
+                return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
+            }
+
+            reconstructPath(cameFrom, current) {
+                const path = [current];
+                let currentKey = `${current.x},${current.y}`;
+
+                while (cameFrom.has(currentKey)) {
+                    current = cameFrom.get(currentKey);
+                    path.unshift(current);
+                    currentKey = `${current.x},${current.y}`;
+                }
+                
+                // Ensure all waypoints are centered on pixels
+                const centeredPath = path.map(point => ({
+                    x: Math.floor(point.x) + 0.5,
+                    y: Math.floor(point.y) + 0.5
+                }));
+
+                // Smooth the path
+                return this.smoothPath(centeredPath);
+            }
+
+            smoothPath(path) {
+                if (path.length < 3) return path;
+
+                const smoothed = [path[0]];
+                let current = 0;
+
+                while (current < path.length - 1) {
+                    let farthest = current + 1;
+                    
+                    // Find the farthest point we can see (use floor for collision checks)
+                    for (let i = current + 2; i < path.length; i++) {
+                        if (this.collision.isLineOfSight(
+                            Math.floor(path[current].x), 
+                            Math.floor(path[current].y), 
+                            Math.floor(path[i].x), 
+                            Math.floor(path[i].y)
+                        )) {
+                            farthest = i;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    smoothed.push(path[farthest]);
+                    current = farthest;
+                }
+
+                return smoothed;
+            }
+
+            getPathDistance(path) {
+                if (!path || path.length < 2) return Infinity;
+                
+                let distance = 0;
+                for (let i = 1; i < path.length; i++) {
+                    const dx = path[i].x - path[i-1].x;
+                    const dy = path[i].y - path[i-1].y;
+                    distance += Math.sqrt(dx * dx + dy * dy);
+                }
+                return distance;
+            }
+        }
+
+        // ==================== HELPER FUNCTION TO FIND WALKABLE POSITION ====================
+        function findNearestWalkablePosition(collision, x, y, maxRadius = 5) {
+            // Check if current position is already walkable
+            if (collision.isWalkable(x, y)) {
+                return { x, y, adjusted: false };
+            }
+
+            // Search in expanding circles
+            for (let radius = 1; radius <= maxRadius; radius++) {
+                // Check positions in a circle
+                const steps = radius * 8; // More steps for larger radius
+                for (let i = 0; i < steps; i++) {
+                    const angle = (i / steps) * Math.PI * 2;
+                    const checkX = Math.round(x + Math.cos(angle) * radius);
+                    const checkY = Math.round(y + Math.sin(angle) * radius);
+                    
+                    if (collision.isWalkable(checkX, checkY)) {
+                        return { x: checkX, y: checkY, adjusted: true };
+                    }
+                }
+            }
+
+            return { x, y, adjusted: false, failed: true };
+        }
+
+        // ==================== MAIN TOOL LOGIC ====================
+        let collision = null;
+        let pathfinding = null;
+        let nodesData = null;
+        let originalNodesData = null;
+        let startTime = null;
+        let nodeAdjustments = {}; // Track position adjustments separately
+
+        function logConsole(message, type = 'normal') {
+            const consoleDiv = document.getElementById('console');
+            if (!consoleDiv) return;
+            
+            const entry = document.createElement('div');
+            entry.className = `console-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+
+        function updateProgress(current, total, message) {
+            const percentage = Math.round((current / total) * 100);
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (progressFill) {
+                progressFill.style.width = `${percentage}%`;
+                progressFill.textContent = `${percentage}%`;
+            }
+            if (progressText) {
+                progressText.textContent = message;
+            }
+        }
+
+        async function loadNodesData() {
+            const url = 'https://puzzle-drops.github.io/Scapewatch/data/nodes.json';
+            logConsole('Fetching nodes.json from: ' + url, 'dim');
+            
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                const data = JSON.parse(text);
+                nodesData = data;
+                originalNodesData = JSON.parse(JSON.stringify(data)); // Deep clone
+                
+                const nodeCount = Object.keys(data).length;
+                logConsole(`Successfully parsed ${nodeCount} nodes from nodes.json`, 'success');
+                
+                return data;
+            } catch (error) {
+                logConsole(`ERROR loading nodes: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        async function analyzeNodes() {
+            try {
+                startTime = Date.now();
+                const stats = {
+                    total: 0,
+                    accessible: 0,
+                    inaccessible: 0,
+                    banks: 0,
+                    updated: 0,
+                    noPath: 0
+                };
+
+                if (!nodesData) {
+                    throw new Error('No nodes data loaded!');
+                }
+
+                const nodeEntries = Object.entries(nodesData);
+                stats.total = nodeEntries.length;
+                
+                logConsole(`Starting analysis of ${stats.total} nodes...`, 'info');
+                logConsole('Using exact game pathfinding algorithm with line-of-sight and smoothing', 'info');
+
+                // Step 1: Check accessibility and find walkable positions
+                logConsole('=== CHECKING NODE ACCESSIBILITY ===', 'info');
+                const accessibleNodes = [];
+                const accessibleBanks = [];
+                const inaccessibleNodes = [];
+                nodeAdjustments = {}; // Reset adjustments
+
+                let checkCount = 0;
+                for (const [nodeId, node] of nodeEntries) {
+                    checkCount++;
+                    
+                    if (checkCount % 10 === 0) {
+                        updateProgress(checkCount, nodeEntries.length, 
+                                     `Checking accessibility: ${nodeId} (${checkCount}/${nodeEntries.length})`);
+                    }
+                    
+                    const x = Math.floor(node.position.x);
+                    const y = Math.floor(node.position.y);
+                    
+                    // Find nearest walkable position
+                    const walkablePos = findNearestWalkablePosition(collision, x, y, 3);
+                    
+                    if (!walkablePos.failed) {
+                        // Store adjustment separately - don't modify original node
+                        nodeAdjustments[nodeId] = {
+                            x: walkablePos.x,
+                            y: walkablePos.y,
+                            adjusted: walkablePos.adjusted
+                        };
+                        
+                        if (walkablePos.adjusted) {
+                            logConsole(`  → Adjusted ${nodeId} from (${x}, ${y}) to (${walkablePos.x}, ${walkablePos.y})`, 'dim');
+                        }
+                        
+                        accessibleNodes.push({ id: nodeId, node });
+                        if (node.type === 'bank') {
+                            accessibleBanks.push({ id: nodeId, node });
+                            stats.banks++;
+                            logConsole(`✓ BANK: ${nodeId} is accessible at (${walkablePos.x}, ${walkablePos.y})`, 'success');
+                        } else {
+                            logConsole(`✓ ${nodeId} is accessible`, 'dim');
+                        }
+                    } else {
+                        inaccessibleNodes.push({ id: nodeId, node });
+                        logConsole(`✗ ${nodeId} is INACCESSIBLE at (${x}, ${y})`, 'warning');
+                    }
+                }
+
+                stats.accessible = accessibleNodes.length;
+                stats.inaccessible = inaccessibleNodes.length;
+
+                logConsole('', 'normal');
+                logConsole(`Found ${accessibleBanks.length} accessible banks`, 'success');
+                logConsole(`Found ${inaccessibleNodes.length} inaccessible nodes`, 'warning');
+
+                // Step 2: Calculate nearest bank for each accessible node
+                logConsole('', 'normal');
+                logConsole('=== CALCULATING NEAREST BANKS ===', 'info');
+                logConsole(`Processing ${accessibleNodes.length} accessible nodes...`, 'info');
+                
+                let processedCount = 0;
+                for (const { id: nodeId, node } of accessibleNodes) {
+                    processedCount++;
+                    
+                    updateProgress(processedCount, accessibleNodes.length, 
+                                  `Processing ${nodeId} (${processedCount}/${accessibleNodes.length})`);
+
+                    if (node.type === 'bank') {
+                        // Banks use themselves
+                        node.nearestBank = nodeId;
+                        node.nearestBankDistance = 0;
+                        logConsole(`${nodeId} → self (bank)`, 'success');
+                    } else {
+                        // Get the walkable position for this node
+                        const nodePos = nodeAdjustments[nodeId];
+                        let nearestBank = null;
+                        let shortestDistance = Infinity;
+                        let testedBanks = [];
+
+                        for (const { id: bankId, node: bankNode } of accessibleBanks) {
+                            // Get the walkable position for the bank
+                            const bankPos = nodeAdjustments[bankId];
+                            
+                            // Try to find path using walkable positions
+                            const path = pathfinding.findPath(
+                                nodePos.x, nodePos.y,
+                                bankPos.x, bankPos.y
+                            );
+
+                            if (path) {
+                                const distance = pathfinding.getPathDistance(path);
+                                testedBanks.push(`${bankId}(${Math.round(distance)})`);
+                                
+                                if (distance < shortestDistance) {
+                                    shortestDistance = distance;
+                                    nearestBank = bankId;
+                                }
+                            } else {
+                                testedBanks.push(`${bankId}(no path)`);
+                            }
+                        }
+
+                        if (nearestBank) {
+                            const oldBank = node.nearestBank;
+                            const oldDistance = node.nearestBankDistance;
+                            
+                            node.nearestBank = nearestBank;
+                            node.nearestBankDistance = Math.round(shortestDistance);
+                            
+                            if (oldBank !== nearestBank || oldDistance !== node.nearestBankDistance) {
+                                stats.updated++;
+                                logConsole(`${nodeId} → ${nearestBank} (${Math.round(shortestDistance)}) [UPDATED]`, 'success');
+                            } else {
+                                logConsole(`${nodeId} → ${nearestBank} (${Math.round(shortestDistance)})`, 'dim');
+                            }
+                        } else {
+                            // No reachable bank found
+                            node.nearestBank = null;
+                            node.nearestBankDistance = null;
+                            stats.noPath++;
+                            logConsole(`${nodeId} → NO REACHABLE BANK! Tested: [${testedBanks.join(', ')}]`, 'error');
+                        }
+                    }
+                    
+                    // Small delay to prevent browser freezing
+                    if (processedCount % 5 === 0) {
+                        await new Promise(resolve => setTimeout(resolve, 1));
+                    }
+                }
+
+                // Step 3: Handle inaccessible nodes
+                logConsole('', 'normal');
+                logConsole('Setting inaccessible nodes to null...', 'info');
+                for (const { id: nodeId, node } of inaccessibleNodes) {
+                    node.nearestBank = null;
+                    node.nearestBankDistance = null;
+                }
+
+                updateProgress(100, 100, 'Analysis complete!');
+                
+                const endTime = Date.now();
+                const processingTime = ((endTime - startTime) / 1000).toFixed(1);
+
+                // Update stats display
+                document.getElementById('totalNodes').textContent = stats.total;
+                document.getElementById('accessibleNodes').textContent = stats.accessible;
+                document.getElementById('inaccessibleNodes').textContent = stats.inaccessible;
+                document.getElementById('banksFound').textContent = stats.banks;
+                document.getElementById('updatedNodes').textContent = stats.updated;
+                document.getElementById('processingTime').textContent = `${processingTime}s`;
+
+                // Check if any changes were made
+                const hasChanges = JSON.stringify(nodesData) !== JSON.stringify(originalNodesData);
+                
+                logConsole('', 'normal');
+                logConsole('=== ANALYSIS COMPLETE ===', 'info');
+                logConsole(`Updated ${stats.updated} nodes with new bank distances`, hasChanges ? 'success' : 'warning');
+                
+                if (stats.noPath > 0) {
+                    logConsole(`WARNING: ${stats.noPath} nodes could not find ANY reachable bank!`, 'error');
+                    logConsole('This may indicate a pathfinding issue or map changes.', 'error');
+                }
+
+                // Show results and enable export
+                document.getElementById('results').style.display = 'block';
+                document.getElementById('exportBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = false;
+                
+            } catch (error) {
+                logConsole(`ERROR in analyzeNodes: ${error.message}`, 'error');
+                logConsole(`Stack trace: ${error.stack}`, 'error');
+                throw error;
+            }
+        }
+
+        async function exportToClipboard() {
+            try {
+                const jsonStr = JSON.stringify(nodesData, null, 2);
+                await navigator.clipboard.writeText(jsonStr);
+                logConsole('JSON copied to clipboard!', 'success');
+                alert('JSON copied to clipboard!');
+            } catch (error) {
+                logConsole(`Failed to copy to clipboard: ${error.message}`, 'error');
+                // Fallback
+                const textArea = document.createElement('textarea');
+                textArea.value = JSON.stringify(nodesData, null, 2);
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                logConsole('JSON copied to clipboard (fallback method)!', 'success');
+            }
+        }
+
+        function downloadJSON() {
+            try {
+                const jsonStr = JSON.stringify(nodesData, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'nodes_with_banks.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                logConsole('JSON downloaded as nodes_with_banks.json', 'success');
+            } catch (error) {
+                logConsole(`Download failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function startAnalysis() {
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+            
+            try {
+                logConsole('Starting bank distance analysis v3.0...', 'info');
+                logConsole('Using exact game pathfinding with line-of-sight optimization', 'info');
+                
+                // Initialize collision system
+                collision = new CollisionSystem();
+                await collision.initialize('https://puzzle-drops.github.io/Scapewatch/assets/collision-map.png');
+                
+                // Initialize pathfinding
+                pathfinding = new Pathfinding(collision);
+                logConsole('Pathfinding system initialized with smoothing', 'success');
+                
+                // Load nodes data
+                logConsole('Loading nodes data...', 'info');
+                await loadNodesData();
+                
+                // Analyze all nodes
+                logConsole('Beginning node analysis...', 'info');
+                await analyzeNodes();
+                
+            } catch (error) {
+                logConsole(`FATAL ERROR: ${error.message}`, 'error');
+                logConsole(`Stack trace: ${error.stack}`, 'error');
+                startBtn.disabled = false;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('startBtn').addEventListener('click', startAnalysis);
+        document.getElementById('exportBtn').addEventListener('click', exportToClipboard);
+        document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
+        
+        // Log that the page is ready
+        logConsole('Bank Distance Calculator v3.0 ready', 'success');
+        logConsole('Changes in v3.0:', 'info');
+        logConsole('- Uses exact game pathfinding algorithm', 'info');
+        logConsole('- Added line-of-sight optimization', 'info');
+        logConsole('- Added path smoothing', 'info');
+        logConsole('- Position adjustments stored separately (no corruption)', 'info');
+        logConsole('- Player collision: Single point (1x1 pixel)', 'info');
+    </script>
+</body>
+</html>
