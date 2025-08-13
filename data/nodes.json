@@ -1,625 +1,729 @@
 {
-"water_altar": {
+  "water_altar": {
     "id": "water_altar",
     "name": "Water Altar",
     "type": "skill",
     "position": {
-        "x": 4319,
-        "y": 1990
+      "x": 4319,
+      "y": 1990
     },
     "activities": [
-        "craft_water_runes"
-    ]
-},
-"test_abyss": {
+      "craft_water_runes"
+    ],
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 261
+  },
+  "test_abyss": {
     "id": "test_abyss",
     "name": "The Abyss",
     "type": "skill",
     "position": {
-        "x": 4325,
-        "y": 1872
+      "x": 4325,
+      "y": 1872
     },
     "activities": [
-        "craft_air_runes",
-        "craft_mind_runes",
-        "craft_water_runes",
-        "craft_earth_runes",
-        "craft_fire_runes",
-        "craft_body_runes",
-        "craft_cosmic_runes",
-        "craft_chaos_runes",
-        "craft_astral_runes",
-        "craft_nature_runes",
-        "craft_law_runes",
-        "craft_death_runes",
-        "craft_blood_runes",
-        "craft_soul_runes",
-        "craft_wrath_runes"
-    ]
-},
-"lumbridge_thieving": {
+      "craft_air_runes",
+      "craft_mind_runes",
+      "craft_water_runes",
+      "craft_earth_runes",
+      "craft_fire_runes",
+      "craft_body_runes",
+      "craft_cosmic_runes",
+      "craft_chaos_runes",
+      "craft_astral_runes",
+      "craft_nature_runes",
+      "craft_law_runes",
+      "craft_death_runes",
+      "craft_blood_runes",
+      "craft_soul_runes",
+      "craft_wrath_runes"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 58
+  },
+  "lumbridge_thieving": {
     "id": "lumbridge_thieving",
     "name": "Lumbridge Town Center",
     "type": "skill",
     "position": {
-        "x": 4397,
-        "y": 1880
+      "x": 4397,
+      "y": 1880
     },
     "activities": [
-        "pickpocket_man"
-    ]
-},
-"test_thieving": {
+      "pickpocket_man"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 51
+  },
+  "test_thieving": {
     "id": "test_thieving",
     "name": "Test Thieving",
     "type": "skill",
     "position": {
-        "x": 4325,
-        "y": 1862
+      "x": 4325,
+      "y": 1862
     },
     "activities": [
-        "pickpocket_man",
-        "pickpocket_farmer",
-        "pickpocket_ham",
-        "pickpocket_warrior",
-        "pickpocket_rogue",
-        "pickpocket_master_farmer",
-        "pickpocket_guard",
-        "blackjack_bearded",
-        "pickpocket_bandit_camp",
-        "blackjack_bandit",
-        "pickpocket_knight",
-        "pickpocket_watchman",
-        "pickpocket_menaphite",
-        "pickpocket_paladin",
-        "pickpocket_gnome",
-        "pickpocket_hero",
-        "pickpocket_vyre",
-        "pickpocket_elf",
-        "pickpocket_tzhaar"
-    ]
-},
-"lumbridge_firemaking": {
+      "pickpocket_man",
+      "pickpocket_farmer",
+      "pickpocket_ham",
+      "pickpocket_warrior",
+      "pickpocket_rogue",
+      "pickpocket_master_farmer",
+      "pickpocket_guard",
+      "blackjack_bearded",
+      "pickpocket_bandit_camp",
+      "blackjack_bandit",
+      "pickpocket_knight",
+      "pickpocket_watchman",
+      "pickpocket_menaphite",
+      "pickpocket_paladin",
+      "pickpocket_gnome",
+      "pickpocket_hero",
+      "pickpocket_vyre",
+      "pickpocket_elf",
+      "pickpocket_tzhaar"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 64
+  },
+  "lumbridge_firemaking": {
     "id": "lumbridge_firemaking",
     "name": "Lumbridge Firemaking",
     "type": "skill",
     "position": {
-        "x": 4330,
-        "y": 1856
+      "x": 4330,
+      "y": 1856
     },
     "activities": [
-        "firemaking"
-    ]
-},
-"draynor_rooftop": {
+      "firemaking"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 66
+  },
+  "draynor_rooftop": {
     "id": "draynor_rooftop",
     "name": "Draynor Rooftop",
     "type": "skill",
     "position": {
-        "x": 4142,
-        "y": 1830
+      "x": 4142,
+      "y": 1830
     },
     "activities": [
-        "draynor_rooftop"
-    ]
-},
-"al_kharid_rooftop": {
+      "draynor_rooftop"
+    ],
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 9
+  },
+  "al_kharid_rooftop": {
     "id": "al_kharid_rooftop",
     "name": "Al Kharid Rooftop",
     "type": "skill",
     "position": {
-        "x": 4497,
-        "y": 1929
+      "x": 4497,
+      "y": 1929
     },
     "activities": [
-        "al_kharid_rooftop"
-    ]
-},
-"varrock_rooftop": {
+      "al_kharid_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "varrock_rooftop": {
     "id": "varrock_rooftop",
     "name": "Varrock Rooftop",
     "type": "skill",
     "position": {
-        "x": 4394,
-        "y": 1491
+      "x": 4394,
+      "y": 1491
     },
     "activities": [
-        "varrock_rooftop"
-    ]
-},
-"canifis_rooftop": {
+      "varrock_rooftop"
+    ],
+    "nearestBank": "east_varrock_bank",
+    "nearestBankDistance": 92
+  },
+  "canifis_rooftop": {
     "id": "canifis_rooftop",
     "name": "Canifis Rooftop",
     "type": "skill",
     "position": {
-        "x": 4964,
-        "y": 1340
+      "x": 4964,
+      "y": 1340
     },
     "activities": [
-        "canifis_rooftop"
-    ]
-},
-"falador_rooftop": {
+      "canifis_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "falador_rooftop": {
     "id": "falador_rooftop",
     "name": "Falador Rooftop",
     "type": "skill",
     "position": {
-        "x": 4024,
-        "y": 1637
+      "x": 4024,
+      "y": 1637
     },
     "activities": [
-        "falador_rooftop"
-    ]
-},
-"seers_rooftop": {
+      "falador_rooftop"
+    ],
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 317
+  },
+  "seers_rooftop": {
     "id": "seers_rooftop",
     "name": "Seers' Village Rooftop",
     "type": "skill",
     "position": {
-        "x": 3410,
-        "y": 1342
+      "x": 3410,
+      "y": 1342
     },
     "activities": [
-        "seers_rooftop"
-    ]
-},
-"pollnivneach_rooftop": {
+      "seers_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "pollnivneach_rooftop": {
     "id": "pollnivneach_rooftop",
     "name": "Pollnivneach Rooftop",
     "type": "skill",
     "position": {
-        "x": 4653,
-        "y": 2397
+      "x": 4653,
+      "y": 2397
     },
     "activities": [
-        "pollnivneach_rooftop"
-    ]
-},
-"rellekka_rooftop": {
+      "pollnivneach_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "rellekka_rooftop": {
     "id": "rellekka_rooftop",
     "name": "Rellekka Rooftop",
     "type": "skill",
     "position": {
-        "x": 3202,
-        "y": 963
+      "x": 3202,
+      "y": 963
     },
     "activities": [
-        "rellekka_rooftop"
-    ]
-},
-"ardougne_rooftop": {
+      "rellekka_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "ardougne_rooftop": {
     "id": "ardougne_rooftop",
     "name": "Ardougne Rooftop",
     "type": "skill",
     "position": {
-        "x": 3297,
-        "y": 1724
+      "x": 3297,
+      "y": 1724
     },
     "activities": [
-        "ardougne_rooftop"
-    ]
-},
-    "test_trees": {
-        "id": "test_trees",
-        "name": "Test Trees",
-        "type": "skill",
-        "position": {
-            "x": 4325,
-            "y": 1832
-        },
-        "activities": [
-            "chop_tree",
-            "chop_oak",
-            "chop_willow",
-            "chop_teak",
-            "chop_maple",
-            "chop_mahogany",
-            "chop_yew",
-            "chop_magic",
-            "chop_redwood"
-        ]
+      "ardougne_rooftop"
+    ],
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "test_trees": {
+    "id": "test_trees",
+    "name": "Test Trees",
+    "type": "skill",
+    "position": {
+      "x": 4325,
+      "y": 1832
     },
-    "test_mine": {
-        "id": "test_mine",
-        "name": "Test Mine",
-        "type": "skill",
-        "position": {
-            "x": 4325,
-            "y": 1842
-        },
-        "activities": [
-            "mine_copper_tin",
-            "mine_iron",
-            "mine_silver",
-            "mine_coal",
-            "mine_gold",
-            "mine_mithril",
-            "mine_adamantite",
-            "mine_runite",
-            "mine_amethyst"
-        ]
+    "activities": [
+      "chop_tree",
+      "chop_oak",
+      "chop_willow",
+      "chop_teak",
+      "chop_maple",
+      "chop_mahogany",
+      "chop_yew",
+      "chop_magic",
+      "chop_redwood"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 90
+  },
+  "test_mine": {
+    "id": "test_mine",
+    "name": "Test Mine",
+    "type": "skill",
+    "position": {
+      "x": 4325,
+      "y": 1842
     },
-    "test_fish": {
-        "id": "test_fish",
-        "name": "Test Fish",
-        "type": "skill",
-        "position": {
-            "x": 4325,
-            "y": 1852
-        },
-        "activities": [
-            "small_fishing_net",
-            "big_fishing_net",
-            "lobster_pot",
-            "fishing_rod_bait",
-            "fishing_rod_bait_pike",
-            "fly_fishing_rod",
-            "harpoon",
-            "harpoon_shark"
-        ]
+    "activities": [
+      "mine_copper_tin",
+      "mine_iron",
+      "mine_silver",
+      "mine_coal",
+      "mine_gold",
+      "mine_mithril",
+      "mine_adamantite",
+      "mine_runite",
+      "mine_amethyst"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 80
+  },
+  "test_fish": {
+    "id": "test_fish",
+    "name": "Test Fish",
+    "type": "skill",
+    "position": {
+      "x": 4325,
+      "y": 1852
     },
-    "lumbridge_kitchen": {
-        "id": "lumbridge_kitchen",
-        "name": "Lumbridge Kitchen",
-        "type": "skill",
-        "position": {
-            "x": 4374,
-            "y": 1886
-        },
-        "activities": [
-            "cook_food"
-        ]
+    "activities": [
+      "small_fishing_net",
+      "big_fishing_net",
+      "lobster_pot",
+      "fishing_rod_bait",
+      "fishing_rod_bait_pike",
+      "fly_fishing_rod",
+      "harpoon",
+      "harpoon_shark"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 72
+  },
+  "lumbridge_kitchen": {
+    "id": "lumbridge_kitchen",
+    "name": "Lumbridge Kitchen",
+    "type": "skill",
+    "position": {
+      "x": 4374,
+      "y": 1886
     },
-    "lumbridge_bank": {
-        "id": "lumbridge_bank",
-        "name": "Lumbridge Bank",
-        "type": "bank",
-        "position": {
-            "x": 4361,
-            "y": 1903
-        }
+    "activities": [
+      "cook_food"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 21
+  },
+  "lumbridge_bank": {
+    "id": "lumbridge_bank",
+    "name": "Lumbridge Bank",
+    "type": "bank",
+    "position": {
+      "x": 4361,
+      "y": 1903
     },
-    "lumbridge_trees": {
-        "id": "lumbridge_trees",
-        "name": "Lumbridge Trees",
-        "type": "skill",
-        "position": {
-            "x": 4348,
-            "y": 1832
-        },
-        "activities": [
-            "chop_tree",
-            "chop_oak"
-        ]
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 0
+  },
+  "lumbridge_trees": {
+    "id": "lumbridge_trees",
+    "name": "Lumbridge Trees",
+    "type": "skill",
+    "position": {
+      "x": 4348,
+      "y": 1832
     },
-    "west_lumbridge_mine": {
-        "id": "west_lumbridge_mine",
-        "name": "West Lumbridge Mine",
-        "type": "skill",
-        "position": {
-            "x": 4245,
-            "y": 2024
-        },
-        "activities": [
-            "mine_copper_tin"
-        ]
+    "activities": [
+      "chop_tree",
+      "chop_oak"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 84
+  },
+  "west_lumbridge_mine": {
+    "id": "west_lumbridge_mine",
+    "name": "West Lumbridge Mine",
+    "type": "skill",
+    "position": {
+      "x": 4245,
+      "y": 2024
     },
-    "east_lumbridge_mine": {
-        "id": "east_lumbridge_mine",
-        "name": "East Lumbridge Mine",
-        "type": "skill",
-        "position": {
-            "x": 4406,
-            "y": 2026
-        },
-        "activities": [
-            "mine_copper_tin"
-        ]
+    "activities": [
+      "mine_copper_tin"
+    ],
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 249
+  },
+  "east_lumbridge_mine": {
+    "id": "east_lumbridge_mine",
+    "name": "East Lumbridge Mine",
+    "type": "skill",
+    "position": {
+      "x": 4406,
+      "y": 2026
     },
-    "lumbridge_fishing": {
-        "id": "lumbridge_fishing",
-        "name": "River Lum",
-        "type": "skill",
-        "position": {
-            "x": 4439,
-            "y": 2015
-        },
-        "activities": [
-            "small_fishing_net"
-        ]
+    "activities": [
+      "mine_copper_tin"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 221
+  },
+  "lumbridge_fishing": {
+    "id": "lumbridge_fishing",
+    "name": "River Lum",
+    "type": "skill",
+    "position": {
+      "x": 4439,
+      "y": 2015
     },
-    "draynor_bank": {
-        "id": "draynor_bank",
-        "name": "Draynor Bank",
-        "type": "bank",
-        "position": {
-            "x": 4134,
-            "y": 1833
-        }
+    "activities": [
+      "small_fishing_net"
+    ],
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 204
+  },
+  "draynor_bank": {
+    "id": "draynor_bank",
+    "name": "Draynor Bank",
+    "type": "bank",
+    "position": {
+      "x": 4134,
+      "y": 1833
     },
-    "draynor_willows": {
-        "id": "draynor_willows",
-        "name": "Draynor Willows",
-        "type": "skill",
-        "position": {
-            "x": 4126,
-            "y": 1854
-        },
-        "activities": [
-            "chop_willow"
-        ]
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 0
+  },
+  "draynor_willows": {
+    "id": "draynor_willows",
+    "name": "Draynor Willows",
+    "type": "skill",
+    "position": {
+      "x": 4126,
+      "y": 1854
     },
-    "east_varrock_bank": {
-        "id": "east_varrock_bank",
-        "name": "East Varrock Bank",
-        "type": "bank",
-        "position": {
-            "x": 4459,
-            "y": 1480
-        }
+    "activities": [
+      "chop_willow"
+    ],
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 47
+  },
+  "east_varrock_bank": {
+    "id": "east_varrock_bank",
+    "name": "East Varrock Bank",
+    "type": "bank",
+    "position": {
+      "x": 4459,
+      "y": 1480
     },
-    "west_varrock_bank": {
-        "id": "west_varrock_bank",
-        "name": "West Varrock Bank",
-        "type": "bank",
-        "position": {
-            "x": 4318,
-            "y": 1439
-        }
+    "nearestBank": "east_varrock_bank",
+    "nearestBankDistance": 0
+  },
+  "west_varrock_bank": {
+    "id": "west_varrock_bank",
+    "name": "West Varrock Bank",
+    "type": "bank",
+    "position": {
+      "x": 4318,
+      "y": 1439
     },
-    "grand_exchange": {
-        "id": "grand_exchange",
-        "name": "Grand Exchange",
-        "type": "bank",
-        "position": {
-            "x": 4281,
-            "y": 1340
-        }
+    "nearestBank": "west_varrock_bank",
+    "nearestBankDistance": 0
+  },
+  "grand_exchange": {
+    "id": "grand_exchange",
+    "name": "Grand Exchange",
+    "type": "bank",
+    "position": {
+      "x": 4281,
+      "y": 1340
     },
-    "east_varrock_mine": {
-        "id": "east_varrock_mine",
-        "name": "East Varrock Mine",
-        "type": "skill",
-        "position": {
-            "x": 4523,
-            "y": 1588
-        },
-        "activities": [
-            "mine_copper_tin",
-            "mine_iron"
-        ]
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "east_varrock_mine": {
+    "id": "east_varrock_mine",
+    "name": "East Varrock Mine",
+    "type": "skill",
+    "position": {
+      "x": 4523,
+      "y": 1588
     },
-    "west_varrock_mine": {
-        "id": "west_varrock_mine",
-        "name": "West Varrock Mine",
-        "type": "skill",
-        "position": {
-            "x": 4311,
-            "y": 1581
-        },
-        "activities": [
-            "mine_copper_tin",
-            "mine_iron"
-        ]
+    "activities": [
+      "mine_copper_tin",
+      "mine_iron"
+    ],
+    "nearestBank": "east_varrock_bank",
+    "nearestBankDistance": 187
+  },
+  "west_varrock_mine": {
+    "id": "west_varrock_mine",
+    "name": "West Varrock Mine",
+    "type": "skill",
+    "position": {
+      "x": 4311,
+      "y": 1581
     },
-    "cooks_assistant_quest": {
-        "id": "cook_quest",
-        "name": "Cook's Assistant",
-        "type": "quest",
-        "position": {
-            "x": 4734,
-            "y": 2137
-        },
-        "questId": "cooks_assistant"
+    "activities": [
+      "mine_copper_tin",
+      "mine_iron"
+    ],
+    "nearestBank": "west_varrock_bank",
+    "nearestBankDistance": 154
+  },
+  "cooks_assistant_quest": {
+    "id": "cook_quest",
+    "name": "Cook's Assistant",
+    "type": "quest",
+    "position": {
+      "x": 4734,
+      "y": 2137
     },
-    "demon_slayer_quest": {
-        "id": "demon_slayer_quest",
-        "name": "Demon Slayer",
-        "type": "quest",
-        "position": {
-            "x": 4361,
-            "y": 1470
-        },
-        "questId": "demon_slayer"
+    "questId": "cooks_assistant",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "demon_slayer_quest": {
+    "id": "demon_slayer_quest",
+    "name": "Demon Slayer",
+    "type": "quest",
+    "position": {
+      "x": 4361,
+      "y": 1470
     },
-    "the_restless_ghost_quest": {
-        "id": "ghostless_ghost_quest",
-        "name": "Restless Ghost",
-        "type": "quest",
-        "position": {
-            "x": 4438,
-            "y": 1897
-        },
-        "questId": "restless_ghost"
+    "questId": "demon_slayer",
+    "nearestBank": "west_varrock_bank",
+    "nearestBankDistance": 72
+  },
+  "the_restless_ghost_quest": {
+    "id": "ghostless_ghost_quest",
+    "name": "Restless Ghost",
+    "type": "quest",
+    "position": {
+      "x": 4438,
+      "y": 1897
     },
-    "romeo_&_juliet_quest": {
-        "id": "romeo_&_juliet_quest",
-        "name": "Romeo & Juliet",
-        "type": "quest",
-        "position": {
-            "x": 4373,
-            "y": 1472
-        },
-        "questId": "romeo_&_juliet"
+    "questId": "restless_ghost",
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 98
+  },
+  "romeo_&_juliet_quest": {
+    "id": "romeo_&_juliet_quest",
+    "name": "Romeo & Juliet",
+    "type": "quest",
+    "position": {
+      "x": 4373,
+      "y": 1472
     },
-    "sheep_shearer_quest": {
-        "id": "sheep_shearer_quest",
-        "name": "Sheep Shearer",
-        "type": "quest",
-        "position": {
-            "x": 4330,
-            "y": 1771
-        },
-        "questId": "sheep_shearer"
+    "questId": "romeo_&_juliet",
+    "nearestBank": "west_varrock_bank",
+    "nearestBankDistance": 75
+  },
+  "sheep_shearer_quest": {
+    "id": "sheep_shearer_quest",
+    "name": "Sheep Shearer",
+    "type": "quest",
+    "position": {
+      "x": 4330,
+      "y": 1771
     },
-    "shield_of_arrav_quest": {
-        "id": "shield_of_arrav_quest",
-        "name": "Shield of Arrav",
-        "type": "quest",
-        "position": {
-            "x": 4370,
-            "y": 1330
-        },
-        "questId": "shield_of_arrav"
+    "questId": "sheep_shearer",
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 184
+  },
+  "shield_of_arrav_quest": {
+    "id": "shield_of_arrav_quest",
+    "name": "Shield of Arrav",
+    "type": "quest",
+    "position": {
+      "x": 4370,
+      "y": 1330
     },
-    "ernest_the_chicken_quest": {
-        "id": "ernest_the_chicken_quest",
-        "name": "Ernest the Chicken",
-        "type": "quest",
-        "position": {
-            "x": 4171,
-            "y": 1659
-        },
-        "questId": "ernest_the_chicken"
+    "questId": "shield_of_arrav",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "ernest_the_chicken_quest": {
+    "id": "ernest_the_chicken_quest",
+    "name": "Ernest the Chicken",
+    "type": "quest",
+    "position": {
+      "x": 4171,
+      "y": 1659
     },
-    "vampyre_slayer_quest": {
-        "id": "vampyre_slayer_quest",
-        "name": "Vampyre Slayer",
-        "type": "quest",
-        "position": {
-            "x": 4146,
-            "y": 1786
-        },
-        "questId": "vampyre_slayer"
+    "questId": "ernest_the_chicken",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "vampyre_slayer_quest": {
+    "id": "vampyre_slayer_quest",
+    "name": "Vampyre Slayer",
+    "type": "quest",
+    "position": {
+      "x": 4146,
+      "y": 1786
     },
-    "imp_catcher_quest": {
-        "id": "imp_catcher_quest",
-        "name": "Imp Catcher",
-        "type": "quest",
-        "position": {
-            "x": 4157,
-            "y": 1992
-        },
-        "questId": "imp_catcher"
+    "questId": "vampyre_slayer",
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 84
+  },
+  "imp_catcher_quest": {
+    "id": "imp_catcher_quest",
+    "name": "Imp Catcher",
+    "type": "quest",
+    "position": {
+      "x": 4157,
+      "y": 1992
     },
-    "prince_ali_rescue_quest": {
-        "id": "prince_ali_rescue_quest",
-        "name": "Prince Ali Rescue",
-        "type": "quest",
-        "position": {
-            "x": 4556,
-            "y": 1994
-        },
-        "questId": "prince_ali_rescue"
+    "questId": "imp_catcher",
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 204
+  },
+  "prince_ali_rescue_quest": {
+    "id": "prince_ali_rescue_quest",
+    "name": "Prince Ali Rescue",
+    "type": "quest",
+    "position": {
+      "x": 4556,
+      "y": 1994
     },
-    "dorics_quest": {
-        "id": "dorics_quest",
-        "name": "Doric's",
-        "type": "quest",
-        "position": {
-            "x": 3856,
-            "y": 1418
-        },
-        "questId": "dorics"
+    "questId": "prince_ali_rescue",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "dorics_quest": {
+    "id": "dorics_quest",
+    "name": "Doric's",
+    "type": "quest",
+    "position": {
+      "x": 3856,
+      "y": 1418
     },
-    "black_knights_fortress_quest": {
-        "id": "black_knights_fortress_quest",
-        "name": "Black Knights' Fortress",
-        "type": "quest",
-        "position": {
-            "x": 3872,
-            "y": 1644
-        },
-        "questId": "black_knights_fortress"
+    "questId": "dorics",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "black_knights_fortress_quest": {
+    "id": "black_knights_fortress_quest",
+    "name": "Black Knights' Fortress",
+    "type": "quest",
+    "position": {
+      "x": 3872,
+      "y": 1644
     },
-    "witchs_potion_quest": {
-        "id": "witchs_potion_quest",
-        "name": "Witch's Potion",
-        "type": "quest",
-        "position": {
-            "x": 3887,
-            "y": 1908
-        },
-        "questId": "witchs_potion"
+    "questId": "black_knights_fortress",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "witchs_potion_quest": {
+    "id": "witchs_potion_quest",
+    "name": "Witch's Potion",
+    "type": "quest",
+    "position": {
+      "x": 3887,
+      "y": 1908
     },
-    "the_knights_sword_quest": {
-        "id": "the_knights_sword_quest",
-        "name": "The Knight's Sword",
-        "type": "quest",
-        "position": {
-            "x": 3903,
-            "y": 1637
-        },
-        "questId": "the_knights_sword"
+    "questId": "witchs_potion",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "the_knights_sword_quest": {
+    "id": "the_knights_sword_quest",
+    "name": "The Knight's Sword",
+    "type": "quest",
+    "position": {
+      "x": 3903,
+      "y": 1637
     },
-    "goblin_diplomacy_quest": {
-        "id": "goblin_diplomacy_quest",
-        "name": "Goblin Diplomacy",
-        "type": "quest",
-        "position": {
-            "x": 3866,
-            "y": 1294
-        },
-        "questId": "goblin_diplomacy"
+    "questId": "the_knights_sword",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "goblin_diplomacy_quest": {
+    "id": "goblin_diplomacy_quest",
+    "name": "Goblin Diplomacy",
+    "type": "quest",
+    "position": {
+      "x": 3866,
+      "y": 1294
     },
-    "pirates_treasure_quest": {
-        "id": "pirates_treasure_quest",
-        "name": "Pirate's Treasure",
-        "type": "quest",
-        "position": {
-            "x": 4055,
-            "y": 1816
-        },
-        "questId": "pirates_treasure"
+    "questId": "goblin_diplomacy",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  },
+  "pirates_treasure_quest": {
+    "id": "pirates_treasure_quest",
+    "name": "Pirate's Treasure",
+    "type": "quest",
+    "position": {
+      "x": 4055,
+      "y": 1816
     },
-    "dragon_slayer_i_quest": {
-        "id": "dragon_slayer_i_quest",
-        "name": "Dragon Slayer I",
-        "type": "quest",
-        "position": {
-            "x": 4333,
-            "y": 1597
-        },
-        "questId": "dragon_slayer_i"
+    "questId": "pirates_treasure",
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 148
+  },
+  "dragon_slayer_i_quest": {
+    "id": "dragon_slayer_i_quest",
+    "name": "Dragon Slayer I",
+    "type": "quest",
+    "position": {
+      "x": 4333,
+      "y": 1597
     },
-    "rune_mysteries_quest": {
-        "id": "rune_mysteries_quest",
-        "name": "Rune Mysteries",
-        "type": "quest",
-        "position": {
-            "x": 4369,
-            "y": 1875
-        },
-        "questId": "rune_mysteries"
+    "questId": "dragon_slayer_i",
+    "nearestBank": "west_varrock_bank",
+    "nearestBankDistance": 176
+  },
+  "rune_mysteries_quest": {
+    "id": "rune_mysteries_quest",
+    "name": "Rune Mysteries",
+    "type": "quest",
+    "position": {
+      "x": 4369,
+      "y": 1875
     },
-    "misthalin_mystery_quest": {
-        "id": "misthalin_mystery_quest",
-        "name": "Misthalin Mystery",
-        "type": "quest",
-        "position": {
-            "x": 4422,
-            "y": 2010
-        },
-        "questId": "misthalin_mystery"
+    "questId": "rune_mysteries",
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 31
+  },
+  "misthalin_mystery_quest": {
+    "id": "misthalin_mystery_quest",
+    "name": "Misthalin Mystery",
+    "type": "quest",
+    "position": {
+      "x": 4422,
+      "y": 2010
     },
-    "the_corsair_curse_quest": {
-        "id": "the_corsair_curse_quest",
-        "name": "The Corsair Curse",
-        "type": "quest",
-        "position": {
-            "x": 4012,
-            "y": 1772
-        },
-        "questId": "the_corsair_curse"
+    "questId": "misthalin_mystery",
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 201
+  },
+  "the_corsair_curse_quest": {
+    "id": "the_corsair_curse_quest",
+    "name": "The Corsair Curse",
+    "type": "quest",
+    "position": {
+      "x": 4012,
+      "y": 1772
     },
-    "x_marks_the_spot_quest": {
-        "id": "x_marks_the_spot_quest",
-        "name": "X Marks the Spot",
-        "type": "quest",
-        "position": {
-            "x": 4408,
-            "y": 1836
-        },
-        "questId": "x_marks_the_spot"
+    "questId": "the_corsair_curse",
+    "nearestBank": "draynor_bank",
+    "nearestBankDistance": 165
+  },
+  "x_marks_the_spot_quest": {
+    "id": "x_marks_the_spot_quest",
+    "name": "X Marks the Spot",
+    "type": "quest",
+    "position": {
+      "x": 4408,
+      "y": 1836
     },
-    "below_ice_mountain_quest": {
-        "id": "below_ice_mountain_quest",
-        "name": "Below Ice Mountain",
-        "type": "quest",
-        "position": {
-            "x": 3952,
-            "y": 1448
-        },
-        "questId": "below_ice_mountain"
-    }
+    "questId": "x_marks_the_spot",
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 111
+  },
+  "below_ice_mountain_quest": {
+    "id": "below_ice_mountain_quest",
+    "name": "Below Ice Mountain",
+    "type": "quest",
+    "position": {
+      "x": 3952,
+      "y": 1448
+    },
+    "questId": "below_ice_mountain",
+    "nearestBank": null,
+    "nearestBankDistance": null
+  }
 }
