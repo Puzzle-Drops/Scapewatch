@@ -32,10 +32,10 @@ class TestScenario {
         
         // Add runecrafting supplies
         bank.deposit('rune_essence', 1000);
-        bank.deposit('small_pouch', 1);
-        bank.deposit('medium_pouch', 1);
-        bank.deposit('large_pouch', 1);
-        bank.deposit('giant_pouch', 1);
+        //bank.deposit('small_pouch', 1);
+        //bank.deposit('medium_pouch', 1);
+        //bank.deposit('large_pouch', 1);
+        //bank.deposit('giant_pouch', 1);
 
         console.log('Test scenario complete!');
     }
