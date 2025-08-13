@@ -14,11 +14,14 @@ class Player {
         this.isStunned = false;
         this.stunEndTime = 0;
         this.stunDuration = 0;
+        this.isBanking = false;
+        this.bankingEndTime = 0;
+        this.bankingDuration = 600; // 0.6 seconds
     }
 
     update(deltaTime) {
         // Handle movement along path
-        if (this.path.length > 0 && this.pathIndex < this.path.length) {
+        if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking) {
             this.updateSmoothMovement(deltaTime);
         } else if (!this.currentNode && !this.isMoving()) {
             this.checkCurrentNode();
@@ -27,6 +30,17 @@ class Player {
         // Handle activity
         if (this.currentActivity) {
             this.updateActivity(deltaTime);
+        }
+        
+        // Check if banking animation finished
+        if (this.isBanking && Date.now() >= this.bankingEndTime) {
+            this.isBanking = false;
+            console.log('Banking animation complete');
+            
+            // Trigger AI to continue after banking
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+            }
         }
     }
 
@@ -412,6 +426,20 @@ class Player {
         }
     }
 
+    startBanking(duration = 600) {
+        this.isBanking = true;
+        this.bankingDuration = duration;
+        this.bankingEndTime = Date.now() + duration;
+        console.log('Started banking animation');
+    }
+
+    getBankingProgress() {
+        if (!this.isBanking) return 0;
+        
+        const elapsed = Date.now() - (this.bankingEndTime - this.bankingDuration);
+        return Math.max(0, 1 - (elapsed / this.bankingDuration));
+    }
+
     getMovementSpeed() {
         const agilityLevel = skills.getLevel('agility');
         const speedBonus = 1 + (agilityLevel - 1) * 0.01;
@@ -431,28 +459,28 @@ class Player {
     }
 
     isBusy() {
-        return this.isMoving() || this.isPerformingActivity();
+        return this.isMoving() || this.isPerformingActivity() || this.isBanking;
     }
 
-setStunned(stunned, duration = 0) {
-    this.isStunned = stunned;
-    if (stunned) {
-        this.stunDuration = duration;
-        this.stunEndTime = Date.now() + duration;
-        // Stop any current activity
-        this.stopActivity();
-    } else {
-        this.stunDuration = 0;
-        this.stunEndTime = 0;
+    setStunned(stunned, duration = 0) {
+        this.isStunned = stunned;
+        if (stunned) {
+            this.stunDuration = duration;
+            this.stunEndTime = Date.now() + duration;
+            // Stop any current activity
+            this.stopActivity();
+        } else {
+            this.stunDuration = 0;
+            this.stunEndTime = 0;
+        }
     }
-}
 
-getStunProgress() {
-    if (!this.isStunned) return 0;
-    
-    const elapsed = Date.now() - (this.stunEndTime - this.stunDuration);
-    return Math.min(1, elapsed / this.stunDuration);
-}
+    getStunProgress() {
+        if (!this.isStunned) return 0;
+        
+        const elapsed = Date.now() - (this.stunEndTime - this.stunDuration);
+        return Math.min(1, elapsed / this.stunDuration);
+    }
 
     hasRequiredItems(activityId) {
         const activityData = loadingManager.getData('activities')[activityId];
