@@ -123,7 +123,7 @@ class AIManager {
         if (!player.isBusy()) {
             this.makeDecision();
             this.resetDecisionCooldown();
-        } else if (this.shouldCheckBanking() && !player.isMoving() && !player.isPerformingActivity()) {
+        } else if (this.shouldCheckBanking() && !player.isMoving() && !player.isPerformingActivity() && !player.isBanking) {
             this.makeDecision();
             this.resetDecisionCooldown();
         }
@@ -140,8 +140,15 @@ class AIManager {
             inventoryFull: inventory.isFull(),
             currentTask: this.currentTask?.description,
             currentNode: player.currentNode,
-            hasBankedForTask: this.hasBankedForCurrentTask
+            hasBankedForTask: this.hasBankedForCurrentTask,
+            isBanking: player.isBanking
         });
+        
+        // If we're currently banking, wait for it to finish
+        if (player.isBanking) {
+            console.log('Currently banking, waiting...');
+            return;
+        }
         
         // Check if we need banking
         if (this.needsBanking()) {
@@ -566,13 +573,36 @@ class AIManager {
                     this.selectNextTask();
                 }
                 
-                this.clearCooldown();
+                // Start banking animation
+                player.startBanking(600);
                 
+                // During banking animation, prepare for next action
                 if (this.currentTask && this.currentTask.progress < 1) {
-                    console.log('Continuing task after banking');
-                    this.executeTask(this.currentTask);
+                    // Calculate path to task node during banking animation
+                    const taskNode = nodes.getNode(this.currentTask.nodeId);
+                    if (taskNode && player.currentNode !== this.currentTask.nodeId) {
+                        console.log('Calculating path to task node during banking...');
+                        // This doesn't actually move, just sets up the path
+                        if (window.pathfinding) {
+                            const path = pathfinding.findPath(
+                                player.position.x,
+                                player.position.y,
+                                taskNode.position.x,
+                                taskNode.position.y
+                            );
+                            if (path && path.length > 0) {
+                                player.path = path;
+                                player.pathIndex = 0;
+                                player.segmentProgress = 0;
+                                player.targetPosition = { ...taskNode.position };
+                                player.targetNode = this.currentTask.nodeId;
+                                console.log(`Path to ${this.currentTask.nodeId} prepared (${path.length} waypoints)`);
+                            }
+                        }
+                    }
                 }
                 
+                this.clearCooldown();
                 return;
             }
         }
@@ -594,12 +624,36 @@ class AIManager {
             this.selectNextTask();
         }
         
-        this.clearCooldown();
+        // Start banking animation
+        player.startBanking(600);
         
+        // During banking animation, prepare for next action
         if (this.currentTask && this.currentTask.progress < 1) {
-            console.log('Continuing task after banking');
-            this.executeTask(this.currentTask);
+            // Calculate path to task node during banking animation
+            const taskNode = nodes.getNode(this.currentTask.nodeId);
+            if (taskNode && player.currentNode !== this.currentTask.nodeId) {
+                console.log('Calculating path to task node during banking...');
+                // This doesn't actually move, just sets up the path
+                if (window.pathfinding) {
+                    const path = pathfinding.findPath(
+                        player.position.x,
+                        player.position.y,
+                        taskNode.position.x,
+                        taskNode.position.y
+                    );
+                    if (path && path.length > 0) {
+                        player.path = path;
+                        player.pathIndex = 0;
+                        player.segmentProgress = 0;
+                        player.targetPosition = { ...taskNode.position };
+                        player.targetNode = this.currentTask.nodeId;
+                        console.log(`Path to ${this.currentTask.nodeId} prepared (${path.length} waypoints)`);
+                    }
+                }
+            }
         }
+        
+        this.clearCooldown();
     }
 
     handleBankingForActivity(activityId) {
@@ -630,12 +684,36 @@ class AIManager {
             this.selectNextTask();
         }
         
-        this.clearCooldown();
+        // Start banking animation
+        player.startBanking(600);
         
+        // During banking animation, prepare for next action
         if (this.currentTask) {
-            console.log(`Continuing task after banking`);
-            this.executeTask(this.currentTask);
+            // Calculate path to task node during banking animation
+            const taskNode = nodes.getNode(this.currentTask.nodeId);
+            if (taskNode && player.currentNode !== this.currentTask.nodeId) {
+                console.log('Calculating path to task node during banking...');
+                // This doesn't actually move, just sets up the path
+                if (window.pathfinding) {
+                    const path = pathfinding.findPath(
+                        player.position.x,
+                        player.position.y,
+                        taskNode.position.x,
+                        taskNode.position.y
+                    );
+                    if (path && path.length > 0) {
+                        player.path = path;
+                        player.pathIndex = 0;
+                        player.segmentProgress = 0;
+                        player.targetPosition = { ...taskNode.position };
+                        player.targetNode = this.currentTask.nodeId;
+                        console.log(`Path to ${this.currentTask.nodeId} prepared (${path.length} waypoints)`);
+                    }
+                }
+            }
         }
+        
+        this.clearCooldown();
     }
 
     withdrawItemsForActivity(activityId) {
