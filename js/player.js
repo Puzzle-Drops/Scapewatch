@@ -25,6 +25,10 @@ class Player {
         this.pendingPath = null;
         this.pendingTargetNode = null;
         this.pendingTargetPosition = null;
+        
+        // Movement timing
+        this.lastMovementTime = 0;
+        this.movementJustStarted = false;
     }
 
     update(deltaTime) {
@@ -42,6 +46,8 @@ class Player {
         if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking) {
             this.updateSmoothMovement(deltaTime);
         } else if (!this.currentNode && !this.isMoving()) {
+            // Reset movement timing when we stop
+            this.lastMovementTime = 0;
             this.checkCurrentNode();
         }
 
@@ -55,6 +61,12 @@ class Player {
             this.isBanking = false;
             console.log('Banking animation complete');
             
+            // If we have a path set up (from banking preparation), mark movement as just started
+            if (this.path.length > 0) {
+                this.movementJustStarted = true;
+                this.lastMovementTime = Date.now();
+            }
+            
             // Trigger AI to continue after banking
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
@@ -63,15 +75,26 @@ class Player {
     }
 
     updateSmoothMovement(deltaTime) {
-    
-    if (this.pathIndex >= this.path.length) {
-        this.path = [];
-        this.pathIndex = 0;
-        this.targetPosition = null;
-        this.segmentProgress = 0;
-        this.onReachedTarget();
-        return;
-    }
+        // If movement just started, reset timing to avoid jumps
+        if (this.movementJustStarted) {
+            this.lastMovementTime = Date.now();
+            this.movementJustStarted = false;
+            return; // Skip this frame to establish baseline
+        }
+        
+        // Calculate actual time since last movement update
+        const currentTime = Date.now();
+        const movementDelta = Math.min(currentTime - this.lastMovementTime, 50); // Cap at 50ms for safety
+        this.lastMovementTime = currentTime;
+        
+        if (this.pathIndex >= this.path.length) {
+            this.path = [];
+            this.pathIndex = 0;
+            this.targetPosition = null;
+            this.segmentProgress = 0;
+            this.onReachedTarget();
+            return;
+        }
 
         const currentWaypoint = this.pathIndex === 0 ? this.position : this.path[this.pathIndex - 1];
         const targetWaypoint = this.path[this.pathIndex];
@@ -86,7 +109,7 @@ class Player {
             return;
         }
 
-        const moveDistance = (this.getMovementSpeed() * deltaTime) / 1000;
+        const moveDistance = (this.getMovementSpeed() * movementDelta) / 1000;
         const moveRatio = moveDistance / segmentDistance;
 
         this.segmentProgress += moveRatio;
@@ -327,6 +350,11 @@ class Player {
             this.segmentProgress = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
+            
+            // Mark that movement just started to reset timing
+            this.movementJustStarted = true;
+            this.lastMovementTime = Date.now();
+            
             console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
         }
     }
@@ -354,6 +382,10 @@ class Player {
         this.segmentProgress = 0;
         this.targetPosition = this.pendingTargetPosition;
         this.targetNode = this.pendingTargetNode;
+        
+        // Mark that movement just started to reset timing
+        this.movementJustStarted = true;
+        this.lastMovementTime = Date.now();
         
         console.log(`Starting movement to ${this.pendingTargetNode} after preparation`);
         
