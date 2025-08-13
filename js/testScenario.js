@@ -15,7 +15,7 @@ class TestScenario {
         //this.setPlayerPosition();
 
         // Set skill levels (each on its own line for easy modification)
-        this.setSkillLevels();
+        //this.setSkillLevels();
 
         // Add items to bank
         //this.populateBank();
@@ -29,6 +29,13 @@ class TestScenario {
         // Add bait and feathers for fishing activities that need them
         bank.deposit('fishing_bait', 1000);
         bank.deposit('feather', 1000);
+        
+        // Add runecrafting supplies
+        bank.deposit('rune_essence', 1000);
+        bank.deposit('small_pouch', 1);
+        bank.deposit('medium_pouch', 1);
+        bank.deposit('large_pouch', 1);
+        bank.deposit('giant_pouch', 1);
 
         console.log('Test scenario complete!');
     }
@@ -115,34 +122,51 @@ class TestScenario {
         if (window.taskManager) {
             taskManager.clearTasks();
             
-            // Task 1: Pickpocket Men/Women 50 times (Current Task)
-            const thievingTask1 = {
+            // Task 1: Runecraft 5 trips at test abyss crafting air runes (Current Task)
+            const runecraftingTask1 = {
+                skill: 'runecraft',
+                itemId: 'runecraft_trips_craft_air_runes',
+                targetCount: 5,
+                nodeId: 'test_abyss',
+                activityId: 'craft_air_runes',
+                description: 'Runecraft 5 trips at The Abyss',
+                startingCount: 0,
+                progress: 0,
+                isRunecraftingTask: true,
+                tripsCompleted: 0,
+                runeType: 'air_rune'
+            };
+            
+            // Task 2: Runecraft 5 trips at water altar crafting water runes (Next Task)
+            const runecraftingTask2 = {
+                skill: 'runecraft',
+                itemId: 'runecraft_trips_craft_water_runes',
+                targetCount: 5,
+                nodeId: 'water_altar',
+                activityId: 'craft_water_runes',
+                description: 'Runecraft 5 trips at Water Altar',
+                startingCount: 0,
+                progress: 0,
+                isRunecraftingTask: true,
+                tripsCompleted: 0,
+                runeType: 'water_rune'
+            };
+            
+            // Task 3: Pickpocket Rogue 50 times
+            const thievingTask = {
                 skill: 'thieving',
-                itemId: 'thieving_pickpocket_rogue', // Virtual item for tracking
+                itemId: 'thieving_pickpocket_rogue',
                 targetCount: 50,
                 nodeId: 'test_thieving',
                 activityId: 'pickpocket_rogue',
                 description: 'Pickpocket Rogue 50 times at Test Thieving',
                 startingCount: 0,
                 progress: 0,
-                isThievingTask: true, // Important flag for thieving tasks
-                successfulThefts: 0 // Counter for successful pickpockets
+                isThievingTask: true,
+                successfulThefts: 0
             };
             
-            // Task 2: Woodcut 13 logs (Current Task)
-            const woodcuttingTask2 = {
-                skill: 'woodcutting',
-                itemId: 'logs',
-                targetCount: 13,
-                nodeId: 'lumbridge_trees',
-                activityId: 'chop_tree',
-                description: 'Chop 13 Logs at Lumbridge Trees',
-                startingCount: null, // Will be set when task becomes current
-                progress: 0,
-                isCookingTask: false
-            };
-            
-            // Task 3: Complete 10 laps at Draynor agility
+            // Task 4: Complete 10 laps at Draynor agility
             const agilityTask = {
                 skill: 'agility',
                 itemId: 'agility_laps_draynor_rooftop',
@@ -156,27 +180,27 @@ class TestScenario {
                 lapsCompleted: 0
             };
             
-            // Task 4: Fish 30 shrimp
+            // Task 5: Fish 30 shrimp
             const fishingTask = {
                 skill: 'fishing',
                 itemId: 'raw_shrimps',
-                targetCount: 10,
+                targetCount: 30,
                 nodeId: 'lumbridge_fishing',
                 activityId: 'small_fishing_net',
-                description: 'Catch 10 Raw shrimps at River Lum',
-                startingCount: null, // Will be set when task becomes current
+                description: 'Catch 30 Raw shrimps at River Lum',
+                startingCount: null,
                 progress: 0,
                 isCookingTask: false
             };
             
-            // Task 5: Cook 29 shrimp
+            // Task 6: Cook 25 shrimp
             const cookingTask = {
                 skill: 'cooking',
-                itemId: 'raw_shrimps', // Raw item being consumed
-                targetCount: 10,
+                itemId: 'raw_shrimps',
+                targetCount: 25,
                 nodeId: 'lumbridge_kitchen',
                 activityId: 'cook_food',
-                description: 'Cook 10 Raw shrimps at Lumbridge Kitchen',
+                description: 'Cook 25 Raw shrimps at Lumbridge Kitchen',
                 startingCount: 0,
                 progress: 0,
                 isCookingTask: true,
@@ -184,40 +208,27 @@ class TestScenario {
                 rawFoodConsumed: 0
             };
             
-            // Task 6: More woodcutting
-            const woodcuttingTask3 = {
+            // Task 7: Woodcut 20 logs
+            const woodcuttingTask = {
                 skill: 'woodcutting',
                 itemId: 'logs',
-                targetCount: 8,
+                targetCount: 20,
                 nodeId: 'lumbridge_trees',
                 activityId: 'chop_tree',
-                description: 'Chop 8 Logs at Lumbridge Trees',
-                startingCount: null, // Will be set when task becomes current
-                progress: 0,
-                isCookingTask: false
-            };
-            
-            // Task 7: More woodcutting
-            const woodcuttingTask4 = {
-                skill: 'woodcutting',
-                itemId: 'logs',
-                targetCount: 28,
-                nodeId: 'lumbridge_trees',
-                activityId: 'chop_tree',
-                description: 'Chop 28 Logs at Lumbridge Trees',
-                startingCount: null, // Will be set when task becomes current
+                description: 'Chop 20 Logs at Lumbridge Trees',
+                startingCount: null,
                 progress: 0,
                 isCookingTask: false
             };
             
             // Set up the task structure
-            taskManager.currentTask = thievingTask1;
-            taskManager.nextTask = woodcuttingTask2;
-            taskManager.tasks = [agilityTask, fishingTask, cookingTask, woodcuttingTask3, woodcuttingTask4];
+            taskManager.currentTask = runecraftingTask1;
+            taskManager.nextTask = runecraftingTask2;
+            taskManager.tasks = [thievingTask, agilityTask, fishingTask, cookingTask, woodcuttingTask];
             
             console.log('Set up test tasks:');
-            console.log('Current:', thievingTask1.description);
-            console.log('Next:', woodcuttingTask2.description);
+            console.log('Current:', runecraftingTask1.description);
+            console.log('Next:', runecraftingTask2.description);
             taskManager.tasks.forEach((task, index) => {
                 console.log(`Task ${index + 1}:`, task.description);
             });
@@ -301,13 +312,17 @@ class TestScenario {
     completeCurrentTask() {
         if (window.taskManager && taskManager.currentTask) {
             // For gathering tasks, add items to complete
-            if (!taskManager.currentTask.isCookingTask) {
+            if (!taskManager.currentTask.isCookingTask && !taskManager.currentTask.isRunecraftingTask) {
                 const needed = taskManager.currentTask.targetCount;
                 bank.deposit(taskManager.currentTask.itemId, needed);
                 taskManager.updateTaskProgress(taskManager.currentTask);
-            } else {
+            } else if (taskManager.currentTask.isCookingTask) {
                 // For cooking tasks, set the consumption counter
                 taskManager.currentTask.rawFoodConsumed = taskManager.currentTask.targetCount;
+                taskManager.setTaskProgress(taskManager.currentTask, 1);
+            } else if (taskManager.currentTask.isRunecraftingTask) {
+                // For runecrafting tasks, set trips completed
+                taskManager.currentTask.tripsCompleted = taskManager.currentTask.targetCount;
                 taskManager.setTaskProgress(taskManager.currentTask, 1);
             }
             
