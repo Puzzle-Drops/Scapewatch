@@ -17,9 +17,27 @@ class Player {
         this.isBanking = false;
         this.bankingEndTime = 0;
         this.bankingDuration = 600; // 0.6 seconds
+        
+        // Movement preparation state
+        this.isPreparingMovement = false;
+        this.preparationEndTime = 0;
+        this.preparationDuration = 100; // 0.1 seconds
+        this.pendingPath = null;
+        this.pendingTargetNode = null;
+        this.pendingTargetPosition = null;
     }
 
     update(deltaTime) {
+        // Handle movement preparation
+        if (this.isPreparingMovement) {
+            if (Date.now() >= this.preparationEndTime) {
+                // Preparation complete, apply the pending movement
+                this.applyPendingMovement();
+            }
+            // Don't do anything else while preparing
+            return;
+        }
+        
         // Handle movement along path
         if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking) {
             this.updateSmoothMovement(deltaTime);
@@ -247,7 +265,7 @@ class Player {
         }
     }
 
-    moveTo(targetNodeId) {
+    moveTo(targetNodeId, skipPreparation = false) {
         const nodesData = loadingManager.getData('nodes');
         const node = nodesData[targetNodeId];
         
@@ -268,46 +286,88 @@ class Player {
             this.currentNode = null;
         }
 
+        // Calculate the path
+        let path = null;
         if (window.pathfinding) {
-            const path = pathfinding.findPath(
+            path = pathfinding.findPath(
                 this.position.x,
                 this.position.y,
                 node.position.x,
                 node.position.y
             );
 
-            if (path && path.length > 0) {
-                if (path.length > 1 && 
-                    Math.abs(path[0].x - this.position.x) < 0.1 && 
-                    Math.abs(path[0].y - this.position.y) < 0.1) {
-                    path.shift();
-                }
-                
-                this.path = path;
-                this.pathIndex = 0;
-                this.segmentProgress = 0;
-                this.targetPosition = { ...node.position };
-                this.targetNode = targetNodeId;
-                this.stopActivity();
-                
-                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
-            } else {
+            if (!path || path.length === 0) {
                 console.error(`No path found to node ${targetNodeId}`);
-                this.path = [{ x: node.position.x, y: node.position.y }];
-                this.pathIndex = 0;
-                this.segmentProgress = 0;
-                this.targetPosition = { ...node.position };
-                this.targetNode = targetNodeId;
-                this.stopActivity();
+                // Fallback to direct path
+                path = [{ x: node.position.x, y: node.position.y }];
             }
         } else {
-            this.path = [{ x: node.position.x, y: node.position.y }];
+            // No pathfinding available, use direct path
+            path = [{ x: node.position.x, y: node.position.y }];
+        }
+
+        // Remove first waypoint if we're already very close to it
+        if (path.length > 1 && 
+            Math.abs(path[0].x - this.position.x) < 0.1 && 
+            Math.abs(path[0].y - this.position.y) < 0.1) {
+            path.shift();
+        }
+
+        // Stop any current activity
+        this.stopActivity();
+
+        // If coming from an activity and not skipping preparation, prepare first
+        if (!skipPreparation && this.wasPerformingActivity()) {
+            console.log(`Preparing path to ${targetNodeId} (${path.length} waypoints)`);
+            this.startMovementPreparation(path, targetNodeId, node.position);
+        } else {
+            // Apply movement immediately (like during banking or initial movement)
+            this.path = path;
             this.pathIndex = 0;
             this.segmentProgress = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
-            this.stopActivity();
+            console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
         }
+    }
+
+    startMovementPreparation(path, targetNodeId, targetPosition) {
+        this.isPreparingMovement = true;
+        this.preparationEndTime = Date.now() + this.preparationDuration;
+        
+        // Store the pending movement
+        this.pendingPath = path;
+        this.pendingTargetNode = targetNodeId;
+        this.pendingTargetPosition = { ...targetPosition };
+    }
+
+    applyPendingMovement() {
+        if (!this.pendingPath) {
+            console.error('No pending path to apply');
+            this.isPreparingMovement = false;
+            return;
+        }
+
+        // Apply the movement
+        this.path = this.pendingPath;
+        this.pathIndex = 0;
+        this.segmentProgress = 0;
+        this.targetPosition = this.pendingTargetPosition;
+        this.targetNode = this.pendingTargetNode;
+        
+        console.log(`Starting movement to ${this.pendingTargetNode} after preparation`);
+        
+        // Clear preparation state
+        this.isPreparingMovement = false;
+        this.pendingPath = null;
+        this.pendingTargetNode = null;
+        this.pendingTargetPosition = null;
+    }
+
+    wasPerformingActivity() {
+        // Check if we recently stopped an activity (within last 100ms)
+        // This is a simple heuristic - you could track this more explicitly
+        return this.activityStartTime > 0 && (Date.now() - this.activityStartTime) < 10000;
     }
 
     onReachedTarget() {
@@ -459,7 +519,7 @@ class Player {
     }
 
     isBusy() {
-        return this.isMoving() || this.isPerformingActivity() || this.isBanking;
+        return this.isMoving() || this.isPerformingActivity() || this.isBanking || this.isPreparingMovement;
     }
 
     setStunned(stunned, duration = 0) {
