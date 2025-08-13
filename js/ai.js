@@ -375,41 +375,54 @@ class AIManager {
         let targetBankId = null;
         let fallbackBankId = null;
         
-        // If we have a task, compare nearest bank distances
+        // If we have a task, determine which bank to use
         if (this.currentTask && this.currentTask.nodeId) {
             const taskNode = nodes.getNode(this.currentTask.nodeId);
-            const currentNodeData = currentNode || nodes.getNode(player.currentNode);
             
-            if (taskNode && currentNodeData) {
-                const currentNodeBankDist = currentNodeData.nearestBankDistance || Infinity;
-                const taskNodeBankDist = taskNode.nearestBankDistance || Infinity;
-                
-                // Choose bank with shorter distance to its node
-                if (currentNodeBankDist < taskNodeBankDist) {
-                    targetBankId = currentNodeData.nearestBank;
-                    fallbackBankId = taskNode.nearestBank;
-                    console.log(`Choosing ${currentNodeData.nearestBank} (dist: ${currentNodeBankDist}) over ${taskNode.nearestBank} (dist: ${taskNodeBankDist})`);
-                } else if (taskNodeBankDist < currentNodeBankDist) {
+            if (taskNode) {
+                // If we're not on a node, just go to the task node's nearest bank
+                if (!currentNode) {
                     targetBankId = taskNode.nearestBank;
-                    fallbackBankId = currentNodeData.nearestBank;
-                    console.log(`Choosing ${taskNode.nearestBank} (dist: ${taskNodeBankDist}) over ${currentNodeData.nearestBank} (dist: ${currentNodeBankDist})`);
+                    console.log(`Not on a node, going to task node's nearest bank: ${targetBankId}`);
                 } else {
-                    // Equal distances - coin flip
-                    if (Math.random() < 0.5) {
-                        targetBankId = currentNodeData.nearestBank;
+                    // We're on a node, compare distances
+                    const currentNodeBankDist = currentNode.nearestBankDistance || Infinity;
+                    const taskNodeBankDist = taskNode.nearestBankDistance || Infinity;
+                    
+                    // Choose bank with shorter distance to its node
+                    if (currentNodeBankDist < taskNodeBankDist) {
+                        targetBankId = currentNode.nearestBank;
                         fallbackBankId = taskNode.nearestBank;
-                    } else {
+                        console.log(`Choosing ${currentNode.nearestBank} (dist: ${currentNodeBankDist}) over ${taskNode.nearestBank} (dist: ${taskNodeBankDist})`);
+                    } else if (taskNodeBankDist < currentNodeBankDist) {
                         targetBankId = taskNode.nearestBank;
-                        fallbackBankId = currentNodeData.nearestBank;
+                        fallbackBankId = currentNode.nearestBank;
+                        console.log(`Choosing ${taskNode.nearestBank} (dist: ${taskNodeBankDist}) over ${currentNode.nearestBank} (dist: ${currentNodeBankDist})`);
+                    } else {
+                        // Equal distances - coin flip
+                        if (Math.random() < 0.5) {
+                            targetBankId = currentNode.nearestBank;
+                            fallbackBankId = taskNode.nearestBank;
+                        } else {
+                            targetBankId = taskNode.nearestBank;
+                            fallbackBankId = currentNode.nearestBank;
+                        }
+                        console.log(`Equal distances (${currentNodeBankDist}), coin flip chose ${targetBankId}`);
                     }
-                    console.log(`Equal distances (${currentNodeBankDist}), coin flip chose ${targetBankId}`);
                 }
             }
-        }
-        
-        // Fallback: use current node's nearest bank if no task
-        if (!targetBankId && currentNode) {
+        } else if (currentNode) {
+            // No task but we're on a node - use current node's nearest bank
             targetBankId = currentNode.nearestBank;
+            console.log(`No task, using current node's nearest bank: ${targetBankId}`);
+        } else {
+            // No task and not on a node - find any bank as last resort
+            console.log('No task and not on a node, finding any bank...');
+            const allBanks = nodes.getNodesOfType('bank');
+            if (allBanks.length > 0) {
+                targetBankId = allBanks[0].id;
+                console.log(`Using first available bank: ${targetBankId}`);
+            }
         }
         
         if (!targetBankId) {
@@ -482,8 +495,6 @@ class AIManager {
     }
 
     goToBankForItems(activityId) {
-        // This method needs updating too, but it's used less frequently
-        // For now, we'll use a simple approach
         const currentNode = nodes.getNode(player.currentNode);
         
         if (currentNode && currentNode.type === 'bank') {
@@ -491,12 +502,30 @@ class AIManager {
             return;
         }
         
-        // Use current node's nearest bank
+        let targetBankId = null;
+        
         if (currentNode && currentNode.nearestBank) {
-            console.log(`Moving to ${currentNode.nearestBank} to get items for ${activityId}`);
-            player.moveTo(currentNode.nearestBank);
+            // We're on a node, use its nearest bank
+            targetBankId = currentNode.nearestBank;
+        } else if (this.currentTask && this.currentTask.nodeId) {
+            // Not on a node, but have a task - use task node's nearest bank
+            const taskNode = nodes.getNode(this.currentTask.nodeId);
+            if (taskNode && taskNode.nearestBank) {
+                targetBankId = taskNode.nearestBank;
+            }
         } else {
-            console.error('Cannot find bank for getting items!');
+            // Last resort - find any bank
+            const allBanks = nodes.getNodesOfType('bank');
+            if (allBanks.length > 0) {
+                targetBankId = allBanks[0].id;
+            }
+        }
+        
+        if (targetBankId) {
+            console.log(`Moving to ${targetBankId} to get items for ${activityId}`);
+            player.moveTo(targetBankId);
+        } else {
+            console.error('Cannot find any bank for getting items!');
         }
     }
 
