@@ -77,22 +77,26 @@ class RunecraftingSkill extends BaseSkill {
         }
         
         // Get activity data for the name
-        const activityData = loadingManager.getData('activities')[selectedAltar.activityId];
-        const nodeData = nodes.getNode(altarNode);
-        
-        return {
-            skill: this.id,
-            itemId: `runecraft_trips_${selectedAltar.activityId}`, // Virtual item for tracking
-            targetCount: targetTrips,
-            nodeId: altarNode,
-            activityId: selectedAltar.activityId,
-            description: `Runecraft ${targetTrips} trips at ${nodeData.name}`,
-            startingCount: 0,
-            progress: 0,
-            isRunecraftingTask: true,
-            tripsCompleted: 0,
-            runeType: activityData.runeType
-        };
+const activityData = loadingManager.getData('activities')[selectedAltar.activityId];
+const nodeData = nodes.getNode(altarNode);
+
+// Get the rune name from items data for better display
+const runeItemData = loadingManager.getData('items')[activityData.runeType];
+const runeName = runeItemData ? runeItemData.name.toLowerCase() : activityData.runeType.replace('_', ' ');
+
+return {
+    skill: this.id,
+    itemId: `runecraft_trips_${selectedAltar.activityId}`, // Virtual item for tracking
+    targetCount: targetTrips,
+    nodeId: altarNode,
+    activityId: selectedAltar.activityId,
+    description: `Runecraft ${targetTrips} trips of ${runeName} at ${nodeData.name}`,
+    startingCount: 0,
+    progress: 0,
+    isRunecraftingTask: true,
+    tripsCompleted: 0,
+    runeType: activityData.runeType
+};
     }
     
     getAvailableAltars() {
@@ -194,19 +198,24 @@ class RunecraftingSkill extends BaseSkill {
     }
     
     updateRunecraftingTaskProgress() {
-        if (!window.taskManager) return;
+    if (!window.taskManager) return;
+    
+    const currentTask = taskManager.getFirstIncompleteTask();
+    
+    if (currentTask && currentTask.isRunecraftingTask) {
+        currentTask.tripsCompleted = (currentTask.tripsCompleted || 0) + 1;
+        const progress = currentTask.tripsCompleted / currentTask.targetCount;
         
-        const currentTask = taskManager.getFirstIncompleteTask();
+        console.log(`Runecrafting trip complete! Progress: ${currentTask.tripsCompleted}/${currentTask.targetCount} trips`);
         
-        if (currentTask && currentTask.isRunecraftingTask) {
-            currentTask.tripsCompleted = (currentTask.tripsCompleted || 0) + 1;
-            const progress = currentTask.tripsCompleted / currentTask.targetCount;
-            
-            console.log(`Runecrafting progress: ${currentTask.tripsCompleted}/${currentTask.targetCount} trips`);
-            
-            taskManager.setTaskProgress(currentTask, progress);
+        taskManager.setTaskProgress(currentTask, progress);
+        
+        // Update UI immediately
+        if (window.ui) {
+            window.ui.updateTasks();
         }
     }
+}
     
     getTaskVerb() {
         return 'Runecraft';
@@ -284,23 +293,20 @@ class RunecraftingSkill extends BaseSkill {
             this.currentPhase = 2;
             console.log('Emptying giant pouch');
         } else {
-            // No more essence to craft
-            console.log('No essence left to craft');
-            this.clearCraftingState();
-            
-            // Complete the trip
-            this.updateRunecraftingTaskProgress();
-            
-            // Reset phase for next trip
-            this.currentPhase = 0;
-            
-            // Tell AI to re-evaluate (need to bank)
-            if (window.ai) {
-                window.ai.decisionCooldown = 0;
-            }
-            
-            return false;
-        }
+    // No more essence to craft
+    console.log('No essence left to craft - trip complete');
+    this.clearCraftingState();
+    
+    // Reset phase for next trip
+    this.currentPhase = 0;
+    
+    // Tell AI to re-evaluate (need to bank)
+    if (window.ai) {
+        window.ai.decisionCooldown = 0;
+    }
+    
+    return false;
+}
         
         // Set crafting state
         this.isCrafting = true;
@@ -553,16 +559,17 @@ class RunecraftingSkill extends BaseSkill {
     }
     
     onActivityComplete(activityData) {
-        // Check if we should continue crafting at this altar
-        if (this.hasEssenceForCurrentTask()) {
-            // More phases to complete
-            console.log('Continuing runecrafting sequence');
-        } else {
-            // Trip complete
-            console.log('Runecrafting trip complete');
-            this.currentPhase = 0;
-        }
+    // Check if we should continue crafting at this altar
+    if (this.hasEssenceForCurrentTask()) {
+        // More phases to complete
+        console.log('Continuing runecrafting sequence');
+    } else {
+        // Trip complete - NOW update the task progress
+        console.log('Runecrafting trip complete - updating task progress');
+        this.updateRunecraftingTaskProgress();
+        this.currentPhase = 0;
     }
+}
     
     onActivityStopped() {
         console.log('Runecrafting activity was stopped, clearing state');
