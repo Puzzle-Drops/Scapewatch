@@ -1,4 +1,42 @@
 {
+"water_altar": {
+    "id": "water_altar",
+    "name": "Water Altar",
+    "type": "skill",
+    "position": {
+        "x": 4319,
+        "y": 1990
+    },
+    "activities": [
+        "craft_water_runes"
+    ]
+},
+"test_abyss": {
+    "id": "test_abyss",
+    "name": "The Abyss",
+    "type": "skill",
+    "position": {
+        "x": 4325,
+        "y": 1872
+    },
+    "activities": [
+        "craft_air_runes",
+        "craft_mind_runes",
+        "craft_water_runes",
+        "craft_earth_runes",
+        "craft_fire_runes",
+        "craft_body_runes",
+        "craft_cosmic_runes",
+        "craft_chaos_runes",
+        "craft_astral_runes",
+        "craft_nature_runes",
+        "craft_law_runes",
+        "craft_death_runes",
+        "craft_blood_runes",
+        "craft_soul_runes",
+        "craft_wrath_runes"
+    ]
+},
 "lumbridge_thieving": {
     "id": "lumbridge_thieving",
     "name": "Lumbridge Town Center",
