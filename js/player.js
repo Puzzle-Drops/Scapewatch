@@ -17,37 +17,13 @@ class Player {
         this.isBanking = false;
         this.bankingEndTime = 0;
         this.bankingDuration = 600; // 0.6 seconds
-        
-        // Movement preparation state
-        this.isPreparingMovement = false;
-        this.preparationEndTime = 0;
-        this.preparationDuration = 100; // 0.1 seconds
-        this.pendingPath = null;
-        this.pendingTargetNode = null;
-        this.pendingTargetPosition = null;
-        
-        // Movement timing
-        this.lastMovementTime = 0;
-        this.movementJustStarted = false;
     }
 
     update(deltaTime) {
-        // Handle movement preparation
-        if (this.isPreparingMovement) {
-            if (Date.now() >= this.preparationEndTime) {
-                // Preparation complete, apply the pending movement
-                this.applyPendingMovement();
-            }
-            // Don't do anything else while preparing
-            return;
-        }
-        
         // Handle movement along path
         if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking) {
             this.updateSmoothMovement(deltaTime);
         } else if (!this.currentNode && !this.isMoving()) {
-            // Reset movement timing when we stop
-            this.lastMovementTime = 0;
             this.checkCurrentNode();
         }
 
@@ -61,12 +37,6 @@ class Player {
             this.isBanking = false;
             console.log('Banking animation complete');
             
-            // If we have a path set up (from banking preparation), mark movement as just started
-            if (this.path.length > 0) {
-                this.movementJustStarted = true;
-                this.lastMovementTime = Date.now();
-            }
-            
             // Trigger AI to continue after banking
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
@@ -75,26 +45,15 @@ class Player {
     }
 
     updateSmoothMovement(deltaTime) {
-        // If movement just started, reset timing to avoid jumps
-        if (this.movementJustStarted) {
-            this.lastMovementTime = Date.now();
-            this.movementJustStarted = false;
-            return; // Skip this frame to establish baseline
-        }
-        
-        // Calculate actual time since last movement update
-        const currentTime = Date.now();
-        const movementDelta = Math.min(currentTime - this.lastMovementTime, 50); // Cap at 50ms for safety
-        this.lastMovementTime = currentTime;
-        
-        if (this.pathIndex >= this.path.length) {
-            this.path = [];
-            this.pathIndex = 0;
-            this.targetPosition = null;
-            this.segmentProgress = 0;
-            this.onReachedTarget();
-            return;
-        }
+    
+    if (this.pathIndex >= this.path.length) {
+        this.path = [];
+        this.pathIndex = 0;
+        this.targetPosition = null;
+        this.segmentProgress = 0;
+        this.onReachedTarget();
+        return;
+    }
 
         const currentWaypoint = this.pathIndex === 0 ? this.position : this.path[this.pathIndex - 1];
         const targetWaypoint = this.path[this.pathIndex];
@@ -109,7 +68,7 @@ class Player {
             return;
         }
 
-        const moveDistance = (this.getMovementSpeed() * movementDelta) / 1000;
+        const moveDistance = (this.getMovementSpeed() * deltaTime) / 1000;
         const moveRatio = moveDistance / segmentDistance;
 
         this.segmentProgress += moveRatio;
@@ -288,7 +247,7 @@ class Player {
         }
     }
 
-    moveTo(targetNodeId, skipPreparation = false) {
+    moveTo(targetNodeId) {
         const nodesData = loadingManager.getData('nodes');
         const node = nodesData[targetNodeId];
         
@@ -309,97 +268,46 @@ class Player {
             this.currentNode = null;
         }
 
-        // Calculate the path
-        let path = null;
         if (window.pathfinding) {
-            path = pathfinding.findPath(
+            const path = pathfinding.findPath(
                 this.position.x,
                 this.position.y,
                 node.position.x,
                 node.position.y
             );
 
-            if (!path || path.length === 0) {
+            if (path && path.length > 0) {
+                if (path.length > 1 && 
+                    Math.abs(path[0].x - this.position.x) < 0.1 && 
+                    Math.abs(path[0].y - this.position.y) < 0.1) {
+                    path.shift();
+                }
+                
+                this.path = path;
+                this.pathIndex = 0;
+                this.segmentProgress = 0;
+                this.targetPosition = { ...node.position };
+                this.targetNode = targetNodeId;
+                this.stopActivity();
+                
+                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+            } else {
                 console.error(`No path found to node ${targetNodeId}`);
-                // Fallback to direct path
-                path = [{ x: node.position.x, y: node.position.y }];
+                this.path = [{ x: node.position.x, y: node.position.y }];
+                this.pathIndex = 0;
+                this.segmentProgress = 0;
+                this.targetPosition = { ...node.position };
+                this.targetNode = targetNodeId;
+                this.stopActivity();
             }
         } else {
-            // No pathfinding available, use direct path
-            path = [{ x: node.position.x, y: node.position.y }];
-        }
-
-        // Remove first waypoint if we're already very close to it
-        if (path.length > 1 && 
-            Math.abs(path[0].x - this.position.x) < 0.1 && 
-            Math.abs(path[0].y - this.position.y) < 0.1) {
-            path.shift();
-        }
-
-        // Stop any current activity
-        this.stopActivity();
-
-        // If coming from an activity and not skipping preparation, prepare first
-        if (!skipPreparation && this.wasPerformingActivity()) {
-            console.log(`Preparing path to ${targetNodeId} (${path.length} waypoints)`);
-            this.startMovementPreparation(path, targetNodeId, node.position);
-        } else {
-            // Apply movement immediately (like during banking or initial movement)
-            this.path = path;
+            this.path = [{ x: node.position.x, y: node.position.y }];
             this.pathIndex = 0;
             this.segmentProgress = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
-            
-            // Mark that movement just started to reset timing
-            this.movementJustStarted = true;
-            this.lastMovementTime = Date.now();
-            
-            console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+            this.stopActivity();
         }
-    }
-
-    startMovementPreparation(path, targetNodeId, targetPosition) {
-        this.isPreparingMovement = true;
-        this.preparationEndTime = Date.now() + this.preparationDuration;
-        
-        // Store the pending movement
-        this.pendingPath = path;
-        this.pendingTargetNode = targetNodeId;
-        this.pendingTargetPosition = { ...targetPosition };
-    }
-
-    applyPendingMovement() {
-        if (!this.pendingPath) {
-            console.error('No pending path to apply');
-            this.isPreparingMovement = false;
-            return;
-        }
-
-        // Apply the movement
-        this.path = this.pendingPath;
-        this.pathIndex = 0;
-        this.segmentProgress = 0;
-        this.targetPosition = this.pendingTargetPosition;
-        this.targetNode = this.pendingTargetNode;
-        
-        // Mark that movement just started to reset timing
-        this.movementJustStarted = true;
-        this.lastMovementTime = Date.now();
-        
-        console.log(`Starting movement to ${this.pendingTargetNode} after preparation`);
-        
-        // Clear preparation state
-        this.isPreparingMovement = false;
-        this.pendingPath = null;
-        this.pendingTargetNode = null;
-        this.pendingTargetPosition = null;
-    }
-
-    wasPerformingActivity() {
-        // Check if we recently stopped an activity (within last 100ms)
-        // This is a simple heuristic - you could track this more explicitly
-        return this.activityStartTime > 0 && (Date.now() - this.activityStartTime) < 10000;
     }
 
     onReachedTarget() {
@@ -551,7 +459,7 @@ class Player {
     }
 
     isBusy() {
-        return this.isMoving() || this.isPerformingActivity() || this.isBanking || this.isPreparingMovement;
+        return this.isMoving() || this.isPerformingActivity() || this.isBanking;
     }
 
     setStunned(stunned, duration = 0) {
