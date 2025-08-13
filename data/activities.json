@@ -1,4 +1,178 @@
 {
+"craft_air_runes": {
+    "id": "craft_air_runes",
+    "name": "Craft Air Runes",
+    "skill": "runecraft",
+    "requiredLevel": 1,
+    "baseDuration": 600,
+    "xpPerEssence": 5,
+    "runeType": "air_rune",
+    "runeMultipliers": {
+        "11": 2, "22": 3, "33": 4, "44": 5, "55": 6, "66": 7, "77": 8, "88": 9, "99": 10
+    }
+},
+"craft_mind_runes": {
+    "id": "craft_mind_runes",
+    "name": "Craft Mind Runes",
+    "skill": "runecraft",
+    "requiredLevel": 2,
+    "baseDuration": 600,
+    "xpPerEssence": 5.5,
+    "runeType": "mind_rune",
+    "runeMultipliers": {
+        "14": 2, "28": 3, "42": 4, "56": 5, "70": 6, "84": 7, "98": 8
+    }
+},
+"craft_water_runes": {
+    "id": "craft_water_runes",
+    "name": "Craft Water Runes",
+    "skill": "runecraft",
+    "requiredLevel": 5,
+    "baseDuration": 600,
+    "xpPerEssence": 6,
+    "runeType": "water_rune",
+    "runeMultipliers": {
+        "19": 2, "38": 3, "57": 4, "76": 5, "95": 6
+    }
+},
+"craft_earth_runes": {
+    "id": "craft_earth_runes",
+    "name": "Craft Earth Runes",
+    "skill": "runecraft",
+    "requiredLevel": 9,
+    "baseDuration": 600,
+    "xpPerEssence": 6.5,
+    "runeType": "earth_rune",
+    "runeMultipliers": {
+        "26": 2, "52": 3, "78": 4
+    }
+},
+"craft_fire_runes": {
+    "id": "craft_fire_runes",
+    "name": "Craft Fire Runes",
+    "skill": "runecraft",
+    "requiredLevel": 14,
+    "baseDuration": 600,
+    "xpPerEssence": 7,
+    "runeType": "fire_rune",
+    "runeMultipliers": {
+        "35": 2, "70": 3
+    }
+},
+"craft_body_runes": {
+    "id": "craft_body_runes",
+    "name": "Craft Body Runes",
+    "skill": "runecraft",
+    "requiredLevel": 20,
+    "baseDuration": 600,
+    "xpPerEssence": 7.5,
+    "runeType": "body_rune",
+    "runeMultipliers": {
+        "46": 2, "92": 3
+    }
+},
+"craft_cosmic_runes": {
+    "id": "craft_cosmic_runes",
+    "name": "Craft Cosmic Runes",
+    "skill": "runecraft",
+    "requiredLevel": 27,
+    "baseDuration": 600,
+    "xpPerEssence": 8,
+    "runeType": "cosmic_rune",
+    "runeMultipliers": {
+        "59": 2
+    }
+},
+"craft_chaos_runes": {
+    "id": "craft_chaos_runes",
+    "name": "Craft Chaos Runes",
+    "skill": "runecraft",
+    "requiredLevel": 35,
+    "baseDuration": 600,
+    "xpPerEssence": 8.5,
+    "runeType": "chaos_rune",
+    "runeMultipliers": {
+        "74": 2
+    }
+},
+"craft_astral_runes": {
+    "id": "craft_astral_runes",
+    "name": "Craft Astral Runes",
+    "skill": "runecraft",
+    "requiredLevel": 40,
+    "baseDuration": 600,
+    "xpPerEssence": 8.7,
+    "runeType": "astral_rune",
+    "runeMultipliers": {
+        "82": 2
+    }
+},
+"craft_nature_runes": {
+    "id": "craft_nature_runes",
+    "name": "Craft Nature Runes",
+    "skill": "runecraft",
+    "requiredLevel": 44,
+    "baseDuration": 600,
+    "xpPerEssence": 9,
+    "runeType": "nature_rune",
+    "runeMultipliers": {
+        "91": 2
+    }
+},
+"craft_law_runes": {
+    "id": "craft_law_runes",
+    "name": "Craft Law Runes",
+    "skill": "runecraft",
+    "requiredLevel": 54,
+    "baseDuration": 600,
+    "xpPerEssence": 9.5,
+    "runeType": "law_rune",
+    "runeMultipliers": {
+        "95": 2
+    }
+},
+"craft_death_runes": {
+    "id": "craft_death_runes",
+    "name": "Craft Death Runes",
+    "skill": "runecraft",
+    "requiredLevel": 65,
+    "baseDuration": 600,
+    "xpPerEssence": 10,
+    "runeType": "death_rune",
+    "runeMultipliers": {
+        "99": 2
+    }
+},
+"craft_blood_runes": {
+    "id": "craft_blood_runes",
+    "name": "Craft Blood Runes",
+    "skill": "runecraft",
+    "requiredLevel": 77,
+    "baseDuration": 600,
+    "xpPerEssence": 10.5,
+    "runeType": "blood_rune",
+    "runeMultipliers": {}
+},
+"craft_soul_runes": {
+    "id": "craft_soul_runes",
+    "name": "Craft Soul Runes",
+    "skill": "runecraft",
+    "requiredLevel": 90,
+    "baseDuration": 600,
+    "xpPerEssence": 29.7,
+    "runeType": "soul_rune",
+    "runeMultipliers": {}
+},
+"craft_wrath_runes": {
+    "id": "craft_wrath_runes",
+    "name": "Craft Wrath Runes",
+    "skill": "runecraft",
+    "requiredLevel": 95,
+    "baseDuration": 600,
+    "xpPerEssence": 8,
+    "runeType": "wrath_rune",
+    "runeMultipliers": {}
+},
 "pickpocket_man": {
     "id": "pickpocket_man",
     "name": "Pickpocket Man/Woman",
