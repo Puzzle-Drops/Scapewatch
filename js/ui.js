@@ -348,6 +348,9 @@ class UIManager {
         
         const tasksList = document.getElementById('tasks-list');
         if (!tasksList || !window.taskManager) return;
+
+        // Update all task progress first to ensure accuracy
+        taskManager.updateAllProgress();
         
         tasksList.innerHTML = '';
         
