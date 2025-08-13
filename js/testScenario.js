@@ -123,34 +123,34 @@ class TestScenario {
             taskManager.clearTasks();
             
             // Task 1: Runecraft 5 trips at test abyss crafting air runes (Current Task)
-            const runecraftingTask1 = {
-                skill: 'runecraft',
-                itemId: 'runecraft_trips_craft_air_runes',
-                targetCount: 5,
-                nodeId: 'test_abyss',
-                activityId: 'craft_air_runes',
-                description: 'Runecraft 5 trips at The Abyss',
-                startingCount: 0,
-                progress: 0,
-                isRunecraftingTask: true,
-                tripsCompleted: 0,
-                runeType: 'air_rune'
-            };
-            
-            // Task 2: Runecraft 5 trips at water altar crafting water runes (Next Task)
-            const runecraftingTask2 = {
-                skill: 'runecraft',
-                itemId: 'runecraft_trips_craft_water_runes',
-                targetCount: 5,
-                nodeId: 'water_altar',
-                activityId: 'craft_water_runes',
-                description: 'Runecraft 5 trips at Water Altar',
-                startingCount: 0,
-                progress: 0,
-                isRunecraftingTask: true,
-                tripsCompleted: 0,
-                runeType: 'water_rune'
-            };
+const runecraftingTask1 = {
+    skill: 'runecraft',
+    itemId: 'runecraft_trips_craft_air_runes',
+    targetCount: 5,
+    nodeId: 'test_abyss',
+    activityId: 'craft_air_runes',
+    description: 'Runecraft 5 trips of air runes at The Abyss',
+    startingCount: 0,
+    progress: 0,
+    isRunecraftingTask: true,
+    tripsCompleted: 0,
+    runeType: 'air_rune'
+};
+
+// Task 2: Runecraft 5 trips at water altar crafting water runes (Next Task)
+const runecraftingTask2 = {
+    skill: 'runecraft',
+    itemId: 'runecraft_trips_craft_water_runes',
+    targetCount: 5,
+    nodeId: 'water_altar',
+    activityId: 'craft_water_runes',
+    description: 'Runecraft 5 trips of water runes at Water Altar',
+    startingCount: 0,
+    progress: 0,
+    isRunecraftingTask: true,
+    tripsCompleted: 0,
+    runeType: 'water_rune'
+};
             
             // Task 3: Pickpocket Rogue 50 times
             const thievingTask = {
