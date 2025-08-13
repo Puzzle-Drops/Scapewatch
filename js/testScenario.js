@@ -27,15 +27,15 @@ class TestScenario {
         this.setupTestTasks();
 
         // Add bait and feathers for fishing activities that need them
-        bank.deposit('fishing_bait', 1000);
-        bank.deposit('feather', 1000);
+        bank.deposit('fishing_bait', 1000000);
+        bank.deposit('feather', 1000000);
         
         // Add runecrafting supplies
-        bank.deposit('rune_essence', 1000);
-        //bank.deposit('small_pouch', 1);
-        //bank.deposit('medium_pouch', 1);
-        //bank.deposit('large_pouch', 1);
-        //bank.deposit('giant_pouch', 1);
+        bank.deposit('rune_essence', 1000000);
+        bank.deposit('small_pouch', 1);
+        bank.deposit('medium_pouch', 1);
+        bank.deposit('large_pouch', 1);
+        bank.deposit('giant_pouch', 1);
 
         console.log('Test scenario complete!');
     }
