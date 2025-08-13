@@ -258,76 +258,64 @@ return {
     }
     
     beforeActivityStart(activityData) {
-        // Check if we're already crafting
-        if (this.isCrafting) {
-            const currentTime = Date.now();
-            const timeCrafting = currentTime - this.craftingStartTime;
-            
-            if (timeCrafting < 600) {
-                if (window.ai && window.ai.currentTask && window.ai.currentTask.isRunecraftingTask) {
-                    const taskId = `${window.ai.currentTask.activityId}_${window.ai.currentTask.targetCount}`;
-                    if (this.craftingTaskId === taskId) {
-                        console.log('Already crafting runes, rejecting duplicate start');
-                        return false;
-                    }
+    // Check if we're already crafting
+    if (this.isCrafting) {
+        const currentTime = Date.now();
+        const timeCrafting = currentTime - this.craftingStartTime;
+        
+        if (timeCrafting < 600) {
+            if (window.ai && window.ai.currentTask && window.ai.currentTask.isRunecraftingTask) {
+                const taskId = `${window.ai.currentTask.activityId}_${window.ai.currentTask.targetCount}`;
+                if (this.craftingTaskId === taskId) {
+                    console.log('Already crafting runes, rejecting duplicate start');
+                    return false;
                 }
-            } else {
-                console.log('Crafting took too long, resetting state');
-                this.clearCraftingState();
             }
-        }
-        
-        // Determine what phase we're in
-        const inventoryEssence = inventory.getItemCount('rune_essence');
-        
-        if (inventoryEssence > 0) {
-            // Phase 0: Use inventory essence
-            this.currentPhase = 0;
-            console.log(`Crafting runes from ${inventoryEssence} inventory essence`);
-        } else if (this.currentPhase === 0 && this.hasSmallMediumLargePouches()) {
-            // Phase 1: Empty small/medium/large pouches
-            this.currentPhase = 1;
-            console.log('Emptying small/medium/large pouches');
-        } else if (this.currentPhase === 1 && this.pouchContents.giant_pouch > 0) {
-            // Phase 2: Empty giant pouch
-            this.currentPhase = 2;
-            console.log('Emptying giant pouch');
         } else {
-    // No more essence to craft - trip complete
-    console.log('No essence left to craft - trip complete');
-    this.clearCraftingState();
-    
-    // Update task progress for this completed trip
-    this.updateRunecraftingTaskProgress();
-    
-    // Reset phase for next trip
-    this.currentPhase = 0;
-    
-    // Clear pouch contents
-    this.pouchContents = {
-        small_pouch: 0,
-        medium_pouch: 0,
-        large_pouch: 0,
-        giant_pouch: 0
-    };
-    
-    // Tell AI to re-evaluate (need to bank)
-    if (window.ai) {
-        window.ai.decisionCooldown = 0;
+            console.log('Crafting took too long, resetting state');
+            this.clearCraftingState();
+        }
     }
     
-    return false;
-}
+    // Check if we have any essence in inventory
+    const inventoryEssence = inventory.getItemCount('rune_essence');
+    
+    if (inventoryEssence === 0) {
+        // No essence in inventory - trip is complete
+        console.log('No essence in inventory - trip complete');
+        this.clearCraftingState();
         
-        // Set crafting state
-        this.isCrafting = true;
-        this.craftingStartTime = Date.now();
-        if (window.ai && window.ai.currentTask && window.ai.currentTask.isRunecraftingTask) {
-            this.craftingTaskId = `${window.ai.currentTask.activityId}_${window.ai.currentTask.targetCount}`;
+        // Update task progress for completed trip
+        this.updateRunecraftingTaskProgress();
+        
+        // Reset for next trip
+        this.currentPhase = 0;
+        this.pouchContents = {
+            small_pouch: 0,
+            medium_pouch: 0,
+            large_pouch: 0,
+            giant_pouch: 0
+        };
+        
+        // Tell AI to go bank
+        if (window.ai) {
+            window.ai.decisionCooldown = 0;
         }
         
-        return true;
+        return false;
     }
+    
+    console.log(`Crafting runes from ${inventoryEssence} inventory essence (Phase ${this.currentPhase})`);
+    
+    // Set crafting state
+    this.isCrafting = true;
+    this.craftingStartTime = Date.now();
+    if (window.ai && window.ai.currentTask && window.ai.currentTask.isRunecraftingTask) {
+        this.craftingTaskId = `${window.ai.currentTask.activityId}_${window.ai.currentTask.targetCount}`;
+    }
+    
+    return true;
+}
     
     hasSmallMediumLargePouches() {
         return this.pouchContents.small_pouch > 0 || 
@@ -339,83 +327,85 @@ return {
     // Clear crafting state
     this.clearCraftingState();
     
-    let essenceToConsume = 0;
+    // Get current inventory essence
+    const essenceToConsume = inventory.getItemCount('rune_essence');
     
+    if (essenceToConsume === 0) {
+        console.log('ERROR: No essence to consume but activity started');
+        return [];
+    }
+    
+    // Consume the essence
+    inventory.removeItem('rune_essence', essenceToConsume);
+    
+    // Calculate runes created
+    const runesPerEssence = this.getRunesPerEssence(activityData, level);
+    const bonusMultiplier = this.getBonusMultiplier(level);
+    const totalRunes = Math.floor(essenceToConsume * runesPerEssence * bonusMultiplier);
+    
+    // Store XP for later
+    this.lastCraftingXp = essenceToConsume * (activityData.xpPerEssence || 5);
+    
+    console.log(`Crafted ${totalRunes} ${activityData.runeType} from ${essenceToConsume} essence`);
+    
+    // Now handle pouch emptying based on phase
     if (this.currentPhase === 0) {
-        // Use inventory essence
-        essenceToConsume = inventory.getItemCount('rune_essence');
-    } else if (this.currentPhase === 1) {
-        // Empty small/medium/large pouches INTO INVENTORY first
-        let totalFromPouches = 0;
+        // After first craft, empty small/medium/large pouches
+        let totalEmptied = 0;
+        
         if (this.pouchContents.small_pouch > 0) {
             inventory.addItem('rune_essence', this.pouchContents.small_pouch);
-            totalFromPouches += this.pouchContents.small_pouch;
+            console.log(`Emptied ${this.pouchContents.small_pouch} essence from small pouch`);
+            totalEmptied += this.pouchContents.small_pouch;
             this.pouchContents.small_pouch = 0;
         }
+        
         if (this.pouchContents.medium_pouch > 0) {
             inventory.addItem('rune_essence', this.pouchContents.medium_pouch);
-            totalFromPouches += this.pouchContents.medium_pouch;
+            console.log(`Emptied ${this.pouchContents.medium_pouch} essence from medium pouch`);
+            totalEmptied += this.pouchContents.medium_pouch;
             this.pouchContents.medium_pouch = 0;
         }
+        
         if (this.pouchContents.large_pouch > 0) {
             inventory.addItem('rune_essence', this.pouchContents.large_pouch);
-            totalFromPouches += this.pouchContents.large_pouch;
+            console.log(`Emptied ${this.pouchContents.large_pouch} essence from large pouch`);
+            totalEmptied += this.pouchContents.large_pouch;
             this.pouchContents.large_pouch = 0;
         }
-        console.log(`Emptied ${totalFromPouches} essence from small/medium/large pouches`);
-        essenceToConsume = inventory.getItemCount('rune_essence');
-    } else if (this.currentPhase === 2) {
-        // Empty giant pouch INTO INVENTORY first
+        
+        if (totalEmptied > 0) {
+            console.log(`Total essence emptied from pouches: ${totalEmptied}`);
+            this.currentPhase = 1; // Move to phase 1
+        } else if (this.pouchContents.giant_pouch > 0) {
+            // No small/medium/large but has giant - move to phase 1 anyway
+            this.currentPhase = 1;
+        } else {
+            // No pouches at all - trip is done after this craft
+            this.currentPhase = 2; // Skip to end
+        }
+        
+    } else if (this.currentPhase === 1) {
+        // After second craft, empty giant pouch
         if (this.pouchContents.giant_pouch > 0) {
             inventory.addItem('rune_essence', this.pouchContents.giant_pouch);
             console.log(`Emptied ${this.pouchContents.giant_pouch} essence from giant pouch`);
             this.pouchContents.giant_pouch = 0;
+            this.currentPhase = 2; // Move to final phase
+        } else {
+            // No giant pouch - we're done
+            this.currentPhase = 2;
         }
-        essenceToConsume = inventory.getItemCount('rune_essence');
-    }
-        
-        if (essenceToConsume === 0) {
-    console.log('No essence to consume - trip incomplete, ending trip');
-    // Reset for next trip
-    this.currentPhase = 0;
-    this.clearCraftingState();
-    
-    // Update task progress if we crafted anything this trip
-    const inventoryEssence = inventory.getItemCount('rune_essence');
-    const pouchEssence = this.getTotalPouchContents();
-    if (inventoryEssence === 0 && pouchEssence === 0) {
-        // Trip is actually complete
-        this.updateRunecraftingTaskProgress();
+    } else {
+        // Phase 2 - all done
+        this.currentPhase = 2;
     }
     
-    // Tell AI to re-evaluate (go bank)
-    if (window.ai) {
-        window.ai.decisionCooldown = 0;
-    }
-    
-    return [];
+    return [{
+        itemId: activityData.runeType,
+        quantity: totalRunes
+    }];
 }
-        
-        // Consume the essence
-        if (this.currentPhase === 0) {
-            inventory.removeItem('rune_essence', essenceToConsume);
-        }
-        
-        // Calculate runes created
-        const runesPerEssence = this.getRunesPerEssence(activityData, level);
-        const bonusMultiplier = this.getBonusMultiplier(level);
-        const totalRunes = Math.floor(essenceToConsume * runesPerEssence * bonusMultiplier);
-        
-        // Store XP for later
-        this.lastCraftingXp = essenceToConsume * (activityData.xpPerEssence || 5);
-        
-        console.log(`Crafted ${totalRunes} ${activityData.runeType} from ${essenceToConsume} essence`);
-        
-        return [{
-            itemId: activityData.runeType,
-            quantity: totalRunes
-        }];
-    }
     
     getRunesPerEssence(activityData, level) {
         if (!activityData.runeMultipliers) return 1;
@@ -604,15 +594,36 @@ return {
     }
     
     onActivityComplete(activityData) {
-    // Check if we should continue crafting at this altar
-    if (this.hasEssenceForCurrentTask()) {
-        // More phases to complete
-        console.log('Continuing runecrafting sequence');
+    // Check if we have essence in inventory
+    const inventoryEssence = inventory.getItemCount('rune_essence');
+    
+    if (inventoryEssence > 0) {
+        // More essence to craft
+        console.log(`Continuing runecrafting - ${inventoryEssence} essence remaining`);
+        // Activity will restart automatically
     } else {
-        // Trip complete - NOW update the task progress
-        console.log('Runecrafting trip complete - updating task progress');
+        // No essence left - trip complete
+        console.log('No essence remaining - trip complete');
+        
+        // Update task progress
         this.updateRunecraftingTaskProgress();
+        
+        // Reset for next trip
         this.currentPhase = 0;
+        this.pouchContents = {
+            small_pouch: 0,
+            medium_pouch: 0,
+            large_pouch: 0,
+            giant_pouch: 0
+        };
+        
+        // Clear crafting state
+        this.clearCraftingState();
+        
+        // Tell AI to re-evaluate (go bank)
+        if (window.ai) {
+            window.ai.decisionCooldown = 0;
+        }
     }
 }
     
