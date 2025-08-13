@@ -44,9 +44,6 @@ class AIManager {
         // Only make decisions if cooldown has expired
         if (this.decisionCooldown > 0) return;
 
-        // Don't make decisions while player is preparing movement
-        if (player.isPreparingMovement) return;
-
         // Update task progress periodically for sync
         if (window.taskManager) {
             taskManager.updateAllProgress();
@@ -594,12 +591,6 @@ class AIManager {
                                 taskNode.position.y
                             );
                             if (path && path.length > 0) {
-                                // Remove first waypoint if we're already very close to it
-                                if (path.length > 1 && 
-                                    Math.abs(path[0].x - player.position.x) < 0.1 && 
-                                    Math.abs(path[0].y - player.position.y) < 0.1) {
-                                    path.shift();
-                                }
                                 player.path = path;
                                 player.pathIndex = 0;
                                 player.segmentProgress = 0;
@@ -651,12 +642,6 @@ class AIManager {
                         taskNode.position.y
                     );
                     if (path && path.length > 0) {
-                        // Remove first waypoint if we're already very close to it
-                        if (path.length > 1 && 
-                            Math.abs(path[0].x - player.position.x) < 0.1 && 
-                            Math.abs(path[0].y - player.position.y) < 0.1) {
-                            path.shift();
-                        }
                         player.path = path;
                         player.pathIndex = 0;
                         player.segmentProgress = 0;
@@ -717,12 +702,6 @@ class AIManager {
                         taskNode.position.y
                     );
                     if (path && path.length > 0) {
-                        // Remove first waypoint if we're already very close to it
-                        if (path.length > 1 && 
-                            Math.abs(path[0].x - player.position.x) < 0.1 && 
-                            Math.abs(path[0].y - player.position.y) < 0.1) {
-                            path.shift();
-                        }
                         player.path = path;
                         player.pathIndex = 0;
                         player.segmentProgress = 0;
