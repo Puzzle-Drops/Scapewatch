@@ -370,19 +370,67 @@ class AIManager {
             return;
         }
 
-        const nearestBank = nodes.getNearestBank(player.position);
-        if (!nearestBank) {
+        let targetBank = null;
+        
+        // If we have a current task, find the optimal bank
+        if (this.currentTask && this.currentTask.nodeId) {
+            const taskNode = nodes.getNode(this.currentTask.nodeId);
+            
+            if (taskNode) {
+                // Find bank nearest to task node
+                const bankNearTask = nodes.getNearestBankToPosition(taskNode.position);
+                
+                // Find bank nearest to player
+                const bankNearPlayer = nodes.getNearestBank(player.position);
+                
+                if (bankNearTask && bankNearPlayer) {
+                    // Calculate total distances for both options
+                    const distToPlayerBank = distance(player.position.x, player.position.y, 
+                                                     bankNearPlayer.position.x, bankNearPlayer.position.y);
+                    
+                    const distToTaskBank = distance(player.position.x, player.position.y,
+                                                   bankNearTask.position.x, bankNearTask.position.y);
+                    const distFromBankToTask = distance(bankNearTask.position.x, bankNearTask.position.y,
+                                                       taskNode.position.x, taskNode.position.y);
+                    const totalTaskBankDistance = distToTaskBank + distFromBankToTask;
+                    
+                    const distFromPlayerBankToTask = distance(bankNearPlayer.position.x, bankNearPlayer.position.y,
+                                                             taskNode.position.x, taskNode.position.y);
+                    const totalPlayerBankDistance = distToPlayerBank + distFromPlayerBankToTask;
+                    
+                    // Choose the bank with shorter total travel distance
+                    if (totalTaskBankDistance < totalPlayerBankDistance) {
+                        targetBank = bankNearTask;
+                        console.log(`Using ${bankNearTask.name} (near task node) - total distance: ${Math.round(totalTaskBankDistance)}`);
+                    } else {
+                        targetBank = bankNearPlayer;
+                        console.log(`Using ${bankNearPlayer.name} (near player) - total distance: ${Math.round(totalPlayerBankDistance)}`);
+                    }
+                } else if (bankNearTask) {
+                    targetBank = bankNearTask;
+                } else if (bankNearPlayer) {
+                    targetBank = bankNearPlayer;
+                }
+            }
+        }
+        
+        // Fallback to nearest bank if no task or couldn't find optimal bank
+        if (!targetBank) {
+            targetBank = nodes.getNearestBank(player.position);
+        }
+        
+        if (!targetBank) {
             console.log('No reachable bank found!');
             return;
         }
 
-        if (player.targetNode === nearestBank.id && player.isMoving()) {
-            console.log(`Already moving to ${nearestBank.name}`);
+        if (player.targetNode === targetBank.id && player.isMoving()) {
+            console.log(`Already moving to ${targetBank.name}`);
             return;
         }
 
-        console.log(`Moving to ${nearestBank.name}`);
-        player.moveTo(nearestBank.id);
+        console.log(`Moving to ${targetBank.name}`);
+        player.moveTo(targetBank.id);
     }
 
     goToBankForItems(activityId) {
