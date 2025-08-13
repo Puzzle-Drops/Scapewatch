@@ -365,89 +365,139 @@ class AIManager {
 
     goToBank() {
         const currentNode = nodes.getNode(player.currentNode);
+        
+        // If already at a bank, just perform banking
         if (currentNode && currentNode.type === 'bank') {
             this.performBanking();
             return;
         }
-
-        let targetBank = null;
         
-        // If we have a current task, find the optimal bank
+        let targetBankId = null;
+        let fallbackBankId = null;
+        
+        // If we have a task, compare nearest bank distances
         if (this.currentTask && this.currentTask.nodeId) {
             const taskNode = nodes.getNode(this.currentTask.nodeId);
+            const currentNodeData = currentNode || nodes.getNode(player.currentNode);
             
-            if (taskNode) {
-                // Find bank nearest to task node
-                const bankNearTask = nodes.getNearestBankToPosition(taskNode.position);
+            if (taskNode && currentNodeData) {
+                const currentNodeBankDist = currentNodeData.nearestBankDistance || Infinity;
+                const taskNodeBankDist = taskNode.nearestBankDistance || Infinity;
                 
-                // Find bank nearest to player
-                const bankNearPlayer = nodes.getNearestBank(player.position);
-                
-                if (bankNearTask && bankNearPlayer) {
-                    // Calculate total distances for both options
-                    const distToPlayerBank = distance(player.position.x, player.position.y, 
-                                                     bankNearPlayer.position.x, bankNearPlayer.position.y);
-                    
-                    const distToTaskBank = distance(player.position.x, player.position.y,
-                                                   bankNearTask.position.x, bankNearTask.position.y);
-                    const distFromBankToTask = distance(bankNearTask.position.x, bankNearTask.position.y,
-                                                       taskNode.position.x, taskNode.position.y);
-                    const totalTaskBankDistance = distToTaskBank + distFromBankToTask;
-                    
-                    const distFromPlayerBankToTask = distance(bankNearPlayer.position.x, bankNearPlayer.position.y,
-                                                             taskNode.position.x, taskNode.position.y);
-                    const totalPlayerBankDistance = distToPlayerBank + distFromPlayerBankToTask;
-                    
-                    // Choose the bank with shorter total travel distance
-                    if (totalTaskBankDistance < totalPlayerBankDistance) {
-                        targetBank = bankNearTask;
-                        console.log(`Using ${bankNearTask.name} (near task node) - total distance: ${Math.round(totalTaskBankDistance)}`);
+                // Choose bank with shorter distance to its node
+                if (currentNodeBankDist < taskNodeBankDist) {
+                    targetBankId = currentNodeData.nearestBank;
+                    fallbackBankId = taskNode.nearestBank;
+                    console.log(`Choosing ${currentNodeData.nearestBank} (dist: ${currentNodeBankDist}) over ${taskNode.nearestBank} (dist: ${taskNodeBankDist})`);
+                } else if (taskNodeBankDist < currentNodeBankDist) {
+                    targetBankId = taskNode.nearestBank;
+                    fallbackBankId = currentNodeData.nearestBank;
+                    console.log(`Choosing ${taskNode.nearestBank} (dist: ${taskNodeBankDist}) over ${currentNodeData.nearestBank} (dist: ${currentNodeBankDist})`);
+                } else {
+                    // Equal distances - coin flip
+                    if (Math.random() < 0.5) {
+                        targetBankId = currentNodeData.nearestBank;
+                        fallbackBankId = taskNode.nearestBank;
                     } else {
-                        targetBank = bankNearPlayer;
-                        console.log(`Using ${bankNearPlayer.name} (near player) - total distance: ${Math.round(totalPlayerBankDistance)}`);
+                        targetBankId = taskNode.nearestBank;
+                        fallbackBankId = currentNodeData.nearestBank;
                     }
-                } else if (bankNearTask) {
-                    targetBank = bankNearTask;
-                } else if (bankNearPlayer) {
-                    targetBank = bankNearPlayer;
+                    console.log(`Equal distances (${currentNodeBankDist}), coin flip chose ${targetBankId}`);
                 }
             }
         }
         
-        // Fallback to nearest bank if no task or couldn't find optimal bank
-        if (!targetBank) {
-            targetBank = nodes.getNearestBank(player.position);
+        // Fallback: use current node's nearest bank if no task
+        if (!targetBankId && currentNode) {
+            targetBankId = currentNode.nearestBank;
         }
         
-        if (!targetBank) {
-            console.log('No reachable bank found!');
+        if (!targetBankId) {
+            console.error('CRITICAL ERROR: No bank found in node data! nodes.json may be missing nearestBank properties');
             return;
         }
-
-        if (player.targetNode === targetBank.id && player.isMoving()) {
-            console.log(`Already moving to ${targetBank.name}`);
+        
+        // Verify the bank node exists and is actually a bank
+        const bankNode = nodes.getNode(targetBankId);
+        if (!bankNode) {
+            console.error(`CRITICAL ERROR: Bank node ${targetBankId} not found in nodes data!`);
+            if (fallbackBankId) {
+                console.log(`Trying fallback bank: ${fallbackBankId}`);
+                targetBankId = fallbackBankId;
+                fallbackBankId = null;
+            } else {
+                return;
+            }
+        } else if (bankNode.type !== 'bank') {
+            console.error(`CRITICAL ERROR: Node ${targetBankId} is not a bank! It's type: ${bankNode.type}`);
+            if (fallbackBankId) {
+                console.log(`Trying fallback bank: ${fallbackBankId}`);
+                targetBankId = fallbackBankId;
+                fallbackBankId = null;
+            } else {
+                return;
+            }
+        }
+        
+        // Check if already moving to this bank
+        if (player.targetNode === targetBankId && player.isMoving()) {
+            console.log(`Already moving to ${targetBankId}`);
             return;
         }
-
-        console.log(`Moving to ${targetBank.name}`);
-        player.moveTo(targetBank.id);
+        
+        // Try to pathfind to the chosen bank
+        console.log(`Attempting to move to ${targetBankId}`);
+        
+        // Store original position to check if pathfinding worked
+        const originalTargetNode = player.targetNode;
+        
+        // Attempt to move to the primary bank
+        player.moveTo(targetBankId);
+        
+        // Check if pathfinding succeeded (player.targetNode would be set)
+        if (player.targetNode !== targetBankId) {
+            console.error(`Failed to pathfind to ${targetBankId}`);
+            
+            // Try fallback bank if available
+            if (fallbackBankId) {
+                console.log(`Trying fallback bank: ${fallbackBankId}`);
+                player.moveTo(fallbackBankId);
+                
+                // Check if fallback worked
+                if (player.targetNode !== fallbackBankId) {
+                    console.error(`CRITICAL ERROR: Cannot pathfind to ANY bank! Both ${targetBankId} and ${fallbackBankId} are unreachable!`);
+                    console.error('Game state may be corrupted. Check collision map and nodes.json data.');
+                    // Restore original target
+                    player.targetNode = originalTargetNode;
+                    return;
+                }
+            } else {
+                console.error(`CRITICAL ERROR: Cannot pathfind to bank ${targetBankId} and no fallback available!`);
+                console.error('Game state may be corrupted. Check collision map and nodes.json data.');
+                // Restore original target
+                player.targetNode = originalTargetNode;
+                return;
+            }
+        }
     }
 
     goToBankForItems(activityId) {
-        const nearestBank = nodes.getNearestBank(player.position);
-        if (!nearestBank) {
-            console.log('No reachable bank found!');
-            return;
-        }
-
+        // This method needs updating too, but it's used less frequently
+        // For now, we'll use a simple approach
         const currentNode = nodes.getNode(player.currentNode);
+        
         if (currentNode && currentNode.type === 'bank') {
             this.handleBankingForActivity(activityId);
             return;
         }
-
-        console.log(`Moving to ${nearestBank.name} to get items for ${activityId}`);
-        player.moveTo(nearestBank.id);
+        
+        // Use current node's nearest bank
+        if (currentNode && currentNode.nearestBank) {
+            console.log(`Moving to ${currentNode.nearestBank} to get items for ${activityId}`);
+            player.moveTo(currentNode.nearestBank);
+        } else {
+            console.error('Cannot find bank for getting items!');
+        }
     }
 
     performBanking() {
