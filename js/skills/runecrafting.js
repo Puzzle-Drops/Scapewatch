@@ -325,33 +325,43 @@ return {
     }
     
     processRewards(activityData, level) {
-        // Clear crafting state
-        this.clearCraftingState();
-        
-        let essenceToConsume = 0;
-        
-        if (this.currentPhase === 0) {
-            // Use inventory essence
-            essenceToConsume = inventory.getItemCount('rune_essence');
-        } else if (this.currentPhase === 1) {
-            // Empty small/medium/large pouches
-            if (this.pouchContents.small_pouch > 0) {
-                essenceToConsume += this.pouchContents.small_pouch;
-                this.pouchContents.small_pouch = 0;
-            }
-            if (this.pouchContents.medium_pouch > 0) {
-                essenceToConsume += this.pouchContents.medium_pouch;
-                this.pouchContents.medium_pouch = 0;
-            }
-            if (this.pouchContents.large_pouch > 0) {
-                essenceToConsume += this.pouchContents.large_pouch;
-                this.pouchContents.large_pouch = 0;
-            }
-        } else if (this.currentPhase === 2) {
-            // Empty giant pouch
-            essenceToConsume = this.pouchContents.giant_pouch;
+    // Clear crafting state
+    this.clearCraftingState();
+    
+    let essenceToConsume = 0;
+    
+    if (this.currentPhase === 0) {
+        // Use inventory essence
+        essenceToConsume = inventory.getItemCount('rune_essence');
+    } else if (this.currentPhase === 1) {
+        // Empty small/medium/large pouches INTO INVENTORY first
+        let totalFromPouches = 0;
+        if (this.pouchContents.small_pouch > 0) {
+            inventory.addItem('rune_essence', this.pouchContents.small_pouch);
+            totalFromPouches += this.pouchContents.small_pouch;
+            this.pouchContents.small_pouch = 0;
+        }
+        if (this.pouchContents.medium_pouch > 0) {
+            inventory.addItem('rune_essence', this.pouchContents.medium_pouch);
+            totalFromPouches += this.pouchContents.medium_pouch;
+            this.pouchContents.medium_pouch = 0;
+        }
+        if (this.pouchContents.large_pouch > 0) {
+            inventory.addItem('rune_essence', this.pouchContents.large_pouch);
+            totalFromPouches += this.pouchContents.large_pouch;
+            this.pouchContents.large_pouch = 0;
+        }
+        console.log(`Emptied ${totalFromPouches} essence from small/medium/large pouches`);
+        essenceToConsume = inventory.getItemCount('rune_essence');
+    } else if (this.currentPhase === 2) {
+        // Empty giant pouch INTO INVENTORY first
+        if (this.pouchContents.giant_pouch > 0) {
+            inventory.addItem('rune_essence', this.pouchContents.giant_pouch);
+            console.log(`Emptied ${this.pouchContents.giant_pouch} essence from giant pouch`);
             this.pouchContents.giant_pouch = 0;
         }
+        essenceToConsume = inventory.getItemCount('rune_essence');
+    }
         
         if (essenceToConsume === 0) {
             console.log('No essence to consume');
