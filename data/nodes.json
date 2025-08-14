@@ -39,7 +39,7 @@
       "craft_wrath_runes"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 58
+    "nearestBankDistance": 63
   },
   "lumbridge_thieving": {
     "id": "lumbridge_thieving",
@@ -85,7 +85,7 @@
       "pickpocket_tzhaar"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 64
+    "nearestBankDistance": 68
   },
   "lumbridge_firemaking": {
     "id": "lumbridge_firemaking",
@@ -99,7 +99,7 @@
       "firemaking"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 66
+    "nearestBankDistance": 69
   },
   "draynor_rooftop": {
     "id": "draynor_rooftop",
@@ -113,7 +113,7 @@
       "draynor_rooftop"
     ],
     "nearestBank": "draynor_bank",
-    "nearestBankDistance": 9
+    "nearestBankDistance": 84
   },
   "al_kharid_rooftop": {
     "id": "al_kharid_rooftop",
@@ -126,8 +126,8 @@
     "activities": [
       "al_kharid_rooftop"
     ],
-    "nearestBank": null,
-    "nearestBankDistance": null
+    "nearestBank": "lumbridge_bank",
+    "nearestBankDistance": 211
   },
   "varrock_rooftop": {
     "id": "varrock_rooftop",
@@ -169,7 +169,7 @@
       "falador_rooftop"
     ],
     "nearestBank": "draynor_bank",
-    "nearestBankDistance": 317
+    "nearestBankDistance": 326
   },
   "seers_rooftop": {
     "id": "seers_rooftop",
@@ -247,7 +247,7 @@
       "chop_redwood"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 90
+    "nearestBankDistance": 93
   },
   "test_mine": {
     "id": "test_mine",
@@ -269,7 +269,7 @@
       "mine_amethyst"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 80
+    "nearestBankDistance": 84
   },
   "test_fish": {
     "id": "test_fish",
@@ -290,7 +290,7 @@
       "harpoon_shark"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 72
+    "nearestBankDistance": 76
   },
   "lumbridge_kitchen": {
     "id": "lumbridge_kitchen",
@@ -304,7 +304,7 @@
       "cook_food"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 21
+    "nearestBankDistance": 22
   },
   "lumbridge_bank": {
     "id": "lumbridge_bank",
@@ -330,7 +330,7 @@
       "chop_oak"
     ],
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 84
+    "nearestBankDistance": 88
   },
   "west_lumbridge_mine": {
     "id": "west_lumbridge_mine",
@@ -429,8 +429,8 @@
       "x": 4281,
       "y": 1340
     },
-    "nearestBank": null,
-    "nearestBankDistance": null
+    "nearestBank": "grand_exchange",
+    "nearestBankDistance": 0
   },
   "east_varrock_mine": {
     "id": "east_varrock_mine",
@@ -520,7 +520,7 @@
     },
     "questId": "sheep_shearer",
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 184
+    "nearestBankDistance": 188
   },
   "shield_of_arrav_quest": {
     "id": "shield_of_arrav_quest",
@@ -676,7 +676,7 @@
     },
     "questId": "rune_mysteries",
     "nearestBank": "lumbridge_bank",
-    "nearestBankDistance": 31
+    "nearestBankDistance": 32
   },
   "misthalin_mystery_quest": {
     "id": "misthalin_mystery_quest",
