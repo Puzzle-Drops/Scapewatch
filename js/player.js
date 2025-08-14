@@ -17,6 +17,7 @@ class Player {
         this.isBanking = false;
         this.bankingEndTime = 0;
         this.bankingDuration = 600; // 0.6 seconds
+        this.movementStartTime = 0;
         
         // Path preparation animation (white circle)
         this.isPreparingPath = false;
@@ -49,15 +50,20 @@ class Player {
         }
         
         // Check if path preparation animation finished
-        if (this.isPreparingPath && Date.now() >= this.pathPrepEndTime) {
-            this.isPreparingPath = false;
-            console.log('Path preparation complete');
-            
-            // Trigger AI to continue
-            if (window.ai) {
-                window.ai.decisionCooldown = 0;
-            }
-        }
+if (this.isPreparingPath && Date.now() >= this.pathPrepEndTime) {
+    this.isPreparingPath = false;
+    console.log('Path preparation complete');
+    
+    // CRITICAL: Reset segment progress to ensure smooth start
+    // This prevents the first movement frame from using accumulated deltaTime
+    this.segmentProgress = 0;
+    this.pathIndex = 0;
+    
+    // Trigger AI to continue
+    if (window.ai) {
+        window.ai.decisionCooldown = 0;
+    }
+}
     }
 
     updateSmoothMovement(deltaTime) {
