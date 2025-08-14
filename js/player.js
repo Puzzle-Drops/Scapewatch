@@ -17,11 +17,16 @@ class Player {
         this.isBanking = false;
         this.bankingEndTime = 0;
         this.bankingDuration = 600; // 0.6 seconds
+        
+        // Path preparation animation (white circle)
+        this.isPreparingPath = false;
+        this.pathPrepEndTime = 0;
+        this.pathPrepDuration = 600; // 0.6 seconds
     }
 
     update(deltaTime) {
-        // Handle movement along path
-        if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking) {
+        // Handle movement along path (don't move while banking or preparing path)
+        if (this.path.length > 0 && this.pathIndex < this.path.length && !this.isBanking && !this.isPreparingPath) {
             this.updateSmoothMovement(deltaTime);
         } else if (!this.currentNode && !this.isMoving()) {
             this.checkCurrentNode();
@@ -38,6 +43,17 @@ class Player {
             console.log('Banking animation complete');
             
             // Trigger AI to continue after banking
+            if (window.ai) {
+                window.ai.decisionCooldown = 0;
+            }
+        }
+        
+        // Check if path preparation animation finished
+        if (this.isPreparingPath && Date.now() >= this.pathPrepEndTime) {
+            this.isPreparingPath = false;
+            console.log('Path preparation complete');
+            
+            // Trigger AI to continue
             if (window.ai) {
                 window.ai.decisionCooldown = 0;
             }
@@ -261,13 +277,21 @@ class Player {
             console.log(`Already at node ${targetNodeId}`);
             return;
         }
-
+        
+        // Check if we should show path preparation animation
+        // (not at a bank, not already preparing, and not already banking)
+        const currentNodeData = this.currentNode ? nodes.getNode(this.currentNode) : null;
+        const shouldPrepare = !this.isPreparingPath && 
+                              !this.isBanking &&
+                              (!currentNodeData || currentNodeData.type !== 'bank');
+        
         // Clear current node when starting to move away
         if (this.currentNode && this.currentNode !== targetNodeId) {
             console.log(`Leaving node ${this.currentNode} to move to ${targetNodeId}`);
             this.currentNode = null;
         }
 
+        // Calculate the path
         if (window.pathfinding) {
             const path = pathfinding.findPath(
                 this.position.x,
@@ -283,6 +307,7 @@ class Player {
                     path.shift();
                 }
                 
+                // Set up the path (just like banking does)
                 this.path = path;
                 this.pathIndex = 0;
                 this.segmentProgress = 0;
@@ -290,23 +315,40 @@ class Player {
                 this.targetNode = targetNodeId;
                 this.stopActivity();
                 
-                console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+                // If we should prepare, start the animation
+                // Movement will be blocked by isPreparingPath check in update()
+                if (shouldPrepare) {
+                    this.startPathPreparation(600);
+                    console.log(`Path to ${targetNodeId} prepared with animation (${path.length} waypoints)`);
+                } else {
+                    console.log(`Found path to ${targetNodeId} with ${path.length} waypoints`);
+                }
             } else {
                 console.error(`No path found to node ${targetNodeId}`);
+                // Fallback path
                 this.path = [{ x: node.position.x, y: node.position.y }];
                 this.pathIndex = 0;
                 this.segmentProgress = 0;
                 this.targetPosition = { ...node.position };
                 this.targetNode = targetNodeId;
                 this.stopActivity();
+                
+                if (shouldPrepare) {
+                    this.startPathPreparation(600);
+                }
             }
         } else {
+            // No pathfinding system fallback
             this.path = [{ x: node.position.x, y: node.position.y }];
             this.pathIndex = 0;
             this.segmentProgress = 0;
             this.targetPosition = { ...node.position };
             this.targetNode = targetNodeId;
             this.stopActivity();
+            
+            if (shouldPrepare) {
+                this.startPathPreparation(600);
+            }
         }
     }
 
@@ -433,11 +475,25 @@ class Player {
         console.log('Started banking animation');
     }
 
+    startPathPreparation(duration = 600) {
+        this.isPreparingPath = true;
+        this.pathPrepDuration = duration;
+        this.pathPrepEndTime = Date.now() + duration;
+        console.log('Started path preparation animation');
+    }
+
     getBankingProgress() {
         if (!this.isBanking) return 0;
         
         const elapsed = Date.now() - (this.bankingEndTime - this.bankingDuration);
         return Math.max(0, 1 - (elapsed / this.bankingDuration));
+    }
+
+    getPathPreparationProgress() {
+        if (!this.isPreparingPath) return 0;
+        
+        const elapsed = Date.now() - (this.pathPrepEndTime - this.pathPrepDuration);
+        return Math.max(0, 1 - (elapsed / this.pathPrepDuration));
     }
 
     getMovementSpeed() {
@@ -459,7 +515,7 @@ class Player {
     }
 
     isBusy() {
-        return this.isMoving() || this.isPerformingActivity() || this.isBanking;
+        return this.isMoving() || this.isPerformingActivity() || this.isBanking || this.isPreparingPath;
     }
 
     setStunned(stunned, duration = 0) {
