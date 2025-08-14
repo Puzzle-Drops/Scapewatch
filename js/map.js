@@ -245,7 +245,7 @@ class MapRenderer {
         this.ctx.lineWidth = 0.4; // reduced from 2
         this.ctx.stroke();
 
-        // Activity indicator OR stun indicator OR banking indicator
+        // Activity indicator OR stun indicator OR banking indicator OR path prep indicator
         if (player.isBanking) {
             // Show banking progress (golden circle that depletes counter-clockwise)
             const bankingProgress = player.getBankingProgress();
@@ -254,6 +254,17 @@ class MapRenderer {
                 // Start from top, go counter-clockwise based on remaining progress
                 this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * bankingProgress));
                 this.ctx.strokeStyle = '#f39c12'; // Golden color for banking
+                this.ctx.lineWidth = 0.4;
+                this.ctx.stroke();
+            }
+        } else if (player.isPreparingPath) {
+            // Show path preparation progress (white circle that depletes counter-clockwise)
+            const pathPrepProgress = player.getPathPreparationProgress();
+            if (pathPrepProgress > 0) {
+                this.ctx.beginPath();
+                // Start from top, go counter-clockwise based on remaining progress
+                this.ctx.arc(x, y, 2, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * pathPrepProgress));
+                this.ctx.strokeStyle = '#ffffff'; // White color for path preparation
                 this.ctx.lineWidth = 0.4;
                 this.ctx.stroke();
             }
